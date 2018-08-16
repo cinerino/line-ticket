@@ -25,6 +25,7 @@ transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __aw
         // フォーム
         res.render('transactions/inputCreditCard', {
             amount: req.query.amount,
+            toAccountNumber: req.query.toAccountNumber,
             gmoShopId: req.query.gmoShopId,
             cb: req.query.cb // フォームのPOST先
         });
@@ -45,7 +46,12 @@ transactionsRouter.post('/transactions/:transactionId/inputCreditCard', (req, re
             state: req.query.state
         });
         // 入金
-        yield PostbackController.depositFromCreditCard(user, parseInt(req.body.amount, 10), req.body.token);
+        yield PostbackController.depositFromCreditCard({
+            user: user,
+            amount: parseInt(req.body.amount, 10),
+            toAccountNumber: req.body.toAccountNumber,
+            creditCardToken: req.body.token
+        });
         const location = 'line://';
         res.send(`
 <html>

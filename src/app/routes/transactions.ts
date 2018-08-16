@@ -20,6 +20,7 @@ transactionsRouter.get(
             // フォーム
             res.render('transactions/inputCreditCard', {
                 amount: req.query.amount,
+                toAccountNumber: req.query.toAccountNumber,
                 gmoShopId: req.query.gmoShopId,
                 cb: req.query.cb // フォームのPOST先
             });
@@ -36,7 +37,6 @@ transactionsRouter.post(
     async (req, res, next) => {
         try {
             debug('credit card token created.', req.body.token);
-
             const user = new User({
                 host: req.hostname,
                 userId: req.query.userId,
@@ -44,10 +44,14 @@ transactionsRouter.post(
             });
 
             // 入金
-            await PostbackController.depositFromCreditCard(user, parseInt(req.body.amount, 10), req.body.token);
+            await PostbackController.depositFromCreditCard({
+                user: user,
+                amount: parseInt(req.body.amount, 10),
+                toAccountNumber: req.body.toAccountNumber,
+                creditCardToken: req.body.token
+            });
 
             const location = 'line://';
-
             res.send(`
 <html>
 <body onload="location.href='line://'">

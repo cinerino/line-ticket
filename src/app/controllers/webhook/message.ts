@@ -202,7 +202,7 @@ export async function selectWhomAskForMoney(user: User) {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: user.authClient
     });
-    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
         .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
@@ -404,7 +404,7 @@ export async function findAccount(user: User) {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: user.authClient
     });
-    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
         .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
@@ -464,7 +464,7 @@ export async function searchAccountTradeActions(user: User) {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: user.authClient
     });
-    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
         .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
@@ -474,7 +474,7 @@ export async function searchAccountTradeActions(user: User) {
     const account = accounts[0];
     let transferActions = await personService.searchAccountMoneyTransferActions({
         personId: 'me',
-        accountType: cinerinoapi.factory.accountType.Point,
+        accountType: cinerinoapi.factory.accountType.Coin,
         accountNumber: account.accountNumber
     });
 

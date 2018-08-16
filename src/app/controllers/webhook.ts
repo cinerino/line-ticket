@@ -122,7 +122,7 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
 
             // 座席仮予約
             case 'createTmpReservation':
-                await PostbackController.createTmpReservation(user, <string>data.eventIdentifier);
+                await PostbackController.createTmpReservation(user, <string>data.eventId);
                 break;
 
             // 決済方法選択

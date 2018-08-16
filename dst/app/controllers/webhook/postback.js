@@ -21,10 +21,13 @@ const LINE = require("../../../line");
 const debug = createDebug('cinerino-line-ticket:controller:webhook:postback');
 // const MESSAGE_TRANSACTION_NOT_FOUND = '該当取引はありません';
 const customsearch = googleapis_1.google.customsearch('v1');
-const PECORINO_ENDPOINT = process.env.PECORINO_ENDPOINT;
-const PECORINO_CLIENT_ID = process.env.PECORINO_CLIENT_ID;
-const PECORINO_CLIENT_SECRET = process.env.PECORINO_CLIENT_SECRET;
-const PECORINO_AUTHORIZE_SERVER_DOMAIN = process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN;
+const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
+    domain: process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
+    clientId: process.env.PECORINO_CLIENT_ID,
+    clientSecret: process.env.PECORINO_CLIENT_SECRET,
+    scopes: [],
+    state: ''
+});
 /**
  * 日付でイベント検索
  * @param {string} userId
@@ -277,7 +280,7 @@ function choosePaymentMethod(user, paymentMethod, transactionId, friendPayPrice)
                 .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
             const requiredPoint = seatReservations[0].result.point;
             // 口座番号取得
-            let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+            let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
                 .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
             accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
             debug('accounts:', accounts);
@@ -466,7 +469,7 @@ function confirmFriendPay(user, token) {
             .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
         const requiredPoint = seatReservations[0].result.point;
         // 口座番号取得
-        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
             .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
@@ -527,23 +530,11 @@ function confirmTransferMoney(user, token, price) {
     return __awaiter(this, void 0, void 0, function* () {
         const transferMoneyInfo = yield user.verifyTransferMoneyToken(token);
         yield LINE.pushMessage(user.userId, `${transferMoneyInfo.name}に${price}ポイントの振込を実行します...`);
-        if (PECORINO_ENDPOINT === undefined) {
-            throw new Error('PECORINO_ENDPOINT undefined.');
-        }
-        if (PECORINO_CLIENT_ID === undefined) {
-            throw new Error('PECORINO_CLIENT_ID undefined.');
-        }
-        if (PECORINO_CLIENT_SECRET === undefined) {
-            throw new Error('PECORINO_CLIENT_SECRET undefined.');
-        }
-        if (PECORINO_AUTHORIZE_SERVER_DOMAIN === undefined) {
-            throw new Error('PECORINO_AUTHORIZE_SERVER_DOMAIN undefined.');
-        }
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
         });
-        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Point })
+        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
             .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
@@ -551,19 +542,12 @@ function confirmTransferMoney(user, token, price) {
             throw new Error('口座未開設です。');
         }
         const account = accounts[0];
-        const auth = new cinerino.pecorinoapi.auth.ClientCredentials({
-            domain: PECORINO_AUTHORIZE_SERVER_DOMAIN,
-            clientId: PECORINO_CLIENT_ID,
-            clientSecret: PECORINO_CLIENT_SECRET,
-            scopes: [],
-            state: ''
-        });
         const transferService = new cinerino.pecorinoapi.service.transaction.Transfer({
-            endpoint: PECORINO_ENDPOINT,
-            auth: auth
+            endpoint: process.env.PECORINO_ENDPOINT,
+            auth: pecorinoAuthClient
         });
         const transaction = yield transferService.start({
-            accountType: cinerinoapi.factory.accountType.Point,
+            accountType: cinerinoapi.factory.accountType.Coin,
             // tslint:disable-next-line:no-magic-numbers
             expires: moment().add(10, 'minutes').toDate(),
             agent: {
@@ -600,6 +584,18 @@ exports.confirmTransferMoney = confirmTransferMoney;
  */
 function selectDepositAmount(user) {
     return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
+        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+        debug('accounts:', accounts);
+        if (accounts.length === 0) {
+            throw new Error('口座未開設です。');
+        }
+        const account = accounts[0];
         const gmoShopId = 'tshop00026096';
         const creditCardCallback = `https://${user.host}/transactions/transactionId/inputCreditCard?userId=${user.userId}`;
         // tslint:disable-next-line:max-line-length
@@ -623,7 +619,7 @@ function selectDepositAmount(user) {
                                 {
                                     type: 'uri',
                                     label: '100円',
-                                    uri: `${creditCardUrl}&amount=100`
+                                    uri: `${creditCardUrl}&amount=100&toAccountNumber=${account.accountNumber}`
                                 }
                             ]
                         }
@@ -637,62 +633,42 @@ exports.selectDepositAmount = selectDepositAmount;
 /**
  * クレジットから口座へ入金する
  */
-function depositFromCreditCard(user, amount, __) {
+function depositFromCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield LINE.pushMessage(user.userId, `${amount}ポイントの入金処理を実行します...`);
+        yield LINE.pushMessage(params.user.userId, `${params.amount}ポイントの入金処理を実行します...`);
         // const personService = new cinerinoapi.service.Person({
         //     endpoint: <string>process.env.CINERINO_ENDPOINT,
         //     auth: user.authClient
         // });
-        // if (PECORINO_ENDPOINT === undefined) {
-        //     throw new Error('PECORINO_ENDPOINT undefined.');
-        // }
-        // if (PECORINO_CLIENT_ID === undefined) {
-        //     throw new Error('PECORINO_CLIENT_ID undefined.');
-        // }
-        // if (PECORINO_CLIENT_SECRET === undefined) {
-        //     throw new Error('PECORINO_CLIENT_SECRET undefined.');
-        // }
-        // if (PECORINO_AUTHORIZE_SERVER_DOMAIN === undefined) {
-        //     throw new Error('PECORINO_AUTHORIZE_SERVER_DOMAIN undefined.');
-        // }
-        // const auth = new pecorinoapi.auth.ClientCredentials({
-        //     domain: PECORINO_AUTHORIZE_SERVER_DOMAIN,
-        //     clientId: PECORINO_CLIENT_ID,
-        //     clientSecret: PECORINO_CLIENT_SECRET,
-        //     scopes: [],
-        //     state: ''
-        // });
-        // const transferTransactionService4backend = new pecorinoapi.service.transaction.Deposit({
-        //     endpoint: PECORINO_ENDPOINT,
-        //     auth: auth
-        // });
-        // const transaction = await transferTransactionService4backend.start({
-        //     // tslint:disable-next-line:no-magic-numbers
-        //     expires: moment().add(10, 'minutes').toDate(),
-        //     agent: {
-        //         typeOf: 'Person',
-        //         id: user.userId,
-        //         name: 'self',
-        //         url: ''
-        //     },
-        //     recipient: {
-        //         typeOf: 'Person',
-        //         id: user.userId,
-        //         name: 'self',
-        //         url: ''
-        //     },
-        //     price: amount,
-        //     notes: 'LINEチケット入金',
-        //     toAccountId: account.id
-        // });
-        // debug('transaction started.', transaction.id);
-        // // バックエンドで確定
-        // await transferTransactionService4backend.confirm({
-        //     transactionId: transaction.id
-        // });
-        // debug('transaction confirmed.');
-        yield LINE.pushMessage(user.userId, '入金処理が完了しました。');
+        // 入金取引開始
+        const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
+            endpoint: process.env.PECORINO_ENDPOINT,
+            auth: pecorinoAuthClient
+        });
+        const transaction = yield depositTransaction.start({
+            // tslint:disable-next-line:no-magic-numbers
+            expires: moment().add(10, 'minutes').toDate(),
+            agent: {
+                typeOf: 'Person',
+                id: params.user.userId,
+                name: params.user.userId,
+                url: ''
+            },
+            recipient: {
+                typeOf: 'Person',
+                id: params.user.userId,
+                name: params.user.userId,
+                url: ''
+            },
+            amount: params.amount,
+            notes: 'LINEチケット入金',
+            accountType: cinerinoapi.factory.accountType.Coin,
+            toAccountNumber: params.toAccountNumber
+        });
+        yield depositTransaction.confirm({
+            transactionId: transaction.id
+        });
+        yield LINE.pushMessage(params.user.userId, '入金処理が完了しました。');
     });
 }
 exports.depositFromCreditCard = depositFromCreditCard;
