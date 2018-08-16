@@ -350,19 +350,20 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
             throw new Error(`Unknown payment method ${paymentMethodType}`);
     }
 
-    // if (paymentMethod === 'Coin') {
-    // } else if (paymentMethod === cinerinoapi.factory.paymentMethodType.CreditCard) {
-    // } else if (paymentMethod === 'FriendPay') {
-    // } else {
-    // }
 
+    const loginTicket = user.authClient.verifyIdToken({});
     const contact = await personService.getContacts({ personId: 'me' });
     await placeOrderService.setCustomerContact({
         transactionId: transactionId,
-        contact: contact
+        contact: {
+            givenName: <string>loginTicket.getUsername(),
+            familyName: <string>loginTicket.getUsername(),
+            email: contact.email,
+            telephone: '+819012345678'
+        }
     });
     debug('customer contact set.');
-    await LINE.pushMessage(user.userId, `以下の通り注文を受け付けようとしています...
+    await LINE.pushMessage(user.userId, `以下の通り注文を受け付けます...
 ------------
 購入者情報
 ------------
@@ -435,7 +436,7 @@ export async function confirmOrder(user: User, transactionId: string) {
     const orderDetails = `--------------------
 注文内容
 --------------------
-予約番号: ${order.confirmationNumber}
+確認番号: ${order.confirmationNumber}
 --------------------
 購入者情報
 --------------------
