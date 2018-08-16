@@ -111,7 +111,7 @@ function postback(event, user) {
                     break;
                 // 座席仮予約
                 case 'createTmpReservation':
-                    yield PostbackController.createTmpReservation(user, data.eventIdentifier);
+                    yield PostbackController.createTmpReservation(user, data.eventId);
                     break;
                 // 決済方法選択
                 case 'choosePaymentMethod':

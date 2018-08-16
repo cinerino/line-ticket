@@ -108,7 +108,7 @@ function searchEventsByDate(user, date) {
                                         {
                                             type: 'postback',
                                             label: '座席確保',
-                                            data: `action=createTmpReservation&eventIdentifier=${event.identifier}`
+                                            data: `action=createTmpReservation&eventId=${event.id}`
                                         }
                                     ]
                                 };
@@ -135,7 +135,7 @@ function createTmpReservation(user, eventId) {
             auth: user.authClient
         });
         const event = yield eventService.findScreeningEventById({ eventId: eventId });
-        yield LINE.pushMessage(user.userId, `${event.workPerformed.name}の座席を確保しています...`);
+        yield LINE.pushMessage(user.userId, `${event.name}の座席を確保します...`);
         // 販売者情報取得
         const organizationService = new cinerinoapi.service.Organization({
             endpoint: process.env.CINERINO_ENDPOINT,
@@ -172,12 +172,6 @@ function createTmpReservation(user, eventId) {
         // 座席選択
         // 無料鑑賞券取得
         const ticketTypes = yield eventService.searchScreeningEventTicketTypes({ eventId: eventId });
-        // const freeTickets = tickets.filter((t) => t.usePoint > 0 && t.flgMember === cinerino.COA.services.master.FlgMember.Member);
-        // if (freeTickets.length === 0) {
-        //     throw new Error('無料鑑賞券が見つかりませんでした。');
-        // }
-        // const selectedTicket = freeTickets[0];
-        // debug('無料鑑賞券が見つかりました。', selectedTicket.ticketCode);
         // 空席検索
         const offers = yield eventService.searchScreeningEventOffers({ eventId: eventId });
         const seatOffers = offers[0].containsPlace;
@@ -241,7 +235,7 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                             actions: [
                                 {
                                     type: 'postback',
-                                    label: 'Pecorino',
+                                    label: 'コイン',
                                     data: `action=choosePaymentMethod&paymentMethod=Pecorino&transactionId=${transaction.id}`
                                 },
                                 {
@@ -293,7 +287,7 @@ function choosePaymentMethod(user, paymentMethod, transactionId, friendPayPrice)
                 amount: requiredPoint,
                 fromAccountNumber: account.accountNumber
             });
-            debug('Pecorino残高確認済', pecorinoAuthorization);
+            debug('残高確認済', pecorinoAuthorization);
             yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
         }
         else if (paymentMethod === 'FriendPay') {
@@ -452,7 +446,7 @@ exports.confirmOrder = confirmOrder;
 function confirmFriendPay(user, token) {
     return __awaiter(this, void 0, void 0, function* () {
         const friendPayInfo = yield user.verifyFriendPayToken(token);
-        yield LINE.pushMessage(user.userId, `${friendPayInfo.price}ポイントの友達決済を受け付けます。`);
+        yield LINE.pushMessage(user.userId, `${friendPayInfo.price}円の友達決済を受け付けます。`);
         yield LINE.pushMessage(user.userId, '残高を確認しています...');
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
@@ -482,7 +476,7 @@ function confirmFriendPay(user, token) {
             amount: requiredPoint,
             fromAccountNumber: account.accountNumber
         });
-        debug('Pecorino残高確認済', pecorinoAuthorization);
+        debug('残高確認済', pecorinoAuthorization);
         yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
         yield LINE.pushMessage(user.userId, '友達決済を承認しました。');
         yield request.post({
@@ -529,7 +523,7 @@ exports.confirmFriendPay = confirmFriendPay;
 function confirmTransferMoney(user, token, price) {
     return __awaiter(this, void 0, void 0, function* () {
         const transferMoneyInfo = yield user.verifyTransferMoneyToken(token);
-        yield LINE.pushMessage(user.userId, `${transferMoneyInfo.name}に${price}ポイントの振込を実行します...`);
+        yield LINE.pushMessage(user.userId, `${transferMoneyInfo.name}に${price}円の振込を実行します...`);
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
@@ -575,7 +569,7 @@ function confirmTransferMoney(user, token, price) {
         yield LINE.pushMessage(user.userId, '転送が完了しました。');
         const contact = yield personService.getContacts({ personId: 'me' });
         // 振込先に通知
-        yield LINE.pushMessage(transferMoneyInfo.userId, `${contact.familyName} ${contact.givenName}から${price}ポイントおこづかいが振り込まれました。`);
+        yield LINE.pushMessage(transferMoneyInfo.userId, `${contact.familyName} ${contact.givenName}から${price}円おこづかいが振り込まれました。`);
     });
 }
 exports.confirmTransferMoney = confirmTransferMoney;
@@ -613,7 +607,7 @@ function selectDepositAmount(user) {
                         altText: '口座へ入金',
                         template: {
                             type: 'buttons',
-                            title: 'Pecorino口座へ入金する',
+                            title: 'コイン口座へ入金する',
                             text: 'いくら入金しますか?',
                             actions: [
                                 {
@@ -635,7 +629,7 @@ exports.selectDepositAmount = selectDepositAmount;
  */
 function depositFromCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield LINE.pushMessage(params.user.userId, `${params.amount}ポイントの入金処理を実行します...`);
+        yield LINE.pushMessage(params.user.userId, `${params.amount}円の入金処理を実行します...`);
         // const personService = new cinerinoapi.service.Person({
         //     endpoint: <string>process.env.CINERINO_ENDPOINT,
         //     auth: user.authClient

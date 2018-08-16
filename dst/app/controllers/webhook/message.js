@@ -180,17 +180,17 @@ function askConfirmationOfTransferMoney(user, transferMoneyToken) {
                             actions: [
                                 {
                                     type: 'postback',
-                                    label: '10ポイント',
+                                    label: '10',
                                     data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=10`
                                 },
                                 {
                                     type: 'postback',
-                                    label: '100ポイント',
+                                    label: '100',
                                     data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=100`
                                 },
                                 {
                                     type: 'postback',
-                                    label: '1000ポイント',
+                                    label: '1000',
                                     data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=1000`
                                 },
                                 {
