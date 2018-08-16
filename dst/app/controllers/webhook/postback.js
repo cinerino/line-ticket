@@ -68,7 +68,7 @@ function searchEventsByDate(user, date) {
                         if (Array.isArray(res.data.items) && res.data.items.length > 0) {
                             debug(res.data.items[0]);
                             thumbnails.push({
-                                eventIdentifier: event.identifier,
+                                eventId: event.id,
                                 link: res.data.items[0].link,
                                 thumbnailLink: res.data.items[0].image.thumbnailLink
                             });
@@ -93,7 +93,7 @@ function searchEventsByDate(user, date) {
                         template: {
                             type: 'carousel',
                             columns: events.map((event) => {
-                                const thumbnail = thumbnails.find((t) => t.eventIdentifier === event.identifier);
+                                const thumbnail = thumbnails.find((t) => t.eventId === event.id);
                                 const thumbnailImageUrl = (thumbnail !== undefined)
                                     ? thumbnail.thumbnailLink
                                     // tslint:disable-next-line:max-line-length
@@ -135,7 +135,7 @@ function createTmpReservation(user, eventId) {
             auth: user.authClient
         });
         const event = yield eventService.findScreeningEventById({ eventId: eventId });
-        yield LINE.pushMessage(user.userId, `${event.name}の座席を確保します...`);
+        yield LINE.pushMessage(user.userId, `${event.name.ja}の座席を確保します...`);
         // 販売者情報取得
         const organizationService = new cinerinoapi.service.Organization({
             endpoint: process.env.CINERINO_ENDPOINT,
