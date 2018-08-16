@@ -16,7 +16,6 @@
 |------------------------------------|----------|------------------------|---------------------------------|
 | `DEBUG`                            | false    | cinerino-line-ticket:* | Debug                           |
 | `NODE_ENV`                         | true     |                        | environment name                |
-| `API_TOKEN_ISSUER`                 | true     |                        |                                 |
 | `REDIS_HOST`                       | true     |                        |                                 |
 | `REDIS_PORT`                       | true     |                        |                                 |
 | `REDIS_KEY`                        | true     |                        |                                 |
@@ -28,6 +27,7 @@
 | `CINERINO_CLIENT_ID`               | true     |                        |                                 |
 | `CINERINO_CLIENT_SECRET`           | true     |                        |                                 |
 | `CINERINO_CODE_VERIFIER`           | true     |                        |                                 |
+| `CINERINO_TOKEN_ISSUER`            | true     |                        |                                 |
 | `PECORINO_ENDPOINT`                | true     |                        |                                 |
 | `PECORINO_CLIENT_ID`               | true     |                        |                                 |
 | `PECORINO_CLIENT_SECRET`           | true     |                        |                                 |

@@ -52,7 +52,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
         }
         // RedisからBearerトークンを取り出す
         yield express_middleware_1.cognitoAuth({
-            issuers: [process.env.API_TOKEN_ISSUER],
+            issuers: [process.env.CINERINO_TOKEN_ISSUER],
             authorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
                 // ログイン状態をセットしてnext
                 req.user.setCredentials(credentials);

@@ -52,7 +52,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
         // RedisからBearerトークンを取り出す
         await cognitoAuth({
-            issuers: [<string>process.env.API_TOKEN_ISSUER],
+            issuers: [<string>process.env.CINERINO_TOKEN_ISSUER],
             authorizedHandler: async () => {
                 // ログイン状態をセットしてnext
                 req.user.setCredentials(credentials);
