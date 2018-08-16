@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/).
+
+## Unreleased
+
+### Added
+
+- 口座決済での注文フロープロトタイプを追加。
+- Face Loginを追加。
+- 会員登録ボタンを表示。
+- Friend Payフローを追加。
+- おこづかいをもらうフローを追加。
+- 座席予約確認機能を追加。
+- クレジットカードから口座へ入金するフローを追加。
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
