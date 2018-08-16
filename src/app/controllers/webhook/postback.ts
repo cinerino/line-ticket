@@ -6,6 +6,7 @@ import * as cinerino from '@cinerino/domain';
 import * as createDebug from 'debug';
 import { google } from 'googleapis';
 import * as moment from 'moment';
+import * as querystring from 'querystring';
 import * as request from 'request-promise-native';
 
 import * as LINE from '../../../line';
@@ -246,8 +247,21 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                         actions: [
                             {
                                 type: 'postback',
+                                label: 'クレジットカード',
+                                data: querystring.stringify({
+                                    action: 'choosePaymentMethod',
+                                    paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                    transactionId: transaction.id
+                                })
+                            },
+                            {
+                                type: 'postback',
                                 label: 'コイン',
-                                data: `action=choosePaymentMethod&paymentMethod=Pecorino&transactionId=${transaction.id}`
+                                data: querystring.stringify({
+                                    action: 'choosePaymentMethod',
+                                    paymentMethod: 'Coin',
+                                    transactionId: transaction.id
+                                })
                             },
                             {
                                 type: 'uri',
@@ -262,10 +276,10 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
     }).promise();
 }
 
-export type PaymentMethodType = 'Pecorino' | 'FriendPay';
+export type PaymentMethodType = 'Coin' | 'FriendPay' | cinerinoapi.factory.paymentMethodType.CreditCard;
 
 // tslint:disable-next-line:max-func-body-length
-export async function choosePaymentMethod(user: User, paymentMethod: PaymentMethodType, transactionId: string, friendPayPrice: number) {
+export async function choosePaymentMethod(user: User, paymentMethodType: PaymentMethodType, transactionId: string, friendPayPrice: number) {
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: user.authClient
@@ -276,40 +290,71 @@ export async function choosePaymentMethod(user: User, paymentMethod: PaymentMeth
     });
 
     let price: number = 0;
+    const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
+    const authorizeActions = await actionRepo.findAuthorizeByTransactionId(transactionId);
+    const seatReservations = <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction[]>authorizeActions
+        .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
+        .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
+    price = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).price;
+    const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
 
-    if (paymentMethod === 'Pecorino') {
-        debug('checking balance...', paymentMethod, transactionId);
-        await LINE.pushMessage(user.userId, '残高を確認しています...');
+    switch (paymentMethodType) {
+        case 'Coin':
+            await LINE.pushMessage(user.userId, '残高を確認しています...');
+            // 口座番号取得
+            let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+                .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
+            accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+            debug('accounts:', accounts);
+            if (accounts.length === 0) {
+                throw new Error('口座未開設です。');
+            }
+            const account = accounts[0];
 
-        const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
-        const authorizeActions = await actionRepo.findAuthorizeByTransactionId(transactionId);
-        const seatReservations = <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction[]>authorizeActions
-            .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
-            .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
-        const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
+            const pecorinoAuthorization = await placeOrderService.authorizePointPayment({
+                transactionId: transactionId,
+                amount: requiredPoint,
+                fromAccountNumber: account.accountNumber
+            });
+            debug('残高確認済', pecorinoAuthorization);
+            await LINE.pushMessage(user.userId, '残高の確認がとれました。');
+            break;
 
-        // 口座番号取得
-        let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
-        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-        debug('accounts:', accounts);
-        if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
-        }
-        const account = accounts[0];
+        case cinerinoapi.factory.paymentMethodType.CreditCard:
+            await LINE.pushMessage(user.userId, 'クレジットカードを確認しています...');
 
-        const pecorinoAuthorization = await placeOrderService.authorizePointPayment({
-            transactionId: transactionId,
-            amount: requiredPoint,
-            fromAccountNumber: account.accountNumber
-        });
-        debug('残高確認済', pecorinoAuthorization);
-        await LINE.pushMessage(user.userId, '残高の確認がとれました。');
-    } else if (paymentMethod === 'FriendPay') {
-        price = friendPayPrice;
-    } else {
-        throw new Error(`Unknown payment method ${paymentMethod}`);
+            // 口座番号取得
+            const creditCards = await personService.searchCreditCards({ personId: 'me' });
+            if (creditCards.length === 0) {
+                throw new Error('クレジットカード未登録です');
+            }
+            const creditCard = creditCards[0];
+            const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
+            await placeOrderService.authorizeCreditCardPayment({
+                transactionId: transactionId,
+                amount: price,
+                orderId: orderId,
+                method: '1',
+                creditCard: {
+                    memberId: 'me',
+                    cardSeq: Number(creditCard.cardSeq)
+                    // cardPass?: string;
+                }
+            });
+            await LINE.pushMessage(user.userId, `${creditCard.cardNo}で決済を受け付けます`);
+            break;
+
+        case 'FriendPay':
+            price = friendPayPrice;
+        default:
+            throw new Error(`Unknown payment method ${paymentMethodType}`);
     }
+
+    // if (paymentMethod === 'Coin') {
+    // } else if (paymentMethod === cinerinoapi.factory.paymentMethodType.CreditCard) {
+    // } else if (paymentMethod === 'FriendPay') {
+    // } else {
+    // }
 
     const contact = await personService.getContacts({ personId: 'me' });
     await placeOrderService.setCustomerContact({
@@ -328,7 +373,7 @@ ${contact.telephone}
 ------------
 決済方法
 ------------
-${paymentMethod}
+${paymentMethodType}
 ${price} JPY
 `);
 

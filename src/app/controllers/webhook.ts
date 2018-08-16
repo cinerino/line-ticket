@@ -1,8 +1,6 @@
 /**
  * LINE webhookコントローラー
- * @namespace app.controllers.webhook
  */
-
 import * as createDebug from 'debug';
 import * as querystring from 'querystring';
 
