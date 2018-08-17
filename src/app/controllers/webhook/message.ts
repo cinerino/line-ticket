@@ -100,6 +100,7 @@ export async function showSeatReservationMenu(user: User) {
 }
 
 export async function showCreditCardMenu(user: User) {
+    const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
     await request.post({
         simple: false,
         url: 'https://api.line.me/v2/bot/message/push',
@@ -119,7 +120,7 @@ export async function showCreditCardMenu(user: User) {
                             {
                                 type: 'uri',
                                 label: 'クレジットカード追加',
-                                uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: '/transactions/inputCreditCard' })}`
+                                uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`
                             },
                             {
                                 type: 'message',

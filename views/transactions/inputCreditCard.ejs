@@ -85,11 +85,9 @@
         data => {
             // Now you can call LIFF API
             const userId = data.context.userId;
-            alert(userId);
             liff.getProfile()
                 .then(profile => {
                     const name = profile.displayName
-                    alert(name);
                 })
                 .catch((err) => {
                     console.log('error', err);

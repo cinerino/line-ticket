@@ -111,6 +111,7 @@ function showSeatReservationMenu(user) {
 exports.showSeatReservationMenu = showSeatReservationMenu;
 function showCreditCardMenu(user) {
     return __awaiter(this, void 0, void 0, function* () {
+        const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
@@ -130,7 +131,7 @@ function showCreditCardMenu(user) {
                                 {
                                     type: 'uri',
                                     label: 'クレジットカード追加',
-                                    uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: '/transactions/inputCreditCard' })}`
+                                    uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`
                                 },
                                 {
                                     type: 'message',
