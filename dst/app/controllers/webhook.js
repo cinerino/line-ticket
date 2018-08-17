@@ -155,6 +155,10 @@ function postback(event, user) {
                 case 'depositFromCreditCard':
                     yield PostbackController.selectDepositAmount(user);
                     break;
+                // クレジットカード検索
+                case 'searchCreditCards':
+                    yield PostbackController.searchCreditCards(user);
+                    break;
                 // クレジットカード追加
                 case 'addCreditCard':
                     yield PostbackController.addCreditCard(user, data.token);

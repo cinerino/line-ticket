@@ -178,6 +178,11 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 await PostbackController.selectDepositAmount(user);
                 break;
 
+            // クレジットカード検索
+            case 'searchCreditCards':
+                await PostbackController.searchCreditCards(user);
+                break;
+
             // クレジットカード追加
             case 'addCreditCard':
                 await PostbackController.addCreditCard(user, <string>data.token);

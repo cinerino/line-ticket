@@ -123,9 +123,9 @@ export async function showCreditCardMenu(user: User) {
                                 uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`
                             },
                             {
-                                type: 'message',
+                                type: 'postback',
                                 label: 'クレジットカード検索',
-                                text: 'クレジットカード検索'
+                                data: `action=searchCreditCards`
                             }
                         ]
                     }

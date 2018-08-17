@@ -762,3 +762,54 @@ export async function addCreditCard(user: User, token: string) {
     const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
     await LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
 }
+
+/**
+ * クレジットカード検索
+ */
+export async function searchCreditCards(user: User) {
+    await LINE.pushMessage(user.userId, `クレジットカードを検索しています...`);
+
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: user.authClient
+    });
+    const creditCards = await personService.searchCreditCards({ personId: 'me' });
+    await LINE.pushMessage(user.userId, `${creditCards.length}件のクレジットカードがみつかりました。`);
+
+    await request.post({
+        simple: false,
+        url: 'https://api.line.me/v2/bot/message/push',
+        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+        json: true,
+        body: {
+            to: user.userId,
+            messages: [
+                {
+                    type: 'template',
+                    altText: 'this is a carousel template',
+                    template: {
+                        type: 'carousel',
+                        columns: creditCards.map((creditCard) => {
+                            return {
+                                // tslint:disable-next-line:max-line-length no-http-string
+                                // thumbnailImageUrl: thumbnailImageUrl,
+                                imageBackgroundColor: '#000000',
+                                title: creditCard.cardNo,
+                                text: `${creditCard.cardName} ${creditCard.holderName}`,
+                                actions: [
+                                    {
+                                        type: 'postback',
+                                        label: '削除する',
+                                        data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                                    }
+                                ]
+                            };
+                        })
+                        // imageAspectRatio: 'rectangle',
+                        // imageSize: 'cover'
+                    }
+                }
+            ]
+        }
+    }).promise();
+}

@@ -732,3 +732,54 @@ function addCreditCard(user, token) {
     });
 }
 exports.addCreditCard = addCreditCard;
+/**
+ * クレジットカード検索
+ */
+function searchCreditCards(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield LINE.pushMessage(user.userId, `クレジットカードを検索しています...`);
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        const creditCards = yield personService.searchCreditCards({ personId: 'me' });
+        yield LINE.pushMessage(user.userId, `${creditCards.length}件のクレジットカードがみつかりました。`);
+        yield request.post({
+            simple: false,
+            url: 'https://api.line.me/v2/bot/message/push',
+            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+            json: true,
+            body: {
+                to: user.userId,
+                messages: [
+                    {
+                        type: 'template',
+                        altText: 'this is a carousel template',
+                        template: {
+                            type: 'carousel',
+                            columns: creditCards.map((creditCard) => {
+                                return {
+                                    // tslint:disable-next-line:max-line-length no-http-string
+                                    // thumbnailImageUrl: thumbnailImageUrl,
+                                    imageBackgroundColor: '#000000',
+                                    title: creditCard.cardNo,
+                                    text: `${creditCard.cardName} ${creditCard.holderName}`,
+                                    actions: [
+                                        {
+                                            type: 'postback',
+                                            label: '削除する',
+                                            data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                                        }
+                                    ]
+                                };
+                            })
+                            // imageAspectRatio: 'rectangle',
+                            // imageSize: 'cover'
+                        }
+                    }
+                ]
+            }
+        }).promise();
+    });
+}
+exports.searchCreditCards = searchCreditCards;
