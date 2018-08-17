@@ -448,35 +448,31 @@ function searchTickets(user) {
                     messages: [
                         {
                             type: 'template',
-                            altText: '座席予約チケット',
+                            altText: '座席予約',
                             template: {
                                 type: 'carousel',
-                                columns: ownershipInfos.map((ownershipInfo) => {
+                                // tslint:disable-next-line:no-magic-numbers
+                                columns: ownershipInfos.slice(0, 5).map((ownershipInfo) => {
                                     const itemOffered = ownershipInfo.typeOfGood;
-                                    // tslint:disable-next-line:max-line-length
-                                    const qr = `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${itemOffered.reservedTicket.ticketToken}`;
                                     const text = util.format('%s-\n@%s\n%s', moment(itemOffered.reservationFor.startDate).format('YYYY-MM-DD HH:mm'), 
                                     // tslint:disable-next-line:max-line-length
                                     `${itemOffered.reservationFor.superEvent.location.name.ja}`, 
                                     // tslint:disable-next-line:max-line-length
                                     `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja}`);
                                     return {
-                                        thumbnailImageUrl: qr,
+                                        // thumbnailImageUrl: qr,
                                         // imageBackgroundColor: '#000000',
                                         title: itemOffered.reservationFor.name.ja,
                                         text: text,
                                         actions: [
                                             {
                                                 type: 'postback',
-                                                label: '飲食を注文する',
-                                                data: `action=orderMenuItems&ticketToken=${itemOffered.reservedTicket.ticketToken}`
+                                                label: 'チケット発行',
+                                                data: `action=publishToken`
                                             }
                                         ]
                                     };
                                 }),
-                                imageAspectRatio: 'square'
-                                // imageAspectRatio: 'rectangle',
-                                // imageSize: 'cover'
                             }
                         }
                     ]

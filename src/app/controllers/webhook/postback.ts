@@ -579,28 +579,6 @@ ${order.price}
                                                         }
                                                     ]
                                                 }
-                                                // {
-                                                //     type: 'box',
-                                                //     layout: 'baseline',
-                                                //     spacing: 'sm',
-                                                //     contents: [
-                                                //         {
-                                                //             type: 'text',
-                                                //             text: 'Seats',
-                                                //             color: '#aaaaaa',
-                                                //             size: 'sm',
-                                                //             flex: 1
-                                                //         },
-                                                //         {
-                                                //             type: 'text',
-                                                //             text: 'C Row, 18 Seat',
-                                                //             wrap: true,
-                                                //             color: '#666666',
-                                                //             size: 'sm',
-                                                //             flex: 4
-                                                //         }
-                                                //     ]
-                                                // }
                                             ]
                                         },
                                         ...order.acceptedOffers.map((orderItem) => {
