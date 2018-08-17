@@ -514,95 +514,95 @@ ${order.price}
                                     type: 'separator',
                                     margin: 'xxl'
                                 },
-
-                                {
-                                    type: 'text',
-                                    text: event.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Date',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: moment(event.startDate).toISOString(),
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Place',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                        // {
-                                        //     type: 'box',
-                                        //     layout: 'baseline',
-                                        //     spacing: 'sm',
-                                        //     contents: [
-                                        //         {
-                                        //             type: 'text',
-                                        //             text: 'Seats',
-                                        //             color: '#aaaaaa',
-                                        //             size: 'sm',
-                                        //             flex: 1
-                                        //         },
-                                        //         {
-                                        //             type: 'text',
-                                        //             text: 'C Row, 18 Seat',
-                                        //             wrap: true,
-                                        //             color: '#666666',
-                                        //             size: 'sm',
-                                        //             flex: 4
-                                        //         }
-                                        //     ]
-                                        // }
-                                    ]
-                                },
                                 {
                                     type: 'box',
                                     layout: 'vertical',
                                     margin: 'xxl',
                                     spacing: 'sm',
                                     contents: [
+
+                                        {
+                                            type: 'text',
+                                            text: event.name.ja,
+                                            wrap: true,
+                                            weight: 'bold',
+                                            gravity: 'center',
+                                            size: 'xl'
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            margin: 'lg',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Date',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: `${moment(event.startDate).format('YYYY-MM-DD HH:mm')}`,
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Place',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                }
+                                                // {
+                                                //     type: 'box',
+                                                //     layout: 'baseline',
+                                                //     spacing: 'sm',
+                                                //     contents: [
+                                                //         {
+                                                //             type: 'text',
+                                                //             text: 'Seats',
+                                                //             color: '#aaaaaa',
+                                                //             size: 'sm',
+                                                //             flex: 1
+                                                //         },
+                                                //         {
+                                                //             type: 'text',
+                                                //             text: 'C Row, 18 Seat',
+                                                //             wrap: true,
+                                                //             color: '#666666',
+                                                //             size: 'sm',
+                                                //             flex: 4
+                                                //         }
+                                                //     ]
+                                                // }
+                                            ]
+                                        },
                                         ...order.acceptedOffers.map((orderItem) => {
                                             const item = <IEventReservation>orderItem.itemOffered;
                                             // tslint:disable-next-line:max-line-length no-unnecessary-local-variable

@@ -55,6 +55,129 @@ request.post({
                                 "margin": "xxl",
                                 "spacing": "sm",
                                 "contents": [
+
+                                    {
+                                        "type": "text",
+                                        "text": "BROWN'S ADVENTURE\nIN MOVIE",
+                                        "wrap": true,
+                                        "weight": "bold",
+                                        "gravity": "center",
+                                        "size": "xl"
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "baseline",
+                                        "margin": "md",
+                                        "contents": [
+                                            {
+                                                "type": "icon",
+                                                "size": "sm",
+                                                "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+                                            },
+                                            {
+                                                "type": "icon",
+                                                "size": "sm",
+                                                "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+                                            },
+                                            {
+                                                "type": "icon",
+                                                "size": "sm",
+                                                "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+                                            },
+                                            {
+                                                "type": "icon",
+                                                "size": "sm",
+                                                "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
+                                            },
+                                            {
+                                                "type": "icon",
+                                                "size": "sm",
+                                                "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gray_star_28.png"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": "4.0",
+                                                "size": "sm",
+                                                "color": "#999999",
+                                                "margin": "md",
+                                                "flex": 0
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "box",
+                                        "layout": "vertical",
+                                        "margin": "lg",
+                                        "spacing": "sm",
+                                        "contents": [
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    {
+                                                        "type": "text",
+                                                        "text": "Date",
+                                                        "color": "#aaaaaa",
+                                                        "size": "sm",
+                                                        "flex": 1
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "text": "Monday 25, 9:00PM",
+                                                        "wrap": true,
+                                                        "size": "sm",
+                                                        "color": "#666666",
+                                                        "flex": 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    {
+                                                        "type": "text",
+                                                        "text": "Place",
+                                                        "color": "#aaaaaa",
+                                                        "size": "sm",
+                                                        "flex": 1
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "text": "7 Floor, No.3",
+                                                        "wrap": true,
+                                                        "color": "#666666",
+                                                        "size": "sm",
+                                                        "flex": 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "box",
+                                                "layout": "baseline",
+                                                "spacing": "sm",
+                                                "contents": [
+                                                    {
+                                                        "type": "text",
+                                                        "text": "Seats",
+                                                        "color": "#aaaaaa",
+                                                        "size": "sm",
+                                                        "flex": 1
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "text": "C Row, 18 Seat",
+                                                        "wrap": true,
+                                                        "color": "#666666",
+                                                        "size": "sm",
+                                                        "flex": 4
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
                                     {
                                         "type": "box",
                                         "layout": "horizontal",
