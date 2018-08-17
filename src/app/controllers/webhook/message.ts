@@ -435,147 +435,318 @@ export async function searchTickets(user: User) {
                         contents: {
                             type: 'carousel',
                             contents: [
-                                {
-                                    type: 'bubble',
-                                    // 'hero': {
-                                    //     type: 'image',
-                                    //     'url': 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_3_movie.png',
-                                    //     size: 'full',
-                                    //     'aspectRatio': '20:13',
-                                    //     'aspectMode': 'cover',
-                                    //     'action': {
-                                    //         type: 'uri',
-                                    //         'uri': 'http://linecorp.com/'
-                                    //     }
-                                    // },
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: 'BROWN',
-                                                wrap: true,
-                                                weight: 'bold',
-                                                gravity: 'center',
-                                                size: 'xl'
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Date',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Monday 25, 9:00PM',
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Place',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: '7 Floor, No.3',
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Seats',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: 'C Row, 18 Seat',
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                            // {
-                                            //     type: 'box',
-                                            //     layout: 'vertical',
-                                            //     margin: 'xxl',
-                                            //     contents: [
-                                            //         {
-                                            //             type: 'spacer'
-                                            //         },
-                                            //         {
-                                            //             type: 'image',
-                                            //             'url': '',
-                                            //             'aspectMode': 'cover',
-                                            //             size: 'xl'
-                                            //         },
-                                            //         {
-                                            //             type: 'text',
-                                            //             text: 'You can enter the theater by using this code instead of a ticket',
-                                            //             color: '#aaaaaa',
-                                            //             wrap: true,
-                                            //             margin: 'xxl',
-                                            //             size: 'xs'
-                                            //         }
-                                            //     ]
-                                            // }
-                                        ]
-                                    },
-                                    footer: {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        contents: [
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'uri',
-                                                    label: 'More',
-                                                    uri: 'https://linecorp.com'
+                                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                                ...ownershipInfos.slice(0, 5).map((ownershipInfo) => {
+                                    const itemOffered = ownershipInfo.typeOfGood;
+                                    const event = itemOffered.reservationFor;
+
+                                    return {
+                                        type: 'bubble',
+                                        // 'hero': {
+                                        //     type: 'image',
+                                        //     'url': 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_3_movie.png',
+                                        //     size: 'full',
+                                        //     'aspectRatio': '20:13',
+                                        //     'aspectMode': 'cover',
+                                        //     'action': {
+                                        //         type: 'uri',
+                                        //         'uri': 'http://linecorp.com/'
+                                        //     }
+                                        // },
+                                        body: {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            spacing: 'md',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: event.name.ja,
+                                                    wrap: true,
+                                                    weight: 'bold',
+                                                    gravity: 'center',
+                                                    size: 'xl'
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'lg',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Date',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: moment(event.startDate).format('llll'),
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Place',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: event.location.name.ja,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Seats',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Ticket Type',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
-                                            }
-                                        ]
+                                                // {
+                                                //     type: 'box',
+                                                //     layout: 'vertical',
+                                                //     margin: 'xxl',
+                                                //     contents: [
+                                                //         {
+                                                //             type: 'spacer'
+                                                //         },
+                                                //         {
+                                                //             type: 'image',
+                                                //             'url': '',
+                                                //             'aspectMode': 'cover',
+                                                //             size: 'xl'
+                                                //         },
+                                                //         {
+                                                //             type: 'text',
+                                                //             text: 'You can enter the theater by using this code instead of a ticket',
+                                                //             color: '#aaaaaa',
+                                                //             wrap: true,
+                                                //             margin: 'xxl',
+                                                //             size: 'xs'
+                                                //         }
+                                                //     ]
+                                                // }
+                                            ]
+                                        },
+                                        footer: {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'uri',
+                                                        label: 'More',
+                                                        uri: 'https://linecorp.com'
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    };
+                                }),
+                                ...[
+                                    {
+                                        type: 'bubble',
+                                        // 'hero': {
+                                        //     type: 'image',
+                                        //     'url': 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_3_movie.png',
+                                        //     size: 'full',
+                                        //     'aspectRatio': '20:13',
+                                        //     'aspectMode': 'cover',
+                                        //     'action': {
+                                        //         type: 'uri',
+                                        //         'uri': 'http://linecorp.com/'
+                                        //     }
+                                        // },
+                                        body: {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            spacing: 'md',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'BROWN',
+                                                    wrap: true,
+                                                    weight: 'bold',
+                                                    gravity: 'center',
+                                                    size: 'xl'
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'lg',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Date',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Monday 25, 9:00PM',
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Place',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: '7 Floor, No.3',
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Seats',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'C Row, 18 Seat',
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                                // {
+                                                //     type: 'box',
+                                                //     layout: 'vertical',
+                                                //     margin: 'xxl',
+                                                //     contents: [
+                                                //         {
+                                                //             type: 'spacer'
+                                                //         },
+                                                //         {
+                                                //             type: 'image',
+                                                //             'url': '',
+                                                //             'aspectMode': 'cover',
+                                                //             size: 'xl'
+                                                //         },
+                                                //         {
+                                                //             type: 'text',
+                                                //             text: 'You can enter the theater by using this code instead of a ticket',
+                                                //             color: '#aaaaaa',
+                                                //             wrap: true,
+                                                //             margin: 'xxl',
+                                                //             size: 'xs'
+                                                //         }
+                                                //     ]
+                                                // }
+                                            ]
+                                        },
+                                        footer: {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'uri',
+                                                        label: 'More',
+                                                        uri: 'https://linecorp.com'
+                                                    }
+                                                }
+                                            ]
+                                        }
                                     }
-                                }
+                                ]
                             ]
                         }
                     }
