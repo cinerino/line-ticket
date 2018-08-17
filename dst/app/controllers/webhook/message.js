@@ -578,43 +578,53 @@ function searchTickets(user) {
                                                 //     ]
                                                 // }
                                             ]
+                                        },
+                                        footer: {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'uri',
+                                                        label: 'More',
+                                                        uri: 'https://linecorp.com'
+                                                    }
+                                                }
+                                            ]
                                         }
                                     }
                                 ]
                             }
-                        },
-                        {
-                            type: 'template',
-                            altText: '座席予約',
-                            template: {
-                                type: 'carousel',
-                                // tslint:disable-next-line:no-magic-numbers
-                                columns: ownershipInfos.slice(0, 5).map((ownershipInfo) => {
-                                    const itemOffered = ownershipInfo.typeOfGood;
-                                    const text = util.format('%s-\n@%s\n%s', moment(itemOffered.reservationFor.startDate).format('YYYY-MM-DD HH:mm'), 
-                                    // tslint:disable-next-line:max-line-length
-                                    `${itemOffered.reservationFor.superEvent.location.name.ja}`, 
-                                    // tslint:disable-next-line:max-line-length
-                                    `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja}`);
-                                    return {
-                                        // thumbnailImageUrl: qr,
-                                        // imageBackgroundColor: '#000000',
-                                        title: itemOffered.reservationFor.name.ja,
-                                        text: text,
-                                        actions: [
-                                            {
-                                                type: 'postback',
-                                                label: 'チケット発行',
-                                                data: `action=publishToken`
-                                            }
-                                        ]
-                                    };
-                                })
-                                // imageAspectRatio: 'square'
-                                // imageAspectRatio: 'rectangle',
-                                // imageSize: 'cover'
-                            }
                         }
+                        // {
+                        //     type: 'template',
+                        //     altText: '座席予約',
+                        //     template: {
+                        //         type: 'carousel',
+                        //         columns: ownershipInfos.slice(0, 5).map((ownershipInfo) => {
+                        //             const itemOffered = ownershipInfo.typeOfGood;
+                        //             const text = util.format(
+                        //                 '%s-\n@%s\n%s',
+                        //                 moment(itemOffered.reservationFor.startDate).format('YYYY-MM-DD HH:mm'),
+                        //                 `${itemOffered.reservationFor.superEvent.location.name.ja}`,
+                        // tslint:disable-next-line:max-line-length
+                        //                 `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja}`
+                        //             );
+                        //             return {
+                        //                 title: itemOffered.reservationFor.name.ja,
+                        //                 text: text,
+                        //                 actions: [
+                        //                     {
+                        //                         type: 'postback',
+                        //                         label: 'チケット発行',
+                        //                         data: `action=publishToken`
+                        //                     }
+                        //                 ]
+                        //             };
+                        //         })
+                        //     }
+                        // }
                     ]
                 }
             }).promise();
