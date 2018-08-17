@@ -395,6 +395,7 @@ ${price} JPY
     });
 }
 exports.choosePaymentMethod = choosePaymentMethod;
+// tslint:disable-next-line:max-func-body-length
 function confirmOrder(user, transactionId) {
     return __awaiter(this, void 0, void 0, function* () {
         yield LINE.pushMessage(user.userId, '注文を確定しています...');
@@ -448,6 +449,223 @@ ${order.price}
             body: {
                 to: user.userId,
                 messages: [
+                    {
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: {
+                            type: 'bubble',
+                            styles: {
+                                footer: {
+                                    separator: true
+                                }
+                            },
+                            body: {
+                                type: 'box',
+                                layout: 'vertical',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'RECEIPT',
+                                        weight: 'bold',
+                                        color: '#1DB446',
+                                        size: 'sm'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: order.seller.name,
+                                        weight: 'bold',
+                                        size: 'xxl',
+                                        margin: 'md'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: order.seller.telephone,
+                                        size: 'xs',
+                                        color: '#aaaaaa',
+                                        wrap: true
+                                    },
+                                    {
+                                        type: 'separator',
+                                        margin: 'xxl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'xxl',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Energy Drink',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$2.99',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Chewing Gum',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0.99',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Bottled Water',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$3.33',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'separator',
+                                                margin: 'xxl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                margin: 'xxl',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'ITEMS',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: order.acceptedOffers.length,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'TOTAL',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${order.price} ${order.priceCurrency}`,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'CASH',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'CHANGE',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'separator',
+                                        margin: 'xxl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        margin: 'md',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'PAYMENT ID',
+                                                size: 'xs',
+                                                color: '#aaaaaa',
+                                                flex: 0
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: order.paymentMethods[0].paymentMethodId,
+                                                color: '#aaaaaa',
+                                                size: 'xs',
+                                                align: 'end'
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
                     {
                         type: 'template',
                         altText: 'this is a carousel template',
@@ -763,7 +981,7 @@ function searchCreditCards(user) {
                                     // thumbnailImageUrl: thumbnailImageUrl,
                                     imageBackgroundColor: '#000000',
                                     title: creditCard.cardNo,
-                                    text: `${creditCard.cardName} ${creditCard.holderName}`,
+                                    text: `${creditCard.cardName} ${creditCard.holderName} ${creditCard.expire}`,
                                     actions: [
                                         {
                                             type: 'postback',

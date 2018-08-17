@@ -16,7 +16,8 @@ request.post({
             {
                 type: 'template',
                 altText: 'This is a buttons template',
-                template: {
+                template:
+                {
                     type: 'buttons',
                     title: '友達に決済をお願いする',
                     text: '友達に決済をお願いする',
@@ -32,8 +33,7 @@ request.post({
         ]
     }
 }).then(() => {
-
-});
+}).catch(console.error);
 
 // request.post('https://api.line.me/v2/bot/message/push', {
 //     auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
