@@ -404,6 +404,7 @@ export async function askReservationEventDate(userId: string, paymentNo: string)
 /**
  * ユーザーのチケット(座席予約)を検索する
  */
+// tslint:disable-next-line:max-func-body-length
 export async function searchTickets(user: User) {
     await LINE.pushMessage(user.userId, '座席予約を検索しています...');
 
@@ -428,6 +429,142 @@ export async function searchTickets(user: User) {
             body: {
                 to: user.userId,
                 messages: [
+                    {
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: {
+                            type: 'carousel',
+                            contents: [
+                                {
+                                    type: 'bubble',
+                                    // 'hero': {
+                                    //     type: 'image',
+                                    //     'url': 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_3_movie.png',
+                                    //     size: 'full',
+                                    //     'aspectRatio': '20:13',
+                                    //     'aspectMode': 'cover',
+                                    //     'action': {
+                                    //         type: 'uri',
+                                    //         'uri': 'http://linecorp.com/'
+                                    //     }
+                                    // },
+                                    body: {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        spacing: 'md',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'BROWN',
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Date',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Monday 25, 9:00PM',
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Place',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: '7 Floor, No.3',
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Seats',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: 'C Row, 18 Seat',
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                            // {
+                                            //     type: 'box',
+                                            //     layout: 'vertical',
+                                            //     margin: 'xxl',
+                                            //     contents: [
+                                            //         {
+                                            //             type: 'spacer'
+                                            //         },
+                                            //         {
+                                            //             type: 'image',
+                                            //             'url': '',
+                                            //             'aspectMode': 'cover',
+                                            //             size: 'xl'
+                                            //         },
+                                            //         {
+                                            //             type: 'text',
+                                            //             text: 'You can enter the theater by using this code instead of a ticket',
+                                            //             color: '#aaaaaa',
+                                            //             wrap: true,
+                                            //             margin: 'xxl',
+                                            //             size: 'xs'
+                                            //         }
+                                            //     ]
+                                            // }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
                     {
                         type: 'template',
                         altText: '座席予約',
@@ -458,7 +595,7 @@ export async function searchTickets(user: User) {
                                         }
                                     ]
                                 };
-                            }),
+                            })
                             // imageAspectRatio: 'square'
                             // imageAspectRatio: 'rectangle',
                             // imageSize: 'cover'
