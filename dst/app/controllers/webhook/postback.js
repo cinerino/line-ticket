@@ -721,3 +721,14 @@ function depositFromCreditCard(params) {
     });
 }
 exports.depositFromCreditCard = depositFromCreditCard;
+function addCreditCard(user, token) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        const creditCard = yield personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
+        yield LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
+    });
+}
+exports.addCreditCard = addCreditCard;

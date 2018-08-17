@@ -4,8 +4,8 @@
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
-import * as request from 'request-promise-native';
 import * as querystring from 'querystring';
+import * as request from 'request-promise-native';
 import * as util from 'util';
 
 import * as LINE from '../../../line';
@@ -167,10 +167,6 @@ export async function showCoinAccountMenu(user: User) {
             ]
         }
     }).promise();
-}
-
-export async function addCreditCard(user: User) {
-    debug(user);
 }
 
 /**

@@ -14,8 +14,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const createDebug = require("debug");
 const moment = require("moment");
-const request = require("request-promise-native");
 const querystring = require("querystring");
+const request = require("request-promise-native");
 const util = require("util");
 const LINE = require("../../../line");
 const debug = createDebug('cinerino-line-ticket:controller:webhook:message');
@@ -183,12 +183,6 @@ function showCoinAccountMenu(user) {
     });
 }
 exports.showCoinAccountMenu = showCoinAccountMenu;
-function addCreditCard(user) {
-    return __awaiter(this, void 0, void 0, function* () {
-        debug(user);
-    });
-}
-exports.addCreditCard = addCreditCard;
 /**
  * 顔写真登録を開始する
  */

@@ -129,7 +129,23 @@
         $('input[name=token]').val(response.tokenObject.token);
 
         // スクリプトからフォームを submit
-        $('form').submit();
+        liff.sendMessages([
+            {
+                type: 'text',
+                text: 'postback:' + 'action=addCreditCard&token=' + response.tokenObject.token
+            }
+        ])
+            .then(() => {
+                console.log('message sent');
+                liff.closeWindow();
+            })
+            .catch((err) => {
+                console.log('error', err);
+            });
+        return false;
+
+        // LINEに戻すのでsubmitしない
+        // $('form').submit();
     }
     /**
      * トークン取得

@@ -15,6 +15,7 @@ const debug = createDebug('cinerino-line-ticket:controller:webhook');
 /**
  * メッセージが送信されたことを示すEvent Objectです。
  */
+// tslint:disable-next-line:max-func-body-length
 export async function message(event: LINE.IWebhookEvent, user: User) {
     const userId = event.source.userId;
 
@@ -64,10 +65,6 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
                         await MessageController.showCreditCardMenu(user);
                         break;
 
-                    case /^クレジットカード追加$/.test(messageText):
-                        await MessageController.addCreditCard(user);
-                        break;
-
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu(user);
                         break;
@@ -92,6 +89,19 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
                     case /^TransferMoneyToken/.test(messageText):
                         const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
                         await MessageController.askConfirmationOfTransferMoney(user, transferMoneyToken);
+                        break;
+
+                    // メッセージで強制的にpostbackイベントを発動
+                    case /^postback:/.test(messageText):
+                        const postbackData = messageText.replace('postback:', '');
+                        const postbackEvent: LINE.IWebhookEvent = {
+                            type: 'postback',
+                            timestamp: event.timestamp,
+                            source: event.source,
+                            message: event.message,
+                            postback: { data: postbackData }
+                        };
+                        await postback(postbackEvent, user);
                         break;
 
                     default:
@@ -166,6 +176,11 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             // 口座入金金額選択
             case 'depositFromCreditCard':
                 await PostbackController.selectDepositAmount(user);
+                break;
+
+            // クレジットカード追加
+            case 'addCreditCard':
+                await PostbackController.addCreditCard(user, <string>data.token);
                 break;
 
             default:

@@ -753,3 +753,12 @@ export async function depositFromCreditCard(params: {
     });
     await LINE.pushMessage(params.user.userId, '入金処理が完了しました。');
 }
+
+export async function addCreditCard(user: User, token: string) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: user.authClient
+    });
+    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
+    await LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
+}

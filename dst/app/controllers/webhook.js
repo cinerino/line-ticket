@@ -21,6 +21,7 @@ const debug = createDebug('cinerino-line-ticket:controller:webhook');
 /**
  * メッセージが送信されたことを示すEvent Objectです。
  */
+// tslint:disable-next-line:max-func-body-length
 function message(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const userId = event.source.userId;
@@ -60,9 +61,6 @@ function message(event, user) {
                         case /^クレジットカード$/.test(messageText):
                             yield MessageController.showCreditCardMenu(user);
                             break;
-                        case /^クレジットカード追加$/.test(messageText):
-                            yield MessageController.addCreditCard(user);
-                            break;
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu(user);
                             break;
@@ -83,6 +81,18 @@ function message(event, user) {
                         case /^TransferMoneyToken/.test(messageText):
                             const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
                             yield MessageController.askConfirmationOfTransferMoney(user, transferMoneyToken);
+                            break;
+                        // メッセージで強制的にpostbackイベントを発動
+                        case /^postback:/.test(messageText):
+                            const postbackData = messageText.replace('postback:', '');
+                            const postbackEvent = {
+                                type: 'postback',
+                                timestamp: event.timestamp,
+                                source: event.source,
+                                message: event.message,
+                                postback: { data: postbackData }
+                            };
+                            yield postback(postbackEvent, user);
                             break;
                         default:
                             // 予約照会方法をアドバイス
@@ -144,6 +154,10 @@ function postback(event, user) {
                 // 口座入金金額選択
                 case 'depositFromCreditCard':
                     yield PostbackController.selectDepositAmount(user);
+                    break;
+                // クレジットカード追加
+                case 'addCreditCard':
+                    yield PostbackController.addCreditCard(user, data.token);
                     break;
                 default:
             }
