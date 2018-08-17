@@ -3,6 +3,7 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as createDebug from 'debug';
+import { google } from 'googleapis';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
 import * as request from 'request-promise-native';
@@ -12,6 +13,7 @@ import * as LINE from '../../../line';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:controller:webhook:message');
+const customsearch = google.customsearch('v1');
 
 /**
  * 使い方を送信する
@@ -421,6 +423,44 @@ export async function searchTickets(user: User) {
     if (ownershipInfos.length === 0) {
         await LINE.pushMessage(user.userId, '座席予約が見つかりませんでした。');
     } else {
+
+        // googleで画像検索
+        const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
+        const CX = '006320166286449124373:nm_gjsvlgnm';
+        const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
+        const thumbnails: any[] = [];
+        await Promise.all(events.map(async (event) => {
+            return new Promise((resolve) => {
+                customsearch.cse.list(
+                    {
+                        cx: CX,
+                        q: event.workPerformed.name,
+                        auth: API_KEY,
+                        num: 1,
+                        rights: 'cc_publicdomain cc_sharealike',
+                        // start: 0,
+                        // imgSize: 'small',
+                        searchType: 'image'
+                    },
+                    (err: any, res: any) => {
+                        if (!(err instanceof Error)) {
+                            if (Array.isArray(res.data.items) && res.data.items.length > 0) {
+                                debug(res.data.items[0]);
+                                thumbnails.push({
+                                    eventId: event.id,
+                                    link: res.data.items[0].link,
+                                    thumbnailLink: res.data.items[0].image.thumbnailLink
+                                });
+                            }
+                        }
+
+                        resolve();
+                    }
+                );
+            });
+        }));
+        debug(thumbnails);
+
         await request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
@@ -439,20 +479,26 @@ export async function searchTickets(user: User) {
                                 ...ownershipInfos.slice(0, 5).map((ownershipInfo) => {
                                     const itemOffered = ownershipInfo.typeOfGood;
                                     const event = itemOffered.reservationFor;
+                                    const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                                    const thumbnailImageUrl = (thumbnail !== undefined)
+                                        ? thumbnail.thumbnailLink
+                                        // tslint:disable-next-line:max-line-length
+                                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
 
                                     return {
                                         type: 'bubble',
-                                        // 'hero': {
-                                        //     type: 'image',
-                                        //     'url': 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_3_movie.png',
-                                        //     size: 'full',
-                                        //     'aspectRatio': '20:13',
-                                        //     'aspectMode': 'cover',
-                                        //     'action': {
-                                        //         type: 'uri',
-                                        //         'uri': 'http://linecorp.com/'
-                                        //     }
-                                        // },
+                                        hero: {
+                                            type: 'image',
+                                            url: thumbnailImageUrl,
+                                            size: 'full',
+                                            aspectRatio: '20:13',
+                                            aspectMode: 'cover',
+                                            action: {
+                                                type: 'uri',
+                                                // tslint:disable-next-line:no-http-string
+                                                uri: 'http://linecorp.com/'
+                                            }
+                                        },
                                         body: {
                                             type: 'box',
                                             layout: 'vertical',
@@ -750,35 +796,6 @@ export async function searchTickets(user: User) {
                             ]
                         }
                     }
-                    // {
-                    //     type: 'template',
-                    //     altText: '座席予約',
-                    //     template: {
-                    //         type: 'carousel',
-                    //         columns: ownershipInfos.slice(0, 5).map((ownershipInfo) => {
-                    //             const itemOffered = ownershipInfo.typeOfGood;
-                    //             const text = util.format(
-                    //                 '%s-\n@%s\n%s',
-                    //                 moment(itemOffered.reservationFor.startDate).format('YYYY-MM-DD HH:mm'),
-                    //                 `${itemOffered.reservationFor.superEvent.location.name.ja}`,
-                    // tslint:disable-next-line:max-line-length
-                    //                 `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja}`
-                    //             );
-
-                    //             return {
-                    //                 title: itemOffered.reservationFor.name.ja,
-                    //                 text: text,
-                    //                 actions: [
-                    //                     {
-                    //                         type: 'postback',
-                    //                         label: 'チケット発行',
-                    //                         data: `action=publishToken`
-                    //                     }
-                    //                 ]
-                    //             };
-                    //         })
-                    //     }
-                    // }
                 ]
             }
         }).promise();
