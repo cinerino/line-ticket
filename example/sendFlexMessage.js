@@ -32,10 +32,11 @@ request.post({
                             },
                             {
                                 "type": "text",
-                                "text": "Brown Store",
+                                "text": "Brown StoreBrown StoreBrown StoreBrown Store",
                                 "weight": "bold",
                                 "size": "xxl",
-                                "margin": "md"
+                                "margin": "md",
+                                wrap: true
                             },
                             {
                                 "type": "text",

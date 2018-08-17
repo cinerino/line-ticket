@@ -476,7 +476,8 @@ ${order.price}
                                         weight: 'bold',
                                         size: 'xxl',
                                         margin: 'md',
-                                        maxLines: 0
+                                        maxLines: 0,
+                                        wrap: true
                                     },
                                     {
                                         type: 'text',
@@ -488,6 +489,88 @@ ${order.price}
                                     {
                                         type: 'separator',
                                         margin: 'xxl'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: event.name.ja,
+                                        wrap: true,
+                                        weight: 'bold',
+                                        gravity: 'center',
+                                        size: 'xl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Date',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: moment(event.startDate).toISOString(),
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Place',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            }
+                                            // {
+                                            //     type: 'box',
+                                            //     layout: 'baseline',
+                                            //     spacing: 'sm',
+                                            //     contents: [
+                                            //         {
+                                            //             type: 'text',
+                                            //             text: 'Seats',
+                                            //             color: '#aaaaaa',
+                                            //             size: 'sm',
+                                            //             flex: 1
+                                            //         },
+                                            //         {
+                                            //             type: 'text',
+                                            //             text: 'C Row, 18 Seat',
+                                            //             wrap: true,
+                                            //             color: '#666666',
+                                            //             size: 'sm',
+                                            //             flex: 4
+                                            //         }
+                                            //     ]
+                                            // }
+                                        ]
                                     },
                                     {
                                         type: 'box',
@@ -521,66 +604,6 @@ ${order.price}
                                                 };
                                             }),
                                             ...[
-                                                {
-                                                    type: 'box',
-                                                    layout: 'horizontal',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Energy Drink',
-                                                            size: 'sm',
-                                                            color: '#555555',
-                                                            flex: 0
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: '$2.99',
-                                                            size: 'sm',
-                                                            color: '#111111',
-                                                            align: 'end'
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'horizontal',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Chewing Gum',
-                                                            size: 'sm',
-                                                            color: '#555555',
-                                                            flex: 0
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: '$0.99',
-                                                            size: 'sm',
-                                                            color: '#111111',
-                                                            align: 'end'
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'horizontal',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Bottled Water',
-                                                            size: 'sm',
-                                                            color: '#555555',
-                                                            flex: 0
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: '$3.33',
-                                                            size: 'sm',
-                                                            color: '#111111',
-                                                            align: 'end'
-                                                        }
-                                                    ]
-                                                },
                                                 {
                                                     type: 'separator',
                                                     margin: 'xxl'
@@ -618,44 +641,6 @@ ${order.price}
                                                         {
                                                             type: 'text',
                                                             text: `${order.price} ${order.priceCurrency}`,
-                                                            size: 'sm',
-                                                            color: '#111111',
-                                                            align: 'end'
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'horizontal',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'CASH',
-                                                            size: 'sm',
-                                                            color: '#555555'
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: '$0',
-                                                            size: 'sm',
-                                                            color: '#111111',
-                                                            align: 'end'
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'horizontal',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'CHANGE',
-                                                            size: 'sm',
-                                                            color: '#555555'
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: '$0',
                                                             size: 'sm',
                                                             color: '#111111',
                                                             align: 'end'
