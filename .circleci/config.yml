@@ -17,16 +17,11 @@ jobs:
       # - run:
       #     name: Update npm
       #     command: 'sudo npm install -g npm@latest'
-      - run:
-          name: configure npm for private modules
-          command: |
-            npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-            npm whoami
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
           name: install npm packages
-          command: npm install
+          command: npm ci
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
@@ -68,7 +63,7 @@ jobs:
             npm run doc
   deploy2development:
     docker:
-      - image: circleci/node:8.4
+      - image: circleci/node:latest
     steps:
       - checkout
       - restore_cache:
@@ -80,7 +75,7 @@ jobs:
             git push development-staging $CIRCLE_BRANCH:master -f -v
   deploy:
     docker:
-      - image: circleci/node:8.4
+      - image: circleci/node:latest
     steps:
       - checkout
       - restore_cache:
@@ -103,12 +98,12 @@ workflows:
       - doc:
           requires:
             - test
-      # - deploy2development:
-      #     requires:
-      #       - doc
-      #     filters:
-      #       branches:
-      #         only: develop
+      - deploy2development:
+          requires:
+            - doc
+          filters:
+            branches:
+              only: develop
       # - deploy:
       #     requires:
       #       - doc
