@@ -472,14 +472,14 @@ ${order.price}
                                     },
                                     {
                                         type: 'text',
-                                        text: order.seller.name,
+                                        text: 'order.seller.name',
                                         weight: 'bold',
                                         size: 'xxl',
                                         margin: 'md'
                                     },
                                     {
                                         type: 'text',
-                                        text: order.seller.telephone,
+                                        text: 'order.seller.telephone',
                                         size: 'xs',
                                         color: '#aaaaaa',
                                         wrap: true
@@ -682,7 +682,7 @@ ${order.price}
                                             },
                                             {
                                                 type: 'text',
-                                                text: order.paymentMethods[0].paymentMethodId,
+                                                text: 'order.paymentMethods[0].paymentMethodId',
                                                 color: '#aaaaaa',
                                                 size: 'xs',
                                                 align: 'end'
