@@ -518,147 +518,175 @@ ${order.price}
                                     margin: 'xxl',
                                     spacing: 'sm',
                                     contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Energy Drink',
-                                                    size: 'sm',
-                                                    color: '#555555',
-                                                    flex: 0
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: '$2.99',
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Chewing Gum',
-                                                    size: 'sm',
-                                                    color: '#555555',
-                                                    flex: 0
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: '$0.99',
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Bottled Water',
-                                                    size: 'sm',
-                                                    color: '#555555',
-                                                    flex: 0
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: '$3.33',
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'separator',
-                                            margin: 'xxl'
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            margin: 'xxl',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'ITEMS',
-                                                    size: 'sm',
-                                                    color: '#555555'
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: order.acceptedOffers.length,
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'TOTAL',
-                                                    size: 'sm',
-                                                    color: '#555555'
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${order.price} ${order.priceCurrency}`,
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'CASH',
-                                                    size: 'sm',
-                                                    color: '#555555'
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: '$0',
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'CHANGE',
-                                                    size: 'sm',
-                                                    color: '#555555'
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: '$0',
-                                                    size: 'sm',
-                                                    color: '#111111',
-                                                    align: 'end'
-                                                }
-                                            ]
-                                        }
+                                        ...order.acceptedOffers.map((orderItem) => {
+                                            const item = <IEventReservation>orderItem.itemOffered;
+                                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja} ￥${item.reservedTicket.ticketType.charge}`;
+
+                                            return {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: str,
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            }
+                                        }),
+                                        ...[
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Energy Drink',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$2.99',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Chewing Gum',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0.99',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Bottled Water',
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$3.33',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'separator',
+                                                margin: 'xxl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                margin: 'xxl',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'ITEMS',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: order.acceptedOffers.length,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'TOTAL',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${order.price} ${order.priceCurrency}`,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'CASH',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'CHANGE',
+                                                        size: 'sm',
+                                                        color: '#555555'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: '$0',
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            }
+                                        ]
                                     ]
                                 },
                                 {
@@ -689,36 +717,36 @@ ${order.price}
                             ]
                         }
                     }
-                },
-                {
-                    type: 'template',
-                    altText: 'this is a carousel template',
-                    template: {
-                        type: 'carousel',
-                        columns: order.acceptedOffers.map((offer) => {
-                            const itemOffered = <IEventReservation>offer.itemOffered;
-                            // tslint:disable-next-line:max-line-length
-                            const qr = `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${itemOffered.reservedTicket.ticketToken}`;
-
-                            return {
-                                thumbnailImageUrl: qr,
-                                // imageBackgroundColor: '#000000',
-                                title: itemOffered.reservationFor.name.ja,
-                                // tslint:disable-next-line:max-line-length
-                                text: `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja} ￥${itemOffered.reservedTicket.ticketType.charge}`,
-                                actions: [
-                                    {
-                                        type: 'postback',
-                                        label: '???',
-                                        data: `action=selectTicket&ticketToken=${itemOffered.reservedTicket.ticketToken}`
-                                    }
-                                ]
-                            };
-                        }),
-                        imageAspectRatio: 'square'
-                        // imageSize: 'cover'
-                    }
                 }
+                // {
+                //     type: 'template',
+                //     altText: 'this is a carousel template',
+                //     template: {
+                //         type: 'carousel',
+                //         columns: order.acceptedOffers.map((offer) => {
+                //             const itemOffered = <IEventReservation>offer.itemOffered;
+                // tslint:disable-next-line:max-line-length
+                //             const qr = `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${itemOffered.reservedTicket.ticketToken}`;
+
+                //             return {
+                //                 thumbnailImageUrl: qr,
+                //                 // imageBackgroundColor: '#000000',
+                //                 title: itemOffered.reservationFor.name.ja,
+                // tslint:disable-next-line:max-line-length
+                //                 text: `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja} ￥${itemOffered.reservedTicket.ticketType.charge}`,
+                //                 actions: [
+                //                     {
+                //                         type: 'postback',
+                //                         label: '???',
+                //                         data: `action=selectTicket&ticketToken=${itemOffered.reservedTicket.ticketToken}`
+                //                     }
+                //                 ]
+                //             };
+                //         }),
+                //         imageAspectRatio: 'square'
+                //         // imageSize: 'cover'
+                //     }
+                // }
             ]
         }
     }).promise();
