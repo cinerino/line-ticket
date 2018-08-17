@@ -499,7 +499,8 @@ ${order.price}
                                     text: order.seller.name,
                                     weight: 'bold',
                                     size: 'xxl',
-                                    margin: 'md'
+                                    margin: 'md',
+                                    maxLines: 0
                                 },
                                 {
                                     type: 'text',
@@ -518,32 +519,32 @@ ${order.price}
                                     margin: 'xxl',
                                     spacing: 'sm',
                                     contents: [
-                                        // ...order.acceptedOffers.map((orderItem) => {
-                                        //     const item = <IEventReservation>orderItem.itemOffered;
-                                        // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                        //     const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja} ￥${item.reservedTicket.ticketType.charge}`;
+                                        ...order.acceptedOffers.map((orderItem) => {
+                                            const item = <IEventReservation>orderItem.itemOffered;
+                                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
 
-                                        //     return {
-                                        //         type: 'box',
-                                        //         layout: 'horizontal',
-                                        //         contents: [
-                                        //             {
-                                        //                 type: 'text',
-                                        //                 text: str,
-                                        //                 size: 'sm',
-                                        //                 color: '#555555',
-                                        //                 flex: 0
-                                        //             },
-                                        //             {
-                                        //                 type: 'text',
-                                        //                 text: `${orderItem.price} ${orderItem.priceCurrency}`,
-                                        //                 size: 'sm',
-                                        //                 color: '#111111',
-                                        //                 align: 'end'
-                                        //             }
-                                        //         ]
-                                        //     };
-                                        // }),
+                                            return {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: str,
+                                                        size: 'sm',
+                                                        color: '#555555',
+                                                        flex: 0
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                                        size: 'sm',
+                                                        color: '#111111',
+                                                        align: 'end'
+                                                    }
+                                                ]
+                                            };
+                                        }),
                                         ...[
                                             {
                                                 type: 'box',
@@ -641,7 +642,7 @@ ${order.price}
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: `${order.price}`,
+                                                        text: `${order.price} ${order.priceCurrency}`,
                                                         size: 'sm',
                                                         color: '#111111',
                                                         align: 'end'
@@ -707,7 +708,7 @@ ${order.price}
                                         },
                                         {
                                             type: 'text',
-                                            text: 'order.paymentMethods[0].paymentMethodId',
+                                            text: order.paymentMethods[0].paymentMethodId,
                                             color: '#aaaaaa',
                                             size: 'xs',
                                             align: 'end'
