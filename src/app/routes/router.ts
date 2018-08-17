@@ -4,6 +4,7 @@
 import * as express from 'express';
 
 import authRouter from './auth';
+import liffRouter from './liff';
 import transactionsRouter from './transactions';
 
 const router = express.Router();
@@ -15,6 +16,7 @@ const router = express.Router();
 // })
 
 router.use(authRouter);
+router.use('/liff', liffRouter);
 router.use(transactionsRouter);
 
 export default router;

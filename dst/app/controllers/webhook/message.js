@@ -15,6 +15,7 @@ const cinerinoapi = require("@cinerino/api-nodejs-client");
 const createDebug = require("debug");
 const moment = require("moment");
 const request = require("request-promise-native");
+const querystring = require("querystring");
 const util = require("util");
 const LINE = require("../../../line");
 const debug = createDebug('cinerino-line-ticket:controller:webhook:message');
@@ -129,7 +130,7 @@ function showCreditCardMenu(user) {
                                 {
                                     type: 'uri',
                                     label: 'クレジットカード追加',
-                                    uri: `line://app/${process.env.LIFF_ID}`
+                                    uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: '/transactions/inputCreditCard' })}`
                                 },
                                 {
                                     type: 'message',

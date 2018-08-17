@@ -5,6 +5,7 @@ import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as request from 'request-promise-native';
+import * as querystring from 'querystring';
 import * as util from 'util';
 
 import * as LINE from '../../../line';
@@ -118,7 +119,7 @@ export async function showCreditCardMenu(user: User) {
                             {
                                 type: 'uri',
                                 label: 'クレジットカード追加',
-                                uri: `line://app/${process.env.LIFF_ID}`
+                                uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: '/transactions/inputCreditCard' })}`
                             },
                             {
                                 type: 'message',

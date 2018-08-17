@@ -12,7 +12,7 @@ request.put(
             // type: "compact",
             type: "tall",
             // type: "full",
-            url: "https://cinerino-line-ticket.azurewebsites.net/transactions/inputCreditCard"
+            url: "https://cinerino-line-ticket.azurewebsites.net/liff"
             // }
         }
     }
