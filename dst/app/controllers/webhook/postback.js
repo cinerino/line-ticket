@@ -597,7 +597,7 @@ ${order.price}
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: order.acceptedOffers.length,
+                                                            text: 'order.acceptedOffers.length',
                                                             size: 'sm',
                                                             color: '#111111',
                                                             align: 'end'
@@ -616,7 +616,7 @@ ${order.price}
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: `${order.price} ${order.priceCurrency}`,
+                                                            text: '${order.price} ${order.priceCurrency}',
                                                             size: 'sm',
                                                             color: '#111111',
                                                             align: 'end'
