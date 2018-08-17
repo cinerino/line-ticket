@@ -496,14 +496,14 @@ ${order.price}
                                 },
                                 {
                                     type: 'text',
-                                    text: 'order.seller.name',
+                                    text: order.seller.name,
                                     weight: 'bold',
                                     size: 'xxl',
                                     margin: 'md'
                                 },
                                 {
                                     type: 'text',
-                                    text: 'order.seller.telephone',
+                                    text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
                                     size: 'xs',
                                     color: '#aaaaaa',
                                     wrap: true
@@ -622,7 +622,7 @@ ${order.price}
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: 'order.acceptedOffers.length',
+                                                        text: `${order.acceptedOffers.length}`,
                                                         size: 'sm',
                                                         color: '#111111',
                                                         align: 'end'
@@ -641,7 +641,7 @@ ${order.price}
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: '${order.price} ${order.priceCurrency}',
+                                                        text: `${order.price}`,
                                                         size: 'sm',
                                                         color: '#111111',
                                                         align: 'end'
