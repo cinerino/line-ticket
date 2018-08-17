@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - おこづかいをもらうフローを追加。
 - 座席予約確認機能を追加。
 - クレジットカードから口座へ入金するフローを追加。
+- クレジットカード管理機能を追加。
 
 ### Changed
 

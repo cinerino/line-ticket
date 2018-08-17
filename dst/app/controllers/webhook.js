@@ -57,6 +57,15 @@ function message(event, user) {
                         case /^口座取引履歴$/.test(messageText):
                             yield MessageController.searchAccountTradeActions(user);
                             break;
+                        case /^クレジットカード$/.test(messageText):
+                            yield MessageController.showCreditCardMenu(user);
+                            break;
+                        case /^クレジットカード追加$/.test(messageText):
+                            yield MessageController.addCreditCard(user);
+                            break;
+                        case /^コイン$/.test(messageText):
+                            yield MessageController.showCoinAccountMenu(user);
+                            break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
                             yield MessageController.startIndexingFace(userId);

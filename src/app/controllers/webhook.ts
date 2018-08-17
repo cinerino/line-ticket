@@ -60,6 +60,18 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
                         await MessageController.searchAccountTradeActions(user);
                         break;
 
+                    case /^クレジットカード$/.test(messageText):
+                        await MessageController.showCreditCardMenu(user);
+                        break;
+
+                    case /^クレジットカード追加$/.test(messageText):
+                        await MessageController.addCreditCard(user);
+                        break;
+
+                    case /^コイン$/.test(messageText):
+                        await MessageController.showCoinAccountMenu(user);
+                        break;
+
                     // 顔写真登録
                     case /^顔写真登録$/.test(messageText):
                         await MessageController.startIndexingFace(userId);

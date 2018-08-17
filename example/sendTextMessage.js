@@ -24,7 +24,8 @@ request.post({
                         {
                             type: 'uri',
                             label: '誰にお願いする?',
-                            uri: `line://msg/text/?${message}`
+                            // uri: `line://msg/text/?${message}`
+                            uri: `line://app/${process.env.LIFF_ID}`
                         }
                     ]
                 }

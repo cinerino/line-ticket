@@ -98,6 +98,80 @@ export async function showSeatReservationMenu(user: User) {
     }).promise();
 }
 
+export async function showCreditCardMenu(user: User) {
+    await request.post({
+        simple: false,
+        url: 'https://api.line.me/v2/bot/message/push',
+        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+        json: true,
+        body: {
+            to: user.userId,
+            messages: [
+                {
+                    type: 'template',
+                    altText: 'クレジットカード管理',
+                    template: {
+                        type: 'buttons',
+                        title: 'クレジットカード管理',
+                        text: 'ご用件はなんでしょう？',
+                        actions: [
+                            {
+                                type: 'uri',
+                                label: 'クレジットカード追加',
+                                uri: `line://app/${process.env.LIFF_ID}`
+                            },
+                            {
+                                type: 'message',
+                                label: 'クレジットカード検索',
+                                text: 'クレジットカード検索'
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }).promise();
+}
+
+export async function showCoinAccountMenu(user: User) {
+    await request.post({
+        simple: false,
+        url: 'https://api.line.me/v2/bot/message/push',
+        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+        json: true,
+        body: {
+            to: user.userId,
+            messages: [
+                {
+                    type: 'template',
+                    altText: 'コイン口座管理',
+                    template: {
+                        type: 'buttons',
+                        title: 'コイン口座管理',
+                        text: 'ご用件はなんでしょう？',
+                        actions: [
+                            {
+                                type: 'message',
+                                label: 'コイン口座追加',
+                                text: 'コイン口座追加'
+                            },
+                            {
+                                type: 'message',
+                                label: 'コイン口座検索',
+                                text: 'コイン口座検索'
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }).promise();
+}
+
+export async function addCreditCard(user: User) {
+    debug(user);
+}
+
 /**
  * 顔写真登録を開始する
  */

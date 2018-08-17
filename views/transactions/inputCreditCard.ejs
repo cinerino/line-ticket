@@ -5,19 +5,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
     <meta name="format-detection" content="telephone=no">
-
+    <title>Cinerino LIFF App</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://pt01.mul-pay.jp/ext/js/token.js"></script>
-
+    <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
         crossorigin="anonymous">
 </head>
 
 <body>
     <div class="container">
-        <h1>クレジットカード情報入力</h1>
-
+        <!-- <h1>クレジットカード情報入力</h1> -->
         <form method="post" action="<%= cb %>">
             <div class="form-group">
                 <label for="cardNumber">CardNumber</label>
@@ -82,6 +81,25 @@
 </body>
 
 <script>
+    liff.init(
+        data => {
+            // Now you can call LIFF API
+            const userId = data.context.userId;
+            alert(userId);
+            liff.getProfile()
+                .then(profile => {
+                    const name = profile.displayName
+                    alert(name);
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        },
+        err => {
+            // LIFF initialization failed
+        }
+    );
+
     Multipayment.init('<%= gmoShopId %>');
     var submitting = false;
 
