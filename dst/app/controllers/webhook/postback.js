@@ -294,7 +294,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                 accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
                 debug('accounts:', accounts);
                 if (accounts.length === 0) {
-                    throw new Error('口座未開設です。');
+                    throw new Error('口座未開設です');
                 }
                 const account = accounts[0];
                 const pecorinoAuthorization = yield placeOrderService.authorizePointPayment({
@@ -510,7 +510,7 @@ function confirmFriendPay(user, token) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         const pecorinoAuthorization = yield placeOrderService.authorizePointPayment({
@@ -575,7 +575,7 @@ function confirmTransferMoney(user, token, price) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         const transferService = new cinerino.pecorinoapi.service.transaction.Transfer({
@@ -629,7 +629,7 @@ function selectDepositAmount(user) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         const gmoShopId = 'tshop00026096';
@@ -646,7 +646,7 @@ function selectDepositAmount(user) {
                 messages: [
                     {
                         type: 'template',
-                        altText: '口座へ入金',
+                        altText: 'コイン口座入金',
                         template: {
                             type: 'buttons',
                             title: 'コイン口座へ入金する',
@@ -654,8 +654,18 @@ function selectDepositAmount(user) {
                             actions: [
                                 {
                                     type: 'uri',
-                                    label: '100円',
+                                    label: '100',
                                     uri: `${creditCardUrl}&amount=100&toAccountNumber=${account.accountNumber}`
+                                },
+                                {
+                                    type: 'uri',
+                                    label: '1000',
+                                    uri: `${creditCardUrl}&amount=1000&toAccountNumber=${account.accountNumber}`
+                                },
+                                {
+                                    type: 'uri',
+                                    label: '10000',
+                                    uri: `${creditCardUrl}&amount=10000&toAccountNumber=${account.accountNumber}`
                                 }
                             ]
                         }

@@ -222,7 +222,7 @@ function selectWhomAskForMoney(user) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         const contact = yield personService.getContacts({ personId: 'me' });
@@ -421,7 +421,7 @@ function findAccount(user) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         const text = util.format('口座番号: %s\n残高: %s\n引出可能残高: %s', account.accountNumber, account.balance.toLocaleString('ja'), account.availableBalance.toLocaleString('ja'));
@@ -476,7 +476,7 @@ function searchAccountTradeActions(user) {
         accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
-            throw new Error('口座未開設です。');
+            throw new Error('口座未開設です');
         }
         const account = accounts[0];
         let transferActions = yield personService.searchAccountMoneyTransferActions({

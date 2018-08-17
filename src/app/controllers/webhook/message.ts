@@ -207,7 +207,7 @@ export async function selectWhomAskForMoney(user: User) {
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
     if (accounts.length === 0) {
-        throw new Error('口座未開設です。');
+        throw new Error('口座未開設です');
     }
     const account = accounts[0];
     const contact = await personService.getContacts({ personId: 'me' });
@@ -409,7 +409,7 @@ export async function findAccount(user: User) {
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
     if (accounts.length === 0) {
-        throw new Error('口座未開設です。');
+        throw new Error('口座未開設です');
     }
     const account = accounts[0];
 
@@ -469,7 +469,7 @@ export async function searchAccountTradeActions(user: User) {
     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
     if (accounts.length === 0) {
-        throw new Error('口座未開設です。');
+        throw new Error('口座未開設です');
     }
     const account = accounts[0];
     let transferActions = await personService.searchAccountMoneyTransferActions({
