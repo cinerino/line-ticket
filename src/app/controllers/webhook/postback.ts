@@ -549,7 +549,7 @@ ${order.price}
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: `${moment(event.startDate).format('YYYY-MM-DD HH:mm')}`,
+                                                            text: `${moment(event.startDate).format('llll')}`,
                                                             wrap: true,
                                                             size: 'sm',
                                                             color: '#666666',
@@ -571,7 +571,7 @@ ${order.price}
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                                            text: `${event.location.name.ja}`,
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
