@@ -24,7 +24,7 @@ var MessageType;
 })(MessageType = exports.MessageType || (exports.MessageType = {}));
 const createDebug = require("debug");
 const request = require("request-promise-native");
-const debug = createDebug('cinerino-line-ticket:controller:line');
+const debug = createDebug('cinerino-line-ticket:*');
 exports.URL_PUSH_MESSAGE = 'https://api.line.me/v2/bot/message/push';
 /**
  * メッセージ送信

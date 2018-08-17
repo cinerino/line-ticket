@@ -8,7 +8,7 @@
 import * as LINE from '../../../../line';
 import User from '../../../user';
 
-// const debug = createDebug('cinerino-line-ticket:controller:webhook:message:image');
+// const debug = createDebug('cinerino-line-ticket:*');
 
 export async function indexFace(user: User, messageId: string) {
     const content = await LINE.getContent(messageId);

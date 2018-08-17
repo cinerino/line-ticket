@@ -14,7 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 // import * as createDebug from 'debug';
 const LINE = require("../../../../line");
-// const debug = createDebug('cinerino-line-ticket:controller:webhook:message:image');
+// const debug = createDebug('cinerino-line-ticket:*');
 function indexFace(user, messageId) {
     return __awaiter(this, void 0, void 0, function* () {
         const content = yield LINE.getContent(messageId);

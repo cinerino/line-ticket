@@ -10,7 +10,7 @@ import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
 
-const debug = createDebug('cinerino-line-ticket:controller:webhook');
+const debug = createDebug('cinerino-line-ticket:*');
 
 /**
  * メッセージが送信されたことを示すEvent Objectです。
@@ -43,30 +43,17 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
                         await MessageController.showSeatReservationMenu(user);
                         break;
 
-                    case /^座席予約追加$/.test(messageText):
-                        await MessageController.askEventStartDate(userId);
-                        break;
-
-                    case /^チケット$/.test(messageText):
-                        await MessageController.searchTickets(user);
-                        break;
-
-                    // 残高照会
-                    case /^口座残高$/.test(messageText):
-                        await MessageController.findAccount(user);
-                        break;
-
-                    // 口座取引履歴
-                    case /^口座取引履歴$/.test(messageText):
-                        await MessageController.searchAccountTradeActions(user);
-                        break;
-
                     case /^クレジットカード$/.test(messageText):
                         await MessageController.showCreditCardMenu(user);
                         break;
 
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu(user);
+                        break;
+
+                    // 口座取引履歴
+                    case /^口座取引履歴$/.test(messageText):
+                        await MessageController.searchAccountTradeActions(user);
                         break;
 
                     // 顔写真登録
@@ -186,6 +173,19 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             // クレジットカード追加
             case 'addCreditCard':
                 await PostbackController.addCreditCard(user, <string>data.token);
+                break;
+
+            // コイン口座検索
+            case 'searchCoinAccounts':
+                await PostbackController.searchCoinAccounts(user);
+                break;
+
+            case 'askEventStartDate':
+                await MessageController.askEventStartDate(user.userId);
+                break;
+
+            case 'searchScreeningEventReservations':
+                await PostbackController.searchScreeningEventReservations(user);
                 break;
 
             default:

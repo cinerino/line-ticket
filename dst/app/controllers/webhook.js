@@ -17,7 +17,7 @@ const LINE = require("../../line");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
 const PostbackController = require("./webhook/postback");
-const debug = createDebug('cinerino-line-ticket:controller:webhook');
+const debug = createDebug('cinerino-line-ticket:*');
 /**
  * メッセージが送信されたことを示すEvent Objectです。
  */
@@ -44,25 +44,15 @@ function message(event, user) {
                         case /^座席予約$/.test(messageText):
                             yield MessageController.showSeatReservationMenu(user);
                             break;
-                        case /^座席予約追加$/.test(messageText):
-                            yield MessageController.askEventStartDate(userId);
-                            break;
-                        case /^チケット$/.test(messageText):
-                            yield MessageController.searchTickets(user);
-                            break;
-                        // 残高照会
-                        case /^口座残高$/.test(messageText):
-                            yield MessageController.findAccount(user);
-                            break;
-                        // 口座取引履歴
-                        case /^口座取引履歴$/.test(messageText):
-                            yield MessageController.searchAccountTradeActions(user);
-                            break;
                         case /^クレジットカード$/.test(messageText):
                             yield MessageController.showCreditCardMenu(user);
                             break;
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu(user);
+                            break;
+                        // 口座取引履歴
+                        case /^口座取引履歴$/.test(messageText):
+                            yield MessageController.searchAccountTradeActions(user);
                             break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
@@ -162,6 +152,16 @@ function postback(event, user) {
                 // クレジットカード追加
                 case 'addCreditCard':
                     yield PostbackController.addCreditCard(user, data.token);
+                    break;
+                // コイン口座検索
+                case 'searchCoinAccounts':
+                    yield PostbackController.searchCoinAccounts(user);
+                    break;
+                case 'askEventStartDate':
+                    yield MessageController.askEventStartDate(user.userId);
+                    break;
+                case 'searchScreeningEventReservations':
+                    yield PostbackController.searchScreeningEventReservations(user);
                     break;
                 default:
             }

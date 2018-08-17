@@ -8,7 +8,7 @@ import * as PostbackController from '../controllers/webhook/postback';
 import User from '../user';
 
 const transactionsRouter = express.Router();
-const debug = createDebug('cinerino-line-ticket:router:transactions');
+const debug = createDebug('cinerino-line-ticket:*');
 
 /**
  * クレジットカード情報入力フォーム

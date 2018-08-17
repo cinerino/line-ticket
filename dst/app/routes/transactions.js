@@ -16,7 +16,7 @@ const express = require("express");
 const PostbackController = require("../controllers/webhook/postback");
 const user_1 = require("../user");
 const transactionsRouter = express.Router();
-const debug = createDebug('cinerino-line-ticket:router:transactions');
+const debug = createDebug('cinerino-line-ticket:*');
 /**
  * クレジットカード情報入力フォーム
  */

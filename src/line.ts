@@ -48,7 +48,7 @@ export interface IWebhookEvent {
 import * as createDebug from 'debug';
 import * as request from 'request-promise-native';
 
-const debug = createDebug('cinerino-line-ticket:controller:line');
+const debug = createDebug('cinerino-line-ticket:*');
 
 export const URL_PUSH_MESSAGE = 'https://api.line.me/v2/bot/message/push';
 

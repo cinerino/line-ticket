@@ -18,8 +18,9 @@ const googleapis_1 = require("googleapis");
 const moment = require("moment");
 const querystring = require("querystring");
 const request = require("request-promise-native");
+const util = require("util");
 const LINE = require("../../../line");
-const debug = createDebug('cinerino-line-ticket:controller:webhook:postback');
+const debug = createDebug('cinerino-line-ticket:*');
 // const MESSAGE_TRANSACTION_NOT_FOUND = '該当取引はありません';
 const customsearch = googleapis_1.google.customsearch('v1');
 const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
@@ -992,3 +993,291 @@ function searchCreditCards(user) {
     });
 }
 exports.searchCreditCards = searchCreditCards;
+function searchCoinAccounts(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
+        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+        debug('accounts:', accounts);
+        if (accounts.length === 0) {
+            throw new Error('口座未開設です');
+        }
+        yield request.post({
+            simple: false,
+            url: 'https://api.line.me/v2/bot/message/push',
+            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+            json: true,
+            body: {
+                to: user.userId,
+                messages: [
+                    {
+                        type: 'template',
+                        altText: '口座確認',
+                        template: {
+                            type: 'carousel',
+                            columns: accounts.map((account) => {
+                                const text = util.format('口座番号: %s\n残高: %s\n引出可能残高: %s', account.accountNumber, account.balance.toLocaleString('ja'), account.availableBalance.toLocaleString('ja'));
+                                return {
+                                    // thumbnailImageUrl: thumbnailImageUrl,
+                                    imageBackgroundColor: '#000000',
+                                    title: account.accountNumber,
+                                    text: text,
+                                    actions: [
+                                        {
+                                            type: 'message',
+                                            label: '取引履歴を確認する',
+                                            text: '口座取引履歴'
+                                        },
+                                        {
+                                            type: 'message',
+                                            label: 'おこづかいをもらう',
+                                            text: 'おこづかい'
+                                        },
+                                        {
+                                            type: 'postback',
+                                            label: 'クレカから入金する',
+                                            data: 'action=depositFromCreditCard'
+                                        }
+                                    ]
+                                };
+                            })
+                            // imageAspectRatio: 'rectangle',
+                            // imageSize: 'cover'
+                        }
+                    }
+                ]
+            }
+        }).promise();
+    });
+}
+exports.searchCoinAccounts = searchCoinAccounts;
+/**
+ * ユーザーのチケット(座席予約)を検索する
+ */
+// tslint:disable-next-line:max-func-body-length
+function searchScreeningEventReservations(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield LINE.pushMessage(user.userId, '座席予約を検索しています...');
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        const ownershipInfos = yield personService.searchScreeningEventReservations({
+            // goodType: cinerinoapi.factory.reservationType.EventReservation,
+            personId: 'me'
+        });
+        debug(ownershipInfos.length, 'ownershipInfos found.');
+        if (ownershipInfos.length === 0) {
+            yield LINE.pushMessage(user.userId, '座席予約が見つかりませんでした。');
+        }
+        else {
+            // googleで画像検索
+            const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
+            const CX = '006320166286449124373:nm_gjsvlgnm';
+            const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
+            const thumbnails = [];
+            yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
+                return new Promise((resolve) => {
+                    customsearch.cse.list({
+                        cx: CX,
+                        q: event.workPerformed.name,
+                        auth: API_KEY,
+                        num: 1,
+                        rights: 'cc_publicdomain cc_sharealike',
+                        // start: 0,
+                        // imgSize: 'small',
+                        searchType: 'image'
+                    }, (err, res) => {
+                        if (!(err instanceof Error)) {
+                            if (Array.isArray(res.data.items) && res.data.items.length > 0) {
+                                debug(res.data.items[0]);
+                                thumbnails.push({
+                                    eventId: event.id,
+                                    link: res.data.items[0].link,
+                                    thumbnailLink: res.data.items[0].image.thumbnailLink
+                                });
+                            }
+                        }
+                        resolve();
+                    });
+                });
+            })));
+            debug(thumbnails);
+            yield request.post({
+                simple: false,
+                url: 'https://api.line.me/v2/bot/message/push',
+                auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+                json: true,
+                body: {
+                    to: user.userId,
+                    messages: [
+                        {
+                            type: 'flex',
+                            altText: 'This is a Flex Message',
+                            contents: {
+                                type: 'carousel',
+                                contents: [
+                                    // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                                    ...ownershipInfos.slice(0, 5).map((ownershipInfo) => {
+                                        const itemOffered = ownershipInfo.typeOfGood;
+                                        const event = itemOffered.reservationFor;
+                                        const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                                        const thumbnailImageUrl = (thumbnail !== undefined)
+                                            ? thumbnail.thumbnailLink
+                                            // tslint:disable-next-line:max-line-length
+                                            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+                                        return {
+                                            type: 'bubble',
+                                            hero: {
+                                                type: 'image',
+                                                url: thumbnailImageUrl,
+                                                size: 'full',
+                                                aspectRatio: '20:13',
+                                                aspectMode: 'cover',
+                                                action: {
+                                                    type: 'uri',
+                                                    // tslint:disable-next-line:no-http-string
+                                                    uri: 'http://linecorp.com/'
+                                                }
+                                            },
+                                            body: {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                spacing: 'md',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: event.name.ja,
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'vertical',
+                                                        margin: 'lg',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Date',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: moment(event.startDate).format('llll'),
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Place',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: event.location.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Seats',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Ticket Type',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            footer: {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'button',
+                                                        action: {
+                                                            type: 'uri',
+                                                            label: 'チケット発行',
+                                                            uri: 'https://linecorp.com'
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        };
+                                    })
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }).promise();
+        }
+    });
+}
+exports.searchScreeningEventReservations = searchScreeningEventReservations;

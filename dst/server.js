@@ -7,7 +7,7 @@ const startTime = process.hrtime();
 const createDebug = require("debug");
 const http = require("http");
 const app = require("./app/app");
-const debug = createDebug('cinerino-line-ticket:server');
+const debug = createDebug('cinerino-line-ticket:*');
 /**
  * Get port from environment and store in Express.
  */

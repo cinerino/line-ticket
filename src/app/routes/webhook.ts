@@ -11,7 +11,7 @@ import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
 
 const webhookRouter = express.Router();
-const debug = createDebug('cinerino-line-ticket:router:webhook');
+const debug = createDebug('cinerino-line-ticket:*');
 
 webhookRouter.all(
     '/',

@@ -4,7 +4,7 @@ import * as createDebug from 'debug';
 import * as redis from 'ioredis';
 import * as jwt from 'jsonwebtoken';
 
-const debug = createDebug('cinerino-line-ticket:user');
+const debug = createDebug('cinerino-line-ticket:*');
 
 // 以下環境変数をセットすること
 // AWS_ACCESS_KEY_ID
