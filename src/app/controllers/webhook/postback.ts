@@ -875,11 +875,6 @@ export async function selectDepositAmount(user: User) {
     }
     const account = accounts[0];
 
-    const gmoShopId = 'tshop00026096';
-    const creditCardCallback = `https://${user.host}/transactions/transactionId/inputCreditCard?userId=${user.userId}`;
-    // tslint:disable-next-line:max-line-length
-    const creditCardUrl = `https://${user.host}/transactions/inputCreditCard?cb=${encodeURIComponent(creditCardCallback)}&gmoShopId=${gmoShopId}`;
-
     await request.post({
         simple: false,
         url: 'https://api.line.me/v2/bot/message/push',
@@ -897,19 +892,22 @@ export async function selectDepositAmount(user: User) {
                         text: 'いくら入金しますか?',
                         actions: [
                             {
-                                type: 'uri',
+                                type: 'postback',
                                 label: '100',
-                                uri: `${creditCardUrl}&amount=100&toAccountNumber=${account.accountNumber}`
+                                // tslint:disable-next-line:max-line-length
+                                data: `action=depositCoinByCreditCard&amount=100&toAccountNumber=${account.accountNumber}`
                             },
                             {
-                                type: 'uri',
+                                type: 'postback',
                                 label: '1000',
-                                uri: `${creditCardUrl}&amount=1000&toAccountNumber=${account.accountNumber}`
+                                // tslint:disable-next-line:max-line-length
+                                data: `action=depositCoinByCreditCard&amount=1000&toAccountNumber=${account.accountNumber}`
                             },
                             {
-                                type: 'uri',
+                                type: 'postback',
                                 label: '10000',
-                                uri: `${creditCardUrl}&amount=10000&toAccountNumber=${account.accountNumber}`
+                                // tslint:disable-next-line:max-line-length
+                                data: `action=depositCoinByCreditCard&amount=10000&toAccountNumber=${account.accountNumber}`
                             }
                         ]
                     }
@@ -922,18 +920,20 @@ export async function selectDepositAmount(user: User) {
 /**
  * クレジットから口座へ入金する
  */
-export async function depositFromCreditCard(params: {
+export async function depositCoinByCreditCard(params: {
     user: User;
     amount: number;
     toAccountNumber: string;
-    creditCardToken: string;
 }) {
     await LINE.pushMessage(params.user.userId, `${params.amount}円の入金処理を実行します...`);
-
-    // const personService = new cinerinoapi.service.Person({
-    //     endpoint: <string>process.env.CINERINO_ENDPOINT,
-    //     auth: user.authClient
-    // });
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const creditCards = await personService.searchCreditCards({ personId: 'me' });
+    if (creditCards.length === 0) {
+        throw new Error('クレジットカード未登録です');
+    }
 
     // 入金取引開始
     const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
@@ -1067,7 +1067,7 @@ export async function searchCoinAccounts(user: User) {
                                 actions: [
                                     {
                                         type: 'message',
-                                        label: '取引履歴を確認する',
+                                        label: '取引履歴確認',
                                         text: '口座取引履歴'
                                     },
                                     {
@@ -1077,8 +1077,8 @@ export async function searchCoinAccounts(user: User) {
                                     },
                                     {
                                         type: 'postback',
-                                        label: 'クレカから入金する',
-                                        data: 'action=depositFromCreditCard'
+                                        label: 'クレジットカードで入金',
+                                        data: 'action=selectDepositAmount'
                                     }
                                 ]
                             };

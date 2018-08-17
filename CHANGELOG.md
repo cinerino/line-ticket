@@ -14,9 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - 会員登録ボタンを表示。
 - Friend Payフローを追加。
 - おこづかいをもらうフローを追加。
-- クレジットカードから口座へ入金するフローを追加。
 - クレジットカード管理機能を追加。
 - 座席予約管理機能を追加。
+- クレジットカードからコイン口座への入金フローを追加。
 
 ### Changed
 

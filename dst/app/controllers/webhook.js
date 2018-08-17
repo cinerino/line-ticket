@@ -142,8 +142,16 @@ function postback(event, user) {
                     yield PostbackController.choosePaymentMethod(user, 'FriendPay', data.transactionId, parseInt(data.price, 10));
                     break;
                 // 口座入金金額選択
-                case 'depositFromCreditCard':
+                case 'selectDepositAmount':
                     yield PostbackController.selectDepositAmount(user);
+                    break;
+                // 口座入金金額選択
+                case 'depositCoinByCreditCard':
+                    yield PostbackController.depositCoinByCreditCard({
+                        user: user,
+                        amount: Number(data.amount),
+                        toAccountNumber: data.toAccountNumber
+                    });
                     break;
                 // クレジットカード検索
                 case 'searchCreditCards':

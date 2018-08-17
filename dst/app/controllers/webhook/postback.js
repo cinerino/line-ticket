@@ -845,10 +845,6 @@ function selectDepositAmount(user) {
             throw new Error('口座未開設です');
         }
         const account = accounts[0];
-        const gmoShopId = 'tshop00026096';
-        const creditCardCallback = `https://${user.host}/transactions/transactionId/inputCreditCard?userId=${user.userId}`;
-        // tslint:disable-next-line:max-line-length
-        const creditCardUrl = `https://${user.host}/transactions/inputCreditCard?cb=${encodeURIComponent(creditCardCallback)}&gmoShopId=${gmoShopId}`;
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
@@ -866,19 +862,22 @@ function selectDepositAmount(user) {
                             text: 'いくら入金しますか?',
                             actions: [
                                 {
-                                    type: 'uri',
+                                    type: 'postback',
                                     label: '100',
-                                    uri: `${creditCardUrl}&amount=100&toAccountNumber=${account.accountNumber}`
+                                    // tslint:disable-next-line:max-line-length
+                                    data: `action=depositCoinByCreditCard&amount=100&toAccountNumber=${account.accountNumber}`
                                 },
                                 {
-                                    type: 'uri',
+                                    type: 'postback',
                                     label: '1000',
-                                    uri: `${creditCardUrl}&amount=1000&toAccountNumber=${account.accountNumber}`
+                                    // tslint:disable-next-line:max-line-length
+                                    data: `action=depositCoinByCreditCard&amount=1000&toAccountNumber=${account.accountNumber}`
                                 },
                                 {
-                                    type: 'uri',
+                                    type: 'postback',
                                     label: '10000',
-                                    uri: `${creditCardUrl}&amount=10000&toAccountNumber=${account.accountNumber}`
+                                    // tslint:disable-next-line:max-line-length
+                                    data: `action=depositCoinByCreditCard&amount=10000&toAccountNumber=${account.accountNumber}`
                                 }
                             ]
                         }
@@ -892,13 +891,17 @@ exports.selectDepositAmount = selectDepositAmount;
 /**
  * クレジットから口座へ入金する
  */
-function depositFromCreditCard(params) {
+function depositCoinByCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield LINE.pushMessage(params.user.userId, `${params.amount}円の入金処理を実行します...`);
-        // const personService = new cinerinoapi.service.Person({
-        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
-        //     auth: user.authClient
-        // });
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const creditCards = yield personService.searchCreditCards({ personId: 'me' });
+        if (creditCards.length === 0) {
+            throw new Error('クレジットカード未登録です');
+        }
         // 入金取引開始
         const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
             endpoint: process.env.PECORINO_ENDPOINT,
@@ -930,7 +933,7 @@ function depositFromCreditCard(params) {
         yield LINE.pushMessage(params.user.userId, '入金処理が完了しました。');
     });
 }
-exports.depositFromCreditCard = depositFromCreditCard;
+exports.depositCoinByCreditCard = depositCoinByCreditCard;
 function addCreditCard(user, token) {
     return __awaiter(this, void 0, void 0, function* () {
         const personService = new cinerinoapi.service.Person({
@@ -1029,7 +1032,7 @@ function searchCoinAccounts(user) {
                                     actions: [
                                         {
                                             type: 'message',
-                                            label: '取引履歴を確認する',
+                                            label: '取引履歴確認',
                                             text: '口座取引履歴'
                                         },
                                         {
@@ -1039,8 +1042,8 @@ function searchCoinAccounts(user) {
                                         },
                                         {
                                             type: 'postback',
-                                            label: 'クレカから入金する',
-                                            data: 'action=depositFromCreditCard'
+                                            label: 'クレジットカードで入金',
+                                            data: 'action=selectDepositAmount'
                                         }
                                     ]
                                 };

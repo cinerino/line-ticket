@@ -161,8 +161,17 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 break;
 
             // 口座入金金額選択
-            case 'depositFromCreditCard':
+            case 'selectDepositAmount':
                 await PostbackController.selectDepositAmount(user);
+                break;
+
+            // 口座入金金額選択
+            case 'depositCoinByCreditCard':
+                await PostbackController.depositCoinByCreditCard({
+                    user: user,
+                    amount: Number(<string>data.amount),
+                    toAccountNumber: <string>data.toAccountNumber
+                });
                 break;
 
             // クレジットカード検索
