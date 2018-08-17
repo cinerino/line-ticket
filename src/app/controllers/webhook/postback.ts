@@ -259,7 +259,7 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                                 label: 'コイン',
                                 data: querystring.stringify({
                                     action: 'choosePaymentMethod',
-                                    paymentMethod: 'Coin',
+                                    paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
                                     transactionId: transaction.id
                                 })
                             },
@@ -276,7 +276,8 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
     }).promise();
 }
 
-export type PaymentMethodType = 'Coin' | 'FriendPay' | cinerinoapi.factory.paymentMethodType.CreditCard;
+export type PaymentMethodType =
+    cinerinoapi.factory.paymentMethodType.Account | 'FriendPay' | cinerinoapi.factory.paymentMethodType.CreditCard;
 
 // tslint:disable-next-line:max-func-body-length
 export async function choosePaymentMethod(user: User, paymentMethodType: PaymentMethodType, transactionId: string, friendPayPrice: number) {
@@ -296,10 +297,10 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
         .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
         .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
     price = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).price;
-    const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
+    // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
 
     switch (paymentMethodType) {
-        case 'Coin':
+        case cinerinoapi.factory.paymentMethodType.Account:
             await LINE.pushMessage(user.userId, '残高を確認しています...');
             // 口座番号取得
             let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
@@ -311,12 +312,13 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
             }
             const account = accounts[0];
 
-            const pecorinoAuthorization = await placeOrderService.authorizePointPayment({
+            const accountAuthorization = await placeOrderService.authorizeAccountPayment({
                 transactionId: transactionId,
-                amount: requiredPoint,
+                accountType: cinerinoapi.factory.accountType.Coin,
+                amount: price,
                 fromAccountNumber: account.accountNumber
             });
-            debug('残高確認済', pecorinoAuthorization);
+            debug('残高確認済', accountAuthorization);
             await LINE.pushMessage(user.userId, '残高の確認がとれました。');
             break;
 
@@ -350,17 +352,17 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
             throw new Error(`Unknown payment method ${paymentMethodType}`);
     }
 
-
     const loginTicket = user.authClient.verifyIdToken({});
-    const contact = await personService.getContacts({ personId: 'me' });
+    let contact = await personService.getContacts({ personId: 'me' });
+    contact = {
+        givenName: <string>loginTicket.getUsername(),
+        familyName: <string>loginTicket.getUsername(),
+        email: contact.email,
+        telephone: '+819012345678'
+    };
     await placeOrderService.setCustomerContact({
         transactionId: transactionId,
-        contact: {
-            givenName: <string>loginTicket.getUsername(),
-            familyName: <string>loginTicket.getUsername(),
-            email: contact.email,
-            telephone: '+819012345678'
-        }
+        contact: contact
     });
     debug('customer contact set.');
     await LINE.pushMessage(user.userId, `以下の通り注文を受け付けます...
@@ -540,9 +542,10 @@ export async function confirmFriendPay(user: User, token: string) {
         throw new Error('口座未開設です');
     }
     const account = accounts[0];
-    const pecorinoAuthorization = await placeOrderService.authorizePointPayment({
+    const pecorinoAuthorization = await placeOrderService.authorizeAccountPayment({
         transactionId: friendPayInfo.transactionId,
         amount: requiredPoint,
+        accountType: cinerinoapi.factory.accountType.Coin,
         fromAccountNumber: account.accountNumber
     });
     debug('残高確認済', pecorinoAuthorization);

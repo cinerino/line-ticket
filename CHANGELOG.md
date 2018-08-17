@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Added
 
-- 口座決済での注文フロープロトタイプを追加。
+- 口座決済での注文フローを追加。
+- クレジットカード決済での注文フローを追加。
 - Face Loginを追加。
 - 会員登録ボタンを表示。
 - Friend Payフローを追加。

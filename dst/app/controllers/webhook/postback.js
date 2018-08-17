@@ -248,7 +248,7 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                                     label: 'コイン',
                                     data: querystring.stringify({
                                         action: 'choosePaymentMethod',
-                                        paymentMethod: 'Coin',
+                                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
                                         transactionId: transaction.id
                                     })
                                 },
@@ -284,9 +284,9 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
             .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
             .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
         price = seatReservations[0].result.price;
-        const requiredPoint = seatReservations[0].result.point;
+        // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
         switch (paymentMethodType) {
-            case 'Coin':
+            case cinerinoapi.factory.paymentMethodType.Account:
                 yield LINE.pushMessage(user.userId, '残高を確認しています...');
                 // 口座番号取得
                 let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
@@ -297,12 +297,13 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                     throw new Error('口座未開設です');
                 }
                 const account = accounts[0];
-                const pecorinoAuthorization = yield placeOrderService.authorizePointPayment({
+                const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
                     transactionId: transactionId,
-                    amount: requiredPoint,
+                    accountType: cinerinoapi.factory.accountType.Coin,
+                    amount: price,
                     fromAccountNumber: account.accountNumber
                 });
-                debug('残高確認済', pecorinoAuthorization);
+                debug('残高確認済', accountAuthorization);
                 yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
                 break;
             case cinerinoapi.factory.paymentMethodType.CreditCard:
@@ -333,15 +334,16 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                 throw new Error(`Unknown payment method ${paymentMethodType}`);
         }
         const loginTicket = user.authClient.verifyIdToken({});
-        const contact = yield personService.getContacts({ personId: 'me' });
+        let contact = yield personService.getContacts({ personId: 'me' });
+        contact = {
+            givenName: loginTicket.getUsername(),
+            familyName: loginTicket.getUsername(),
+            email: contact.email,
+            telephone: '+819012345678'
+        };
         yield placeOrderService.setCustomerContact({
             transactionId: transactionId,
-            contact: {
-                givenName: loginTicket.getUsername(),
-                familyName: loginTicket.getUsername(),
-                email: contact.email,
-                telephone: '+819012345678'
-            }
+            contact: contact
         });
         debug('customer contact set.');
         yield LINE.pushMessage(user.userId, `以下の通り注文を受け付けます...
@@ -513,9 +515,10 @@ function confirmFriendPay(user, token) {
             throw new Error('口座未開設です');
         }
         const account = accounts[0];
-        const pecorinoAuthorization = yield placeOrderService.authorizePointPayment({
+        const pecorinoAuthorization = yield placeOrderService.authorizeAccountPayment({
             transactionId: friendPayInfo.transactionId,
             amount: requiredPoint,
+            accountType: cinerinoapi.factory.accountType.Coin,
             fromAccountNumber: account.accountNumber
         });
         debug('残高確認済', pecorinoAuthorization);
