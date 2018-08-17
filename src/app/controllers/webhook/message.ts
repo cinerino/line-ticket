@@ -85,7 +85,7 @@ export async function showSeatReservationMenu(user: User) {
                         type: 'buttons',
                         title: '座席予約',
                         text: 'ご用件はなんでしょう？',
-                        actions: [,
+                        actions: [
                             {
                                 type: 'postback',
                                 label: '座席を予約する',
@@ -103,7 +103,6 @@ export async function showSeatReservationMenu(user: User) {
         }
     }).promise();
 }
-
 export async function showCreditCardMenu(user: User) {
     const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
     await request.post({
@@ -139,7 +138,6 @@ export async function showCreditCardMenu(user: User) {
         }
     }).promise();
 }
-
 export async function showCoinAccountMenu(user: User) {
     await request.post({
         simple: false,
@@ -174,7 +172,6 @@ export async function showCoinAccountMenu(user: User) {
         }
     }).promise();
 }
-
 /**
  * 顔写真登録を開始する
  */

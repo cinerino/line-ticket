@@ -94,7 +94,7 @@ function showSeatReservationMenu(user) {
                             type: 'buttons',
                             title: '座席予約',
                             text: 'ご用件はなんでしょう？',
-                            actions: [,
+                            actions: [
                                 {
                                     type: 'postback',
                                     label: '座席を予約する',
