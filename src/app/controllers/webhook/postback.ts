@@ -1531,7 +1531,6 @@ export async function searchScreeningEventReservations(user: User) {
     if (ownershipInfos.length === 0) {
         await LINE.pushMessage(user.userId, '座席予約が見つかりませんでした。');
     } else {
-
         // googleで画像検索
         const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
         const CX = '006320166286449124373:nm_gjsvlgnm';
@@ -1584,156 +1583,161 @@ export async function searchScreeningEventReservations(user: User) {
                             type: 'carousel',
                             contents: [
                                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                                ...ownershipInfos.slice(0, 5).map((ownershipInfo) => {
-                                    const itemOffered = ownershipInfo.typeOfGood;
-                                    const event = itemOffered.reservationFor;
-                                    const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                                    const thumbnailImageUrl = (thumbnail !== undefined)
-                                        ? thumbnail.thumbnailLink
-                                        // tslint:disable-next-line:max-line-length
-                                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+                                ...ownershipInfos
+                                    .sort((a, b) => (a.ownedFrom < b.ownedFrom) ? 1 : -1)
+                                    // tslint:disable-next-line:no-magic-numbers
+                                    .slice(0, 10)
+                                    // tslint:disable-next-line:max-func-body-length
+                                    .map((ownershipInfo) => {
+                                        const itemOffered = ownershipInfo.typeOfGood;
+                                        const event = itemOffered.reservationFor;
+                                        const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                                        const thumbnailImageUrl = (thumbnail !== undefined)
+                                            ? thumbnail.thumbnailLink
+                                            // tslint:disable-next-line:max-line-length
+                                            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
 
-                                    return {
-                                        type: 'bubble',
-                                        hero: {
-                                            type: 'image',
-                                            url: thumbnailImageUrl,
-                                            size: 'full',
-                                            aspectRatio: '20:13',
-                                            aspectMode: 'cover',
-                                            action: {
-                                                type: 'uri',
-                                                // tslint:disable-next-line:no-http-string
-                                                uri: 'http://linecorp.com/'
-                                            }
-                                        },
-                                        body: {
-                                            type: 'box',
-                                            layout: 'vertical',
-                                            spacing: 'md',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: event.name.ja,
-                                                    wrap: true,
-                                                    weight: 'bold',
-                                                    gravity: 'center',
-                                                    size: 'xl'
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'vertical',
-                                                    margin: 'lg',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Date',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: moment(event.startDate).format('llll'),
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Place',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: event.location.name.ja,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Seats',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Ticket Type',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: itemOffered.reservedTicket.ticketType.name.ja,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
+                                        return {
+                                            type: 'bubble',
+                                            hero: {
+                                                type: 'image',
+                                                url: thumbnailImageUrl,
+                                                size: 'full',
+                                                aspectRatio: '20:13',
+                                                aspectMode: 'cover',
+                                                action: {
+                                                    type: 'uri',
+                                                    // tslint:disable-next-line:no-http-string
+                                                    uri: 'http://linecorp.com/'
                                                 }
-                                            ]
-                                        },
-                                        footer: {
-                                            type: 'box',
-                                            layout: 'horizontal',
-                                            contents: [
-                                                {
-                                                    type: 'button',
-                                                    action: {
-                                                        type: 'uri',
-                                                        label: 'チケット発行',
-                                                        uri: 'https://linecorp.com'
+                                            },
+                                            body: {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                spacing: 'md',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: event.name.ja,
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'vertical',
+                                                        margin: 'lg',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Date',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: moment(event.startDate).format('llll'),
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Place',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: event.location.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Seats',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Ticket Type',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
                                                     }
-                                                }
-                                            ]
-                                        }
-                                    };
-                                })
+                                                ]
+                                            },
+                                            footer: {
+                                                type: 'box',
+                                                layout: 'horizontal',
+                                                contents: [
+                                                    {
+                                                        type: 'button',
+                                                        action: {
+                                                            type: 'uri',
+                                                            label: 'チケット発行',
+                                                            uri: 'https://linecorp.com'
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        };
+                                    })
                             ]
                         }
                     }

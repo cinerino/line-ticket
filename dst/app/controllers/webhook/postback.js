@@ -1567,7 +1567,12 @@ function searchScreeningEventReservations(user) {
                                 type: 'carousel',
                                 contents: [
                                     // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                                    ...ownershipInfos.slice(0, 5).map((ownershipInfo) => {
+                                    ...ownershipInfos
+                                        .sort((a, b) => (a.ownedFrom < b.ownedFrom) ? 1 : -1)
+                                        // tslint:disable-next-line:no-magic-numbers
+                                        .slice(0, 10)
+                                        // tslint:disable-next-line:max-func-body-length
+                                        .map((ownershipInfo) => {
                                         const itemOffered = ownershipInfo.typeOfGood;
                                         const event = itemOffered.reservationFor;
                                         const thumbnail = thumbnails.find((t) => t.eventId === event.id);
