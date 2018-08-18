@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // 静的ファイル
-// app.use(express.static(__dirname + '/../public'));
+app.use(express.static(`${__dirname}/../../public`));
 
 // MongoDB接続
 cinerino.mongoose.connect(<string>process.env.MONGOLAB_URI, mongooseConnectionOptions)

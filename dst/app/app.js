@@ -19,7 +19,7 @@ app.use(bodyParser.json());
 // with the querystring library (when false) or the qs library (when true).
 app.use(bodyParser.urlencoded({ extended: true }));
 // 静的ファイル
-// app.use(express.static(__dirname + '/../public'));
+app.use(express.static(`${__dirname}/../../public`));
 // MongoDB接続
 cinerino.mongoose.connect(process.env.MONGOLAB_URI, mongooseConnectionOptions_1.default)
     .then(() => { debug('MongoDB connected!'); })

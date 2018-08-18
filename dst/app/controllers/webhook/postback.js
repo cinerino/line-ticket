@@ -21,7 +21,6 @@ const request = require("request-promise-native");
 const util = require("util");
 const LINE = require("../../../line");
 const debug = createDebug('cinerino-line-ticket:*');
-// const MESSAGE_TRANSACTION_NOT_FOUND = '該当取引はありません';
 const customsearch = googleapis_1.google.customsearch('v1');
 const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
     domain: process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
@@ -90,33 +89,118 @@ function searchEventsByDate(user, date) {
                 to: user.userId,
                 messages: [
                     {
-                        type: 'template',
-                        altText: 'this is a carousel template',
-                        template: {
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: {
                             type: 'carousel',
-                            columns: events.map((event) => {
-                                const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                                const thumbnailImageUrl = (thumbnail !== undefined)
-                                    ? thumbnail.thumbnailLink
-                                    // tslint:disable-next-line:max-line-length
-                                    : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-                                return {
-                                    // tslint:disable-next-line:max-line-length no-http-string
-                                    thumbnailImageUrl: thumbnailImageUrl,
-                                    imageBackgroundColor: '#000000',
-                                    title: event.workPerformed.name,
-                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
-                                    actions: [
-                                        {
-                                            type: 'postback',
-                                            label: '座席確保',
-                                            data: `action=createTmpReservation&eventId=${event.id}`
+                            contents: [
+                                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                                ...events.slice(0, 10).map((event) => {
+                                    // const itemOffered = ownershipInfo.typeOfGood;
+                                    // const event = itemOffered.reservationFor;
+                                    const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                                    const thumbnailImageUrl = (thumbnail !== undefined)
+                                        ? thumbnail.thumbnailLink
+                                        // tslint:disable-next-line:max-line-length
+                                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+                                    return {
+                                        type: 'bubble',
+                                        hero: {
+                                            type: 'image',
+                                            url: thumbnailImageUrl,
+                                            size: 'full',
+                                            aspectRatio: '20:13',
+                                            aspectMode: 'cover',
+                                            action: {
+                                                type: 'uri',
+                                                // tslint:disable-next-line:no-http-string
+                                                uri: 'http://linecorp.com/'
+                                            }
+                                        },
+                                        body: {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            spacing: 'md',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: event.name.ja,
+                                                    wrap: true,
+                                                    weight: 'bold',
+                                                    gravity: 'center',
+                                                    size: 'xl'
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'lg',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Date',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: moment(event.startDate).format('llll'),
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Place',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: event.location.name.ja,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        footer: {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'postback',
+                                                        label: '座席確保',
+                                                        data: `action=createTmpReservation&eventId=${event.id}`
+                                                    }
+                                                }
+                                            ]
                                         }
-                                    ]
-                                };
-                            })
-                            // imageAspectRatio: 'rectangle',
-                            // imageSize: 'cover'
+                                    };
+                                })
+                            ]
                         }
                     }
                 ]
@@ -228,35 +312,51 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                 to: user.userId,
                 messages: [
                     {
-                        type: 'template',
-                        altText: 'This is a buttons template',
-                        template: {
-                            type: 'buttons',
-                            title: '決済方法選択',
-                            text: '決済方法を選択してください。Friend Payの場合、ボタンを押して友達を選択してください。',
-                            actions: [
+                        type: 'text',
+                        text: '決済方法を選択してください',
+                        quickReply: {
+                            items: [
                                 {
-                                    type: 'postback',
-                                    label: 'クレジットカード',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                                        transactionId: transaction.id
-                                    })
+                                    type: 'action',
+                                    imageUrl: `https://${user.host}/img/labels/credit-card-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'クレジットカード',
+                                        data: querystring.stringify({
+                                            action: 'choosePaymentMethod',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                            transactionId: transaction.id
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'postback',
-                                    label: 'コイン',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                        transactionId: transaction.id
-                                    })
+                                    type: 'action',
+                                    imageUrl: `https://${user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'コイン',
+                                        data: querystring.stringify({
+                                            action: 'choosePaymentMethod',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                            transactionId: transaction.id
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'uri',
-                                    label: 'Friend Pay',
-                                    uri: `line://msg/text/?${message}`
+                                    type: 'action',
+                                    imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                                    action: {
+                                        type: 'uri',
+                                        label: 'Friend Pay',
+                                        uri: `line://msg/text/?${message}`
+                                    }
+                                },
+                                {
+                                    type: 'action',
+                                    action: {
+                                        type: 'location',
+                                        label: 'Send location'
+                                    }
                                 }
                             ]
                         }
@@ -280,11 +380,15 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
         });
         let price = 0;
         const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
+        const transactionRepo = new cinerino.repository.Transaction(cinerino.mongoose.connection);
         const authorizeActions = yield actionRepo.findAuthorizeByTransactionId(transactionId);
+        const transaction = yield transactionRepo.findById(cinerinoapi.factory.transactionType.PlaceOrder, transactionId);
         const seatReservations = authorizeActions
             .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
             .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
-        price = seatReservations[0].result.price;
+        const authorizeSeatReservationResult = seatReservations[0].result;
+        price = authorizeSeatReservationResult.price;
+        const tmpReservations = authorizeSeatReservationResult.responseBody.object.reservations;
         // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
         switch (paymentMethodType) {
             case cinerinoapi.factory.paymentMethodType.Account:
@@ -371,25 +475,247 @@ ${price} JPY
                 to: user.userId,
                 messages: [
                     {
-                        type: 'template',
-                        altText: 'This is a buttons template',
-                        template: {
-                            type: 'confirm',
-                            text: '注文を確定しますか？',
-                            actions: [
-                                {
-                                    type: 'postback',
-                                    label: 'Yes',
-                                    data: `action=confirmOrder&transactionId=${transactionId}`
-                                },
-                                {
-                                    type: 'postback',
-                                    label: 'No',
-                                    data: `action=cancelOrder&transactionId=${transactionId}`
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: {
+                            type: 'bubble',
+                            styles: {
+                                footer: {
+                                    separator: true
                                 }
-                            ]
+                            },
+                            body: {
+                                type: 'box',
+                                layout: 'vertical',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'RECEIPT',
+                                        weight: 'bold',
+                                        color: '#1DB446',
+                                        size: 'sm'
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: transaction.seller.name.ja,
+                                        weight: 'bold',
+                                        size: 'xxl',
+                                        margin: 'md',
+                                        maxLines: 0,
+                                        wrap: true
+                                    },
+                                    {
+                                        type: 'separator',
+                                        margin: 'xxl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'xxl',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: tmpReservations[0].reservationFor.name.ja,
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Date',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: `${moment(tmpReservations[0].reservationFor.startDate).format('llll')}`,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Place',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: `${tmpReservations[0].reservationFor.location.name.ja}`,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            ...tmpReservations.map((r) => {
+                                                // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                                const str = `${r.reservedTicket.ticketedSeat.seatNumber} ${r.reservedTicket.ticketType.name.ja}`;
+                                                return {
+                                                    type: 'box',
+                                                    layout: 'horizontal',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: str,
+                                                            size: 'sm',
+                                                            color: '#555555',
+                                                            flex: 0
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: `${r.price} ${r.priceCurrency}`,
+                                                            size: 'sm',
+                                                            color: '#111111',
+                                                            align: 'end'
+                                                        }
+                                                    ]
+                                                };
+                                            }),
+                                            ...[
+                                                {
+                                                    type: 'separator',
+                                                    margin: 'xxl'
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'horizontal',
+                                                    margin: 'xxl',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'ITEMS',
+                                                            size: 'sm',
+                                                            color: '#555555'
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: `${tmpReservations.length}`,
+                                                            size: 'sm',
+                                                            color: '#111111',
+                                                            align: 'end'
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'horizontal',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'TOTAL',
+                                                            size: 'sm',
+                                                            color: '#555555'
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: `${price} ${cinerinoapi.factory.priceCurrency.JPY}`,
+                                                            size: 'sm',
+                                                            color: '#111111',
+                                                            align: 'end'
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                    // {
+                                    //     type: 'separator',
+                                    //     margin: 'xxl'
+                                    // },
+                                    // {
+                                    //     type: 'box',
+                                    //     layout: 'horizontal',
+                                    //     margin: 'md',
+                                    //     contents: [
+                                    //         {
+                                    //             type: 'text',
+                                    //             text: 'PAYMENT ID',
+                                    //             size: 'xs',
+                                    //             color: '#aaaaaa',
+                                    //             flex: 0
+                                    //         },
+                                    //         {
+                                    //             type: 'text',
+                                    //             text: order.paymentMethods[0].paymentMethodId,
+                                    //             color: '#aaaaaa',
+                                    //             size: 'xs',
+                                    //             align: 'end'
+                                    //         }
+                                    //     ]
+                                    // }
+                                ]
+                            },
+                            footer: {
+                                type: 'box',
+                                layout: 'horizontal',
+                                contents: [
+                                    {
+                                        type: 'button',
+                                        action: {
+                                            type: 'postback',
+                                            label: '注文確定',
+                                            data: `action=confirmOrder&transactionId=${transactionId}`
+                                        }
+                                    },
+                                    {
+                                        type: 'button',
+                                        action: {
+                                            type: 'postback',
+                                            label: 'キャンセル',
+                                            data: `action=cancelOrder&transactionId=${transactionId}`
+                                        }
+                                    }
+                                ]
+                            }
                         }
                     }
+                    // {
+                    //     type: 'template',
+                    //     altText: 'This is a buttons template',
+                    //     template: {
+                    //         type: 'confirm',
+                    //         text: '注文を確定しますか？',
+                    //         actions: [
+                    //             {
+                    //                 type: 'postback',
+                    //                 label: 'Yes',
+                    //                 data: `action=confirmOrder&transactionId=${transactionId}`
+                    //             },
+                    //             {
+                    //                 type: 'postback',
+                    //                 label: 'No',
+                    //                 data: `action=cancelOrder&transactionId=${transactionId}`
+                    //             }
+                    //         ]
+                    //     }
+                    // }
                 ]
             }
         }).promise();
