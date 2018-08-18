@@ -76,11 +76,18 @@ export async function sendLoginButton(user: User) {
     let text = 'ログインしてください。一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます。';
     const signInUrl = new URL(user.generateAuthUrl());
     // const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
+    const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
     const actions: any[] = [
         {
             type: 'uri',
             label: 'Sign In',
             uri: signInUrl.href
+            // uri: liffUri
+        },
+        {
+            type: 'uri',
+            label: 'Sign In with Google',
+            uri: googleSignInUrl
             // uri: liffUri
         }
     ];

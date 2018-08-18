@@ -22,29 +22,7 @@
 <script>
     liff.init(
         data => {
-            // Now you can call LIFF API
-            const userId = data.context.userId;
-            liff.getProfile()
-                .then(profile => {
-                    const name = profile.displayName;
-
-                    liff.sendMessages([
-                        {
-                            type: 'text',
-                            text: 'Logged out.'
-                        }
-                    ])
-                        .then(() => {
-                            console.log('message sent');
-                            liff.closeWindow();
-                        })
-                        .catch((err) => {
-                            console.log('error', err);
-                        });
-                })
-                .catch((err) => {
-                    console.log('error', err);
-                });
+            liff.closeWindow();
         },
         err => {
             // LIFF initialization failed
