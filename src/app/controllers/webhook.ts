@@ -115,6 +115,7 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
 /**
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
  */
+// tslint:disable-next-line:max-func-body-length
 export async function postback(event: LINE.IWebhookEvent, user: User) {
     const data = querystring.parse(event.postback.data);
     debug('data:', data);
@@ -126,11 +127,6 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             case 'searchEventsByDate':
                 const date = (data.date !== undefined) ? <string>data.date : <string>event.postback.params.date;
                 await PostbackController.searchEventsByDate(user, date);
-                break;
-
-            // 座席仮予約
-            case 'createTmpReservation':
-                await PostbackController.createTmpReservation(user, <string>data.eventId);
                 break;
 
             // 決済方法選択
@@ -201,6 +197,16 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
 
             case 'searchScreeningEventReservations':
                 await PostbackController.searchScreeningEventReservations(user);
+                break;
+
+            // 座席選択
+            case 'selectSeatOffers':
+                const seatNumbers = (<string>data.seatNumbers).split(',');
+                await PostbackController.selectSeatOffers({
+                    user: user,
+                    eventId: <string>data.eventId,
+                    seatNumbers: seatNumbers
+                });
                 break;
 
             default:

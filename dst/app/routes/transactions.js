@@ -20,10 +20,21 @@ transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __aw
     try {
         // フォーム
         res.render('transactions/inputCreditCard', {
-            amount: req.query.amount,
-            toAccountNumber: req.query.toAccountNumber,
-            gmoShopId: req.query.gmoShopId,
-            cb: req.query.cb // フォームのPOST先
+            gmoShopId: req.query.gmoShopId
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}));
+/**
+ * 座席選択フォーム
+ */
+transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    try {
+        // フォーム
+        res.render('transactions/placeOrder/selectSeatOffers', {
+            eventId: req.query.eventId
         });
     }
     catch (error) {

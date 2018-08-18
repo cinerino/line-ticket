@@ -102,6 +102,8 @@ function searchEventsByDate(user, date) {
                                         ? thumbnail.thumbnailLink
                                         // tslint:disable-next-line:max-line-length
                                         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+                                    const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?eventId=${event.id}`;
+                                    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
                                     return {
                                         type: 'bubble',
                                         hero: {
@@ -190,9 +192,12 @@ function searchEventsByDate(user, date) {
                                                 {
                                                     type: 'button',
                                                     action: {
-                                                        type: 'postback',
-                                                        label: '座席確保',
-                                                        data: `action=createTmpReservation&eventId=${event.id}`
+                                                        type: 'uri',
+                                                        label: '座席選択',
+                                                        uri: liffUri
+                                                        // type: 'postback',
+                                                        // label: '座席選択',
+                                                        // data: `action=createTmpReservation&eventId=${event.id}`
                                                     }
                                                 }
                                             ]
@@ -208,157 +213,6 @@ function searchEventsByDate(user, date) {
     });
 }
 exports.searchEventsByDate = searchEventsByDate;
-/**
- * 座席仮予約
- */
-// tslint:disable-next-line:max-func-body-length
-function createTmpReservation(user, eventId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // イベント詳細取得
-        const eventService = new cinerinoapi.service.Event({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
-        });
-        const event = yield eventService.findScreeningEventById({ eventId: eventId });
-        yield LINE.pushMessage(user.userId, `${event.name.ja}の座席を確保します...`);
-        // 販売者情報取得
-        const organizationService = new cinerinoapi.service.Organization({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
-        });
-        const sellers = yield organizationService.searchMovieTheaters({});
-        const seller = sellers.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
-        if (seller === undefined) {
-            throw new Error('Seller not found');
-        }
-        // 取引開始
-        // 許可証トークンパラメーターがなければ、WAITERで許可証を取得
-        // const passportToken = await request.post(
-        //     `${process.env.WAITER_ENDPOINT}/passports`,
-        //     {
-        //         body: {
-        //             scope: `placeOrderTransaction.${seller.identifier}`
-        //         },
-        //         json: true
-        //     }
-        // ).then((body) => body.token);
-        // debug('passportToken published.', passportToken);
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
-        });
-        const transaction = yield placeOrderService.start({
-            // tslint:disable-next-line:no-magic-numbers
-            expires: moment().add(15, 'minutes').toDate(),
-            sellerId: seller.id
-            // passportToken: passportToken
-        });
-        debug('transaction started.', transaction.id);
-        // 座席選択
-        // 無料鑑賞券取得
-        const ticketTypes = yield eventService.searchScreeningEventTicketTypes({ eventId: eventId });
-        // 空席検索
-        const offers = yield eventService.searchScreeningEventOffers({ eventId: eventId });
-        const seatOffers = offers[0].containsPlace;
-        const availableSeatOffers = seatOffers.filter((o) => o.offers !== undefined && o.offers[0].availability === cinerinoapi.factory.chevre.itemAvailability.InStock);
-        if (availableSeatOffers.length <= 0) {
-            throw new Error('No available seats');
-        }
-        // 券種をランダムに選択
-        // tslint:disable-next-line:insecure-random
-        const selectedTicketType = ticketTypes[Math.floor(ticketTypes.length * Math.random())];
-        // 座席をランダムに選択
-        const selectedScreeningRoomSection = offers[0].branchCode;
-        // tslint:disable-next-line:insecure-random
-        const selectedSeatOffer = availableSeatOffers[Math.floor(availableSeatOffers.length * Math.random())];
-        debug('creating a seat reservation authorization...');
-        const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
-            transactionId: transaction.id,
-            event: { id: event.id },
-            tickets: [
-                {
-                    ticketType: {
-                        id: selectedTicketType.id
-                    },
-                    ticketedSeat: {
-                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                        seatNumber: selectedSeatOffer.branchCode,
-                        seatSection: selectedScreeningRoomSection,
-                        seatRow: '',
-                        seatingType: ''
-                    }
-                }
-            ],
-            notes: 'test from samples'
-        });
-        debug('seatReservationAuthorization:', seatReservationAuthorization);
-        yield LINE.pushMessage(user.userId, `座席 ${selectedSeatOffer.branchCode} を確保しました。`);
-        //     const LINE_ID = process.env.LINE_ID;
-        //     const token = await user.signFriendPayInfo({
-        //         transactionId: transaction.id,
-        //         userId: user.userId,
-        //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
-        //     });
-        //     const friendMessage = `FriendPayToken.${token}`;
-        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
-        // line://oaMessage/${LINE_ID}/?${friendMessage}`);
-        yield request.post({
-            simple: false,
-            url: 'https://api.line.me/v2/bot/message/push',
-            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-            json: true,
-            body: {
-                to: user.userId,
-                messages: [
-                    {
-                        type: 'text',
-                        text: '決済方法を選択してください',
-                        quickReply: {
-                            items: [
-                                {
-                                    type: 'action',
-                                    imageUrl: `https://${user.host}/img/labels/credit-card-64.png`,
-                                    action: {
-                                        type: 'postback',
-                                        label: 'クレジットカード',
-                                        data: querystring.stringify({
-                                            action: 'choosePaymentMethod',
-                                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                                            transactionId: transaction.id
-                                        })
-                                    }
-                                },
-                                {
-                                    type: 'action',
-                                    imageUrl: `https://${user.host}/img/labels/coin-64.png`,
-                                    action: {
-                                        type: 'postback',
-                                        label: 'コイン',
-                                        data: querystring.stringify({
-                                            action: 'choosePaymentMethod',
-                                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                            transactionId: transaction.id
-                                        })
-                                    }
-                                }
-                                // {
-                                //     type: 'action', // ③
-                                //     imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
-                                //     action: {
-                                //         type: 'uri',
-                                //         label: 'Friend Pay',
-                                //         uri: `line://msg/text/?${message}`
-                                //     }
-                                // },
-                            ]
-                        }
-                    }
-                ]
-            }
-        }).promise();
-    });
-}
-exports.createTmpReservation = createTmpReservation;
 // tslint:disable-next-line:max-func-body-length
 function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPrice) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1872,3 +1726,154 @@ function searchScreeningEventReservations(user) {
     });
 }
 exports.searchScreeningEventReservations = searchScreeningEventReservations;
+/**
+ * 座席仮予約
+ */
+// tslint:disable-next-line:max-func-body-length
+function selectSeatOffers(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // イベント詳細取得
+        const eventService = new cinerinoapi.service.Event({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const organizationService = new cinerinoapi.service.Organization({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const event = yield eventService.findScreeningEventById({ eventId: params.eventId });
+        yield LINE.pushMessage(params.user.userId, `${event.name.ja}の座席を確保します...`);
+        // 販売者情報取得
+        const sellers = yield organizationService.searchMovieTheaters({});
+        const seller = sellers.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
+        if (seller === undefined) {
+            throw new Error('Seller not found');
+        }
+        // 取引開始
+        // 許可証トークンパラメーターがなければ、WAITERで許可証を取得
+        // const passportToken = await request.post(
+        //     `${process.env.WAITER_ENDPOINT}/passports`,
+        //     {
+        //         body: {
+        //             scope: `placeOrderTransaction.${seller.identifier}`
+        //         },
+        //         json: true
+        //     }
+        // ).then((body) => body.token);
+        // debug('passportToken published.', passportToken);
+        const transaction = yield placeOrderService.start({
+            // tslint:disable-next-line:no-magic-numbers
+            expires: moment().add(15, 'minutes').toDate(),
+            sellerId: seller.id
+            // passportToken: passportToken
+        });
+        debug('transaction started.', transaction.id);
+        // 座席選択
+        // 無料鑑賞券取得
+        const ticketTypes = yield eventService.searchScreeningEventTicketTypes({ eventId: params.eventId });
+        // 空席検索
+        const offers = yield eventService.searchScreeningEventOffers({ eventId: params.eventId });
+        const seatOffers = offers[0].containsPlace;
+        const availableSeatOffers = seatOffers.filter((o) => o.offers !== undefined && o.offers[0].availability === cinerinoapi.factory.chevre.itemAvailability.InStock);
+        if (availableSeatOffers.length <= 0) {
+            throw new Error('No available seats');
+        }
+        // 券種をランダムに選択
+        // tslint:disable-next-line:insecure-random
+        const selectedTicketType = ticketTypes[Math.floor(ticketTypes.length * Math.random())];
+        // 座席をランダムに選択
+        const selectedScreeningRoomSection = offers[0].branchCode;
+        // tslint:disable-next-line:insecure-random
+        // const selectedSeatOffer = availableSeatOffers[Math.floor(availableSeatOffers.length * Math.random())];
+        debug('creating a seat reservation authorization...');
+        const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
+            transactionId: transaction.id,
+            event: { id: event.id },
+            tickets: params.seatNumbers.map((seatNumber) => {
+                return {
+                    ticketType: {
+                        id: selectedTicketType.id
+                    },
+                    ticketedSeat: {
+                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                        seatNumber: seatNumber,
+                        seatSection: selectedScreeningRoomSection,
+                        seatRow: '',
+                        seatingType: ''
+                    }
+                };
+            }),
+            notes: 'test from samples'
+        });
+        debug('seatReservationAuthorization:', seatReservationAuthorization);
+        yield LINE.pushMessage(params.user.userId, `座席 ${params.seatNumbers.join(' ')} を確保しました。`);
+        //     const LINE_ID = process.env.LINE_ID;
+        //     const token = await user.signFriendPayInfo({
+        //         transactionId: transaction.id,
+        //         userId: user.userId,
+        //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
+        //     });
+        //     const friendMessage = `FriendPayToken.${token}`;
+        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
+        // line://oaMessage/${LINE_ID}/?${friendMessage}`);
+        yield request.post({
+            simple: false,
+            url: 'https://api.line.me/v2/bot/message/push',
+            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+            json: true,
+            body: {
+                to: params.user.userId,
+                messages: [
+                    {
+                        type: 'text',
+                        text: '決済方法を選択してください',
+                        quickReply: {
+                            items: [
+                                {
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'クレジットカード',
+                                        data: querystring.stringify({
+                                            action: 'choosePaymentMethod',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                            transactionId: transaction.id
+                                        })
+                                    }
+                                },
+                                {
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'コイン',
+                                        data: querystring.stringify({
+                                            action: 'choosePaymentMethod',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                            transactionId: transaction.id
+                                        })
+                                    }
+                                }
+                                // {
+                                //     type: 'action', // ③
+                                //     imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                                //     action: {
+                                //         type: 'uri',
+                                //         label: 'Friend Pay',
+                                //         uri: `line://msg/text/?${message}`
+                                //     }
+                                // },
+                            ]
+                        }
+                    }
+                ]
+            }
+        }).promise();
+    });
+}
+exports.selectSeatOffers = selectSeatOffers;

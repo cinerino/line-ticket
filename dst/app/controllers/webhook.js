@@ -106,6 +106,7 @@ exports.message = message;
 /**
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
  */
+// tslint:disable-next-line:max-func-body-length
 function postback(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = querystring.parse(event.postback.data);
@@ -117,10 +118,6 @@ function postback(event, user) {
                 case 'searchEventsByDate':
                     const date = (data.date !== undefined) ? data.date : event.postback.params.date;
                     yield PostbackController.searchEventsByDate(user, date);
-                    break;
-                // 座席仮予約
-                case 'createTmpReservation':
-                    yield PostbackController.createTmpReservation(user, data.eventId);
                     break;
                 // 決済方法選択
                 case 'choosePaymentMethod':
@@ -175,6 +172,15 @@ function postback(event, user) {
                     break;
                 case 'searchScreeningEventReservations':
                     yield PostbackController.searchScreeningEventReservations(user);
+                    break;
+                // 座席選択
+                case 'selectSeatOffers':
+                    const seatNumbers = data.seatNumbers.split(',');
+                    yield PostbackController.selectSeatOffers({
+                        user: user,
+                        eventId: data.eventId,
+                        seatNumbers: seatNumbers
+                    });
                     break;
                 default:
             }

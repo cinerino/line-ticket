@@ -17,7 +17,7 @@
 <body>
     <div class="container">
         <!-- <h1>クレジットカード情報入力</h1> -->
-        <form method="post" action="<%= cb %>">
+        <form method="post">
             <div class="form-group">
                 <label for="cardNumber">CardNumber</label>
                 <input type="tel" name="cardNumber" id="cardNumber" class="form-control input-required" value="" maxlength="16" data-pattern="^[0-9]+$"
@@ -70,8 +70,6 @@
             </div>
 
             <input type="hidden" name="token" value="">
-            <input type="hidden" name="amount" value="<%= amount %>">
-            <input type="hidden" name="toAccountNumber" value="<%= toAccountNumber %>">
 
             <a class="btn btn-primary btn-next" href="javascript:void(0);">
                 <span>Next</span>
