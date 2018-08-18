@@ -1269,7 +1269,7 @@ function searchCreditCards(user) {
                                             contents: [
                                                 {
                                                     type: 'text',
-                                                    text: creditCard.holderName,
+                                                    text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
                                                     wrap: true,
                                                     weight: 'bold',
                                                     gravity: 'center',
@@ -1288,10 +1288,32 @@ function searchCreditCards(user) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
+                                                                    text: 'HolderName',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: creditCard.holderName,
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
                                                                     text: 'CarNo',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1313,33 +1335,11 @@ function searchCreditCards(user) {
                                                                     text: 'Expire',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
                                                                     text: creditCard.expire,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'CardName',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown',
                                                                     wrap: true,
                                                                     color: '#666666',
                                                                     size: 'sm',
@@ -1353,7 +1353,7 @@ function searchCreditCards(user) {
                                         },
                                         footer: {
                                             type: 'box',
-                                            layout: 'horizontal',
+                                            layout: 'vertical',
                                             contents: [
                                                 {
                                                     type: 'button',
