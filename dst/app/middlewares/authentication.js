@@ -16,7 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express_middleware_1 = require("@motionpicture/express-middleware");
 const http_status_1 = require("http-status");
-// import * as querystring from 'querystring';
+const querystring = require("querystring");
 const request = require("request-promise-native");
 const url_1 = require("url");
 const LINE = require("../../line");
@@ -76,19 +76,20 @@ function sendLoginButton(user) {
         // tslint:disable-next-line:no-multiline-string
         let text = 'ログインしてください。一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます。';
         const signInUrl = new url_1.URL(user.generateAuthUrl());
-        // const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
         const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: googleSignInUrl })}`;
         const actions = [
             {
                 type: 'uri',
                 label: 'Sign In',
-                uri: signInUrl.href
+                uri: liffUri
                 // uri: liffUri
             },
             {
                 type: 'uri',
                 label: 'Sign In with Google',
-                uri: googleSignInUrl
+                uri: googleLiffUri
                 // uri: liffUri
             }
         ];

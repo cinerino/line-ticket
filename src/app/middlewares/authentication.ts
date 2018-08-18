@@ -7,7 +7,7 @@ import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
-// import * as querystring from 'querystring';
+import * as querystring from 'querystring';
 import * as request from 'request-promise-native';
 import { URL } from 'url';
 
@@ -75,19 +75,20 @@ export async function sendLoginButton(user: User) {
     // tslint:disable-next-line:no-multiline-string
     let text = 'ログインしてください。一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます。';
     const signInUrl = new URL(user.generateAuthUrl());
-    // const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
     const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+    const googleLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: googleSignInUrl })}`;
     const actions: any[] = [
         {
             type: 'uri',
             label: 'Sign In',
-            uri: signInUrl.href
+            uri: liffUri
             // uri: liffUri
         },
         {
             type: 'uri',
             label: 'Sign In with Google',
-            uri: googleSignInUrl
+            uri: googleLiffUri
             // uri: liffUri
         }
     ];
