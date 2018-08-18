@@ -1261,16 +1261,6 @@ export async function depositCoinByCreditCard(params: {
     });
     await LINE.pushMessage(params.user.userId, '入金処理が完了しました。');
 }
-
-export async function addCreditCard(user: User, token: string) {
-    const personService = new cinerinoapi.service.Person({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
-    });
-    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
-    await LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
-}
-
 /**
  * クレジットカード検索
  */
@@ -1293,33 +1283,150 @@ export async function searchCreditCards(user: User) {
             to: user.userId,
             messages: [
                 {
-                    type: 'template',
-                    altText: 'this is a carousel template',
-                    template: {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: {
                         type: 'carousel',
-                        columns: creditCards.map((creditCard) => {
-                            return {
-                                // tslint:disable-next-line:max-line-length no-http-string
-                                // thumbnailImageUrl: thumbnailImageUrl,
-                                imageBackgroundColor: '#000000',
-                                title: creditCard.cardNo,
-                                text: `${creditCard.cardName} ${creditCard.holderName} ${creditCard.expire}`,
-                                actions: [
-                                    {
-                                        type: 'postback',
-                                        label: '削除する',
-                                        data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                        contents: [
+                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                            ...creditCards.map((creditCard) => {
+                                return {
+                                    type: 'bubble',
+                                    body: {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        spacing: 'md',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: creditCard.holderName,
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'CarNo',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: creditCard.cardNo,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Expire',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: creditCard.expire,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'CardName',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: creditCard.cardName,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    footer: {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'postback',
+                                                    label: '削除',
+                                                    data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                                                }
+                                            },
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'postback',
+                                                    label: 'トークン発行',
+                                                    data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
+                                                }
+                                            }
+                                        ]
                                     }
-                                ]
-                            };
-                        })
-                        // imageAspectRatio: 'rectangle',
-                        // imageSize: 'cover'
+                                };
+                            })
+                        ]
                     }
                 }
             ]
         }
     }).promise();
+}
+export async function addCreditCard(user: User, token: string) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: user.authClient
+    });
+    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
+    await LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
+}
+export async function deleteCreditCard(user: User, cardSeq: string) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: user.authClient
+    });
+    await personService.deleteCreditCard({ personId: 'me', cardSeq: cardSeq });
+    await LINE.pushMessage(user.userId, `クレジットカードが削除されました`);
 }
 export async function searchCoinAccounts(user: User) {
     const personService = new cinerinoapi.service.Person({

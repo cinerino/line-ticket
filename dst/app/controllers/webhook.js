@@ -162,6 +162,10 @@ function postback(event, user) {
                 case 'addCreditCard':
                     yield PostbackController.addCreditCard(user, data.token);
                     break;
+                // クレジットカード削除
+                case 'deleteCreditCard':
+                    yield PostbackController.deleteCreditCard(user, data.cardSeq);
+                    break;
                 // コイン口座検索
                 case 'searchCoinAccounts':
                     yield PostbackController.searchCoinAccounts(user);

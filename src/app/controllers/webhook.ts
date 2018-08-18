@@ -185,6 +185,11 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 await PostbackController.addCreditCard(user, <string>data.token);
                 break;
 
+            // クレジットカード削除
+            case 'deleteCreditCard':
+                await PostbackController.deleteCreditCard(user, <string>data.cardSeq);
+                break;
+
             // コイン口座検索
             case 'searchCoinAccounts':
                 await PostbackController.searchCoinAccounts(user);
