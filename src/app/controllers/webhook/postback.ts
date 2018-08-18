@@ -303,15 +303,15 @@ export async function createTmpReservation(user: User, eventId: string) {
     debug('seatReservationAuthorization:', seatReservationAuthorization);
     await LINE.pushMessage(user.userId, `座席 ${selectedSeatOffer.branchCode} を確保しました。`);
 
-    const LINE_ID = process.env.LINE_ID;
-    const token = await user.signFriendPayInfo({
-        transactionId: transaction.id,
-        userId: user.userId,
-        price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
-    });
-    const friendMessage = `FriendPayToken.${token}`;
-    const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
-line://oaMessage/${LINE_ID}/?${friendMessage}`);
+    //     const LINE_ID = process.env.LINE_ID;
+    //     const token = await user.signFriendPayInfo({
+    //         transactionId: transaction.id,
+    //         userId: user.userId,
+    //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
+    //     });
+    //     const friendMessage = `FriendPayToken.${token}`;
+    //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
+    // line://oaMessage/${LINE_ID}/?${friendMessage}`);
 
     await request.post({
         simple: false,
@@ -351,23 +351,16 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
                                         transactionId: transaction.id
                                     })
                                 }
-                            },
-                            {
-                                type: 'action', // ③
-                                imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
-                                action: {
-                                    type: 'uri',
-                                    label: 'Friend Pay',
-                                    uri: `line://msg/text/?${message}`
-                                }
-                            },
-                            {
-                                type: 'action', // ④
-                                action: {
-                                    type: 'location',
-                                    label: 'Send location'
-                                }
                             }
+                            // {
+                            //     type: 'action', // ③
+                            //     imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                            //     action: {
+                            //         type: 'uri',
+                            //         label: 'Friend Pay',
+                            //         uri: `line://msg/text/?${message}`
+                            //     }
+                            // },
                         ]
                     }
                 }

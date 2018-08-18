@@ -38,7 +38,15 @@ request.post({
                                 "type": "location",
                                 "label": "Send location"
                             }
-                        }
+                        },
+                        // {
+                        //     type: 'action', // ③
+                        //     action: {
+                        //         type: 'uri',
+                        //         label: 'Friend Pay',
+                        //         uri: `line://msg/text/?message`
+                        //     }
+                        // }
                     ]
                 }
             }
