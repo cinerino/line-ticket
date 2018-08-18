@@ -447,14 +447,14 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
         default:
             throw new Error(`Unknown payment method ${paymentMethodType}`);
     }
-
-    const loginTicket = user.authClient.verifyIdToken({});
+    // const loginTicket = user.authClient.verifyIdToken({});
     let contact = await personService.getContacts({ personId: 'me' });
+    const lineProfile = await LINE.getProfile(user.userId);
     contact = {
-        givenName: <string>loginTicket.getUsername(),
-        familyName: <string>loginTicket.getUsername(),
+        givenName: lineProfile.displayName,
+        familyName: 'LINE',
         email: contact.email,
-        telephone: '+819012345678'
+        telephone: '+819012345678' // dummy
     };
     await placeOrderService.setCustomerContact({
         transactionId: transactionId,

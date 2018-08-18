@@ -430,13 +430,14 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
             default:
                 throw new Error(`Unknown payment method ${paymentMethodType}`);
         }
-        const loginTicket = user.authClient.verifyIdToken({});
+        // const loginTicket = user.authClient.verifyIdToken({});
         let contact = yield personService.getContacts({ personId: 'me' });
+        const lineProfile = yield LINE.getProfile(user.userId);
         contact = {
-            givenName: loginTicket.getUsername(),
-            familyName: loginTicket.getUsername(),
+            givenName: lineProfile.displayName,
+            familyName: 'LINE',
             email: contact.email,
-            telephone: '+819012345678'
+            telephone: '+819012345678' // dummy
         };
         yield placeOrderService.setCustomerContact({
             transactionId: transactionId,

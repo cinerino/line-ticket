@@ -44,6 +44,12 @@ export interface IWebhookEvent {
     postback?: any;
     replyToken?: string;
 }
+export interface IProfile {
+    displayName: string;
+    userId: string;
+    pictureUrl: string;
+    statusMessage: string;
+}
 
 import * as createDebug from 'debug';
 import * as request from 'request-promise-native';
@@ -86,6 +92,14 @@ export async function getContent(messageId: string) {
         encoding: null,
         simple: false,
         url: `https://api.line.me/v2/bot/message/${messageId}/content`,
+        auth: { bearer: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN }
+    }).promise();
+}
+export async function getProfile(userId: string): Promise<IProfile> {
+    return request.get({
+        encoding: null,
+        simple: false,
+        url: `https://api.line.me/v2/bot/profile/${userId}`,
         auth: { bearer: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN }
     }).promise();
 }
