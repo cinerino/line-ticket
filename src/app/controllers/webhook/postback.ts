@@ -450,7 +450,7 @@ export async function choosePaymentMethod(user: User, paymentMethodType: Payment
     // const loginTicket = user.authClient.verifyIdToken({});
     let contact = await personService.getContacts({ personId: 'me' });
     const lineProfile = await LINE.getProfile(user.userId);
-    await LINE.pushMessage(user.userId, `displayName:${lineProfile.displayName}`);
+    await LINE.pushMessage(user.userId, `Your display name is ${lineProfile.displayName}`);
     contact = {
         givenName: lineProfile.displayName,
         familyName: 'LINE',
