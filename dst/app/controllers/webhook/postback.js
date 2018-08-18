@@ -1462,6 +1462,28 @@ function searchCoinAccounts(user) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
+                                                                    text: 'Name',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: account.name,
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
                                                                     text: 'Type',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
