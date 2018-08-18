@@ -8,7 +8,6 @@ import { google } from 'googleapis';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
 import * as request from 'request-promise-native';
-import * as util from 'util';
 
 import * as LINE from '../../../line';
 import User from '../../user';
@@ -1449,45 +1448,181 @@ export async function searchCoinAccounts(user: User) {
             to: user.userId,
             messages: [
                 {
-                    type: 'template',
-                    altText: '口座確認',
-
-                    template: {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: {
                         type: 'carousel',
-                        columns: accounts.map((account) => {
-                            const text = util.format(
-                                '口座番号: %s\n残高: %s\n引出可能残高: %s',
-                                account.accountNumber,
-                                account.balance.toLocaleString('ja'),
-                                account.availableBalance.toLocaleString('ja')
-                            );
-
-                            return {
-                                // thumbnailImageUrl: thumbnailImageUrl,
-                                imageBackgroundColor: '#000000',
-                                title: account.accountNumber,
-                                text: text,
-                                actions: [
-                                    {
-                                        type: 'message',
-                                        label: '取引履歴確認',
-                                        text: '口座取引履歴'
+                        contents: [
+                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                            ...accounts.map((account) => {
+                                return {
+                                    type: 'bubble',
+                                    body: {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        spacing: 'md',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: account.accountNumber,
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Type',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 2
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: account.accountType,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Balance',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 2
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: account.balance,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Available',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 2
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: account.availableBalance,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Status',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 2
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: account.status,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'OpenDate',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 2
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: moment(account.openDate).format('lll'),
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
                                     },
-                                    {
-                                        type: 'message',
-                                        label: 'おこづかいをもらう',
-                                        text: 'おこづかい'
-                                    },
-                                    {
-                                        type: 'postback',
-                                        label: 'クレジットカードで入金',
-                                        data: 'action=selectDepositAmount'
+                                    footer: {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        contents: [
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'message',
+                                                    label: '取引履歴確認',
+                                                    text: '口座取引履歴'
+                                                }
+                                            },
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'message',
+                                                    label: 'おこづかいをもらう',
+                                                    text: 'おこづかい'
+                                                }
+                                            },
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'postback',
+                                                    label: 'クレジットカードで入金',
+                                                    data: 'action=selectDepositAmount'
+                                                }
+                                            }
+                                        ]
                                     }
-                                ]
-                            };
-                        })
-                        // imageAspectRatio: 'rectangle',
-                        // imageSize: 'cover'
+                                };
+                            })
+                        ]
                     }
                 }
             ]
