@@ -59,7 +59,6 @@
         }
     );
 
-    var firstSeatLabel = 1;
     $(document).ready(function () {
         var $cart = $('#selected-seats'),
             $counter = $('#counter'),
@@ -92,9 +91,6 @@
                     top: false,
                     rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
                     columns: ['1', '2', '3', '4', '5', '6', '7', '8', '8', '10', '11', '12'],
-                    getLabel: function (character, row, column) {
-                        return firstSeatLabel++;
-                    },
                     getId: function (character, row, column) {
                         return row + '-' + column;
                     },
@@ -165,10 +161,12 @@
             });
             console.log('checking out...', seatNumbers);
 
+            var message = 'postback:' + 'action=selectSeatOffers&seatNumbers=' + seatNumbers.join(',') + '&eventId=' + '<%= eventId %>';
+            console.log('sending message...', message);
             liff.sendMessages([
                 {
                     type: 'text',
-                    text: 'postback:' + 'action=selectSeatOffers&seatNumbers=' + seatNumbers.join(',') & +'&eventId=' + '<%= eventId %>'
+                    text: message
                 }
             ])
                 .then(() => {
