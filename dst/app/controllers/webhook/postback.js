@@ -1261,6 +1261,11 @@ function searchCreditCards(user) {
                                 ...creditCards.map((creditCard) => {
                                     return {
                                         type: 'bubble',
+                                        styles: {
+                                            footer: {
+                                                separator: true
+                                            }
+                                        },
                                         body: {
                                             type: 'box',
                                             layout: 'vertical',
@@ -1353,6 +1358,7 @@ function searchCreditCards(user) {
                                         footer: {
                                             type: 'box',
                                             layout: 'vertical',
+                                            spacing: 'sm',
                                             contents: [
                                                 {
                                                     type: 'button',
@@ -1436,6 +1442,11 @@ function searchCoinAccounts(user) {
                                 ...accounts.map((account) => {
                                     return {
                                         type: 'bubble',
+                                        styles: {
+                                            footer: {
+                                                separator: true
+                                            }
+                                        },
                                         body: {
                                             type: 'box',
                                             layout: 'vertical',
@@ -1594,6 +1605,7 @@ function searchCoinAccounts(user) {
                                         footer: {
                                             type: 'box',
                                             layout: 'vertical',
+                                            spacing: 'sm',
                                             contents: [
                                                 {
                                                     type: 'button',

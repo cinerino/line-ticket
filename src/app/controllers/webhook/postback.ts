@@ -1291,6 +1291,11 @@ export async function searchCreditCards(user: User) {
                             ...creditCards.map((creditCard) => {
                                 return {
                                     type: 'bubble',
+                                    styles: {
+                                        footer: {
+                                            separator: true
+                                        }
+                                    },
                                     body: {
                                         type: 'box',
                                         layout: 'vertical',
@@ -1383,6 +1388,7 @@ export async function searchCreditCards(user: User) {
                                     footer: {
                                         type: 'box',
                                         layout: 'vertical',
+                                        spacing: 'sm',
                                         contents: [
                                             {
                                                 type: 'button',
@@ -1457,6 +1463,11 @@ export async function searchCoinAccounts(user: User) {
                             ...accounts.map((account) => {
                                 return {
                                     type: 'bubble',
+                                    styles: {
+                                        footer: {
+                                            separator: true
+                                        }
+                                    },
                                     body: {
                                         type: 'box',
                                         layout: 'vertical',
@@ -1615,6 +1626,7 @@ export async function searchCoinAccounts(user: User) {
                                     footer: {
                                         type: 'box',
                                         layout: 'vertical',
+                                        spacing: 'sm',
                                         contents: [
                                             {
                                                 type: 'button',
