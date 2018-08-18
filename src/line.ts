@@ -97,7 +97,6 @@ export async function getContent(messageId: string) {
 }
 export async function getProfile(userId: string): Promise<IProfile> {
     return request.get({
-        encoding: null,
         simple: false,
         url: `https://api.line.me/v2/bot/profile/${userId}`,
         auth: { bearer: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN }
