@@ -433,6 +433,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
         // const loginTicket = user.authClient.verifyIdToken({});
         let contact = yield personService.getContacts({ personId: 'me' });
         const lineProfile = yield LINE.getProfile(user.userId);
+        yield LINE.pushMessage(user.userId, `displayName:${lineProfile.displayName}`);
         contact = {
             givenName: lineProfile.displayName,
             familyName: 'LINE',

@@ -1,8 +1,5 @@
 
-const request = require('request-promise-native');
+const LINE = require('../dst/line');
 
-request.get({
-    simple: false,
-    url: `https://api.line.me/v2/bot/profile/U28fba84b4008d60291fc861e2562b34f`,
-    auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-}).then((console.log)).catch(console.error);
+LINE.getProfile('U28fba84b4008d60291fc861e2562b34f')
+    .then((console.log)).catch(console.error);
