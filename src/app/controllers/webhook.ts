@@ -124,7 +124,8 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
         switch (data.action) {
             // イベント検索
             case 'searchEventsByDate':
-                await PostbackController.searchEventsByDate(user, <string>event.postback.params.date);
+                const date = (data.date !== undefined) ? <string>data.date : <string>event.postback.params.date;
+                await PostbackController.searchEventsByDate(user, date);
                 break;
 
             // 座席仮予約

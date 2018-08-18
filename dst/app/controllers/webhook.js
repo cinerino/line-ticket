@@ -115,7 +115,8 @@ function postback(event, user) {
             switch (data.action) {
                 // イベント検索
                 case 'searchEventsByDate':
-                    yield PostbackController.searchEventsByDate(user, event.postback.params.date);
+                    const date = (data.date !== undefined) ? data.date : event.postback.params.date;
+                    yield PostbackController.searchEventsByDate(user, date);
                     break;
                 // 座席仮予約
                 case 'createTmpReservation':

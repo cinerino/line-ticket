@@ -481,22 +481,44 @@ export async function askEventStartDate(userId: string) {
                 to: userId, // 送信相手のuserId
                 messages: [
                     {
-                        type: 'template',
-                        altText: '日付選択',
-                        template: {
-                            type: 'buttons',
-                            text: '上映日は？',
-                            actions: [
+                        type: 'text', // ①
+                        text: '上映日を選択してください',
+                        quickReply: { // ②
+                            items: [
                                 {
-                                    type: 'datetimepicker',
-                                    label: '日付選択',
-                                    mode: 'date',
-                                    data: 'action=searchEventsByDate',
-                                    initial: moment().add(1, 'days').format('YYYY-MM-DD'),
-                                    // tslint:disable-next-line:no-magic-numbers
-                                    max: moment().add(2, 'days').format('YYYY-MM-DD'),
-                                    min: moment().add(1, 'days').format('YYYY-MM-DD')
+                                    type: 'action', // ③
+                                    // imageUrl: `https://${user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: '今日',
+                                        data: querystring.stringify({
+                                            action: 'searchEventsByDate',
+                                            date: moment().add(0, 'days').format('YYYY-MM-DD')
+                                        })
+                                    }
+                                },
+                                {
+                                    type: 'action', // ③
+                                    // imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: '明日',
+                                        data: querystring.stringify({
+                                            action: 'searchEventsByDate',
+                                            date: moment().add(1, 'days').format('YYYY-MM-DD')
+                                        })
+                                    }
                                 }
+                                // {
+                                //     type: 'datetimepicker',
+                                //     label: '日付選択',
+                                //     mode: 'date',
+                                //     data: 'action=searchEventsByDate',
+                                //     initial: moment().add(1, 'days').format('YYYY-MM-DD'),
+                                //     // tslint:disable-next-line:no-magic-numbers
+                                //     max: moment().add(2, 'days').format('YYYY-MM-DD'),
+                                //     min: moment().add(1, 'days').format('YYYY-MM-DD')
+                                // }
                             ]
                         }
                     }
