@@ -1369,7 +1369,7 @@ export async function searchCreditCards(user: User) {
                                                             },
                                                             {
                                                                 type: 'text',
-                                                                text: creditCard.cardName,
+                                                                text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown',
                                                                 wrap: true,
                                                                 color: '#666666',
                                                                 size: 'sm',
