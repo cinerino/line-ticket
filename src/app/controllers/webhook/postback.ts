@@ -502,7 +502,7 @@ ${price} JPY
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'RECEIPT',
+                                    text: '注文をご確認ください',
                                     weight: 'bold',
                                     color: '#1DB446',
                                     size: 'sm'
@@ -515,6 +515,50 @@ ${price} JPY
                                     margin: 'md',
                                     maxLines: 0,
                                     wrap: true
+                                },
+                                {
+                                    type: 'separator',
+                                    margin: 'xxl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    margin: 'xxl',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'NAME',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${contact.givenName} ${contact.familyName}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    margin: 'xxl',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'EMAIL',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${contact.email}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
                                 },
                                 {
                                     type: 'separator',
@@ -658,40 +702,44 @@ ${price} JPY
                                             }
                                         ]
                                     ]
+                                },
+                                {
+                                    type: 'separator',
+                                    margin: 'xxl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    margin: 'md',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '決済方法',
+                                            size: 'xs',
+                                            color: '#aaaaaa',
+                                            flex: 0
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: paymentMethodType,
+                                            color: '#aaaaaa',
+                                            size: 'xs',
+                                            align: 'end'
+                                        }
+                                    ]
                                 }
-                                // {
-                                //     type: 'separator',
-                                //     margin: 'xxl'
-                                // },
-                                // {
-                                //     type: 'box',
-                                //     layout: 'horizontal',
-                                //     margin: 'md',
-                                //     contents: [
-                                //         {
-                                //             type: 'text',
-                                //             text: 'PAYMENT ID',
-                                //             size: 'xs',
-                                //             color: '#aaaaaa',
-                                //             flex: 0
-                                //         },
-                                //         {
-                                //             type: 'text',
-                                //             text: order.paymentMethods[0].paymentMethodId,
-                                //             color: '#aaaaaa',
-                                //             size: 'xs',
-                                //             align: 'end'
-                                //         }
-                                //     ]
-                                // }
                             ]
                         },
                         footer: {
                             type: 'box',
                             layout: 'horizontal',
+                            spacing: 'sm',
                             contents: [
                                 {
                                     type: 'button',
+                                    flex: 2,
+                                    style: 'primary',
+                                    color: '#aaaaaa',
                                     action: {
                                         type: 'postback',
                                         label: '注文確定',

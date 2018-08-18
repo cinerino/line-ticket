@@ -15,6 +15,15 @@ request.post({
                 "quickReply": { // ②
                     "items": [
                         {
+                            type: 'action', // ③
+                            imageUrl: `https://cinerino-line-ticket.azurewebsites.net/img/labels/credit-card-64.png`,
+                            action: {
+                                type: 'postback',
+                                label: 'クレジットカード',
+                                data: 'action=choosePaymentMethod'
+                            }
+                        },
+                        {
                             "type": "action", // ③
                             "imageUrl": "https://example.com/sushi.png",
                             "action": {
