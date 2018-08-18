@@ -1545,7 +1545,7 @@ export async function searchCoinAccounts(user: User) {
                                                             },
                                                             {
                                                                 type: 'text',
-                                                                text: account.balance,
+                                                                text: `${account.balance}`,
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
@@ -1567,7 +1567,7 @@ export async function searchCoinAccounts(user: User) {
                                                             },
                                                             {
                                                                 type: 'text',
-                                                                text: account.availableBalance,
+                                                                text: `${account.availableBalance}`,
                                                                 wrap: true,
                                                                 color: '#666666',
                                                                 size: 'sm',
