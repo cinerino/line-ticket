@@ -565,6 +565,8 @@ function askFromWhenAndToWhen(userId) {
 exports.askFromWhenAndToWhen = askFromWhenAndToWhen;
 function logout(user) {
     return __awaiter(this, void 0, void 0, function* () {
+        const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
         yield request.post({
             simple: false,
             url: LINE.URL_PUSH_MESSAGE,
@@ -583,7 +585,7 @@ function logout(user) {
                                 {
                                     type: 'uri',
                                     label: 'Log out',
-                                    uri: `https://${user.host}/logout?userId=${user.userId}`
+                                    uri: liffUri
                                 }
                             ]
                         }

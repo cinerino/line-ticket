@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * 認証ルーター
  */
 const express = require("express");
-// import * as request from 'request-promise-native';
+const request = require("request-promise-native");
 const LINE = require("../../line");
 const user_1 = require("../user");
 const authRouter = express.Router();
@@ -34,32 +34,33 @@ authRouter.get('/signIn', (req, res, next) => __awaiter(this, void 0, void 0, fu
         });
         yield user.signIn(req.query.code);
         yield LINE.pushMessage(event.source.userId, `Signed in. ${user.payload.username}`);
-        res.render('auth/signIn', {});
+        // res.render('auth/signIn', {
+        // });
         // イベントを強制的に再送信
-        // try {
-        //     await request.post(`https://${req.hostname}/webhook`, {
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         },
-        //         form: body
-        //     }).promise();
-        // } catch (error) {
-        //     await LINE.pushMessage(event.source.userId, error.message);
-        // }
-        // const location = 'line://';
+        try {
+            yield request.post(`https://${req.hostname}/webhook`, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                form: body
+            }).promise();
+        }
+        catch (error) {
+            yield LINE.pushMessage(event.source.userId, error.message);
+        }
+        const location = 'line://';
         // if (event.type === 'message') {
         //     location = `line://oaMessage/${LINE_ID}/?${event.message.text}`;
         // }
-        //             res.send(`
-        // <html>
-        // <body onload="location.href='line://'">
-        // <div style="text-align:center; font-size:400%">
-        // <h1>Hello ${user.payload.username}.</h1>
-        // <a href="${location}">LINEへ戻る</a>
-        // </div>
-        // </body>
-        // </html>`
-        //             );
+        res.send(`
+<html>
+<body>
+<div style="text-align:center; font-size:400%">
+<h1>Hello ${user.payload.username}.</h1>
+<a href="${location}">LINEへ戻る</a>
+</div>
+</body>
+</html>`);
     }
     catch (error) {
         next(error);
@@ -85,16 +86,18 @@ authRouter.get('/logout', (req, res, next) => __awaiter(this, void 0, void 0, fu
             res.redirect(user.generateLogoutUrl());
         }
         else {
-            const location = 'line://';
-            res.send(`
-<html>
-<body onload="location.href='line://'">
-<div style="text-align:center; font-size:400%">
-<h1>Logged out.</h1>
-<a href="${location}">LINEへ戻る</a>
-</div>
-</body>
-</html>`);
+            res.render('auth/logout', {});
+            // const location = 'line://';
+            //                 res.send(`
+            // <html>
+            // <body onload="location.href='line://'">
+            // <div style="text-align:center; font-size:400%">
+            // <h1>Logged out.</h1>
+            // <a href="${location}">LINEへ戻る</a>
+            // </div>
+            // </body>
+            // </html>`
+            //                 );
         }
     }
     catch (error) {

@@ -565,6 +565,8 @@ export async function askFromWhenAndToWhen(userId: string) {
 }
 
 export async function logout(user: User) {
+    const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
     await request.post({
         simple: false,
         url: LINE.URL_PUSH_MESSAGE,
@@ -583,7 +585,7 @@ export async function logout(user: User) {
                             {
                                 type: 'uri',
                                 label: 'Log out',
-                                uri: `https://${user.host}/logout?userId=${user.userId}`
+                                uri: liffUri
                             }
                         ]
                     }
