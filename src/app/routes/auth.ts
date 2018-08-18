@@ -2,7 +2,7 @@
  * 認証ルーター
  */
 import * as express from 'express';
-import * as request from 'request-promise-native';
+// import * as request from 'request-promise-native';
 
 import * as LINE from '../../line';
 import User from '../user';
@@ -31,33 +31,36 @@ authRouter.get(
             await user.signIn(req.query.code);
             await LINE.pushMessage(event.source.userId, `Signed in. ${user.payload.username}`);
 
-            // イベントを強制的に再送信
-            try {
-                await request.post(`https://${req.hostname}/webhook`, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    form: body
-                }).promise();
-            } catch (error) {
-                await LINE.pushMessage(event.source.userId, error.message);
-            }
+            res.render('auth/signIn', {
+            });
 
-            const location = 'line://';
+            // イベントを強制的に再送信
+            // try {
+            //     await request.post(`https://${req.hostname}/webhook`, {
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         form: body
+            //     }).promise();
+            // } catch (error) {
+            //     await LINE.pushMessage(event.source.userId, error.message);
+            // }
+
+            // const location = 'line://';
             // if (event.type === 'message') {
             //     location = `line://oaMessage/${LINE_ID}/?${event.message.text}`;
             // }
 
-            res.send(`
-<html>
-<body onload="location.href='line://'">
-<div style="text-align:center; font-size:400%">
-<h1>Hello ${user.payload.username}.</h1>
-<a href="${location}">LINEへ戻る</a>
-</div>
-</body>
-</html>`
-            );
+            //             res.send(`
+            // <html>
+            // <body onload="location.href='line://'">
+            // <div style="text-align:center; font-size:400%">
+            // <h1>Hello ${user.payload.username}.</h1>
+            // <a href="${location}">LINEへ戻る</a>
+            // </div>
+            // </body>
+            // </html>`
+            //             );
         } catch (error) {
             next(error);
         }
