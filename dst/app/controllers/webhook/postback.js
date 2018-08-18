@@ -444,20 +444,6 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
             contact: contact
         });
         debug('customer contact set.');
-        yield LINE.pushMessage(user.userId, `以下の通り注文を受け付けます...
-------------
-購入者情報
-------------
-${contact.givenName} ${contact.familyName}
-${contact.email}
-${contact.telephone}
-
-------------
-決済方法
-------------
-${paymentMethodType}
-${price} JPY
-`);
         // 注文内容確認
         yield request.post({
             simple: false,
@@ -503,41 +489,47 @@ ${price} JPY
                                     },
                                     {
                                         type: 'box',
-                                        layout: 'horizontal',
+                                        layout: 'vertical',
                                         margin: 'xxl',
+                                        spacing: 'sm',
                                         contents: [
-                                            {
-                                                type: 'text',
-                                                text: 'NAME',
-                                                size: 'sm',
-                                                color: '#555555'
-                                            },
                                             {
                                                 type: 'text',
                                                 text: `${contact.givenName} ${contact.familyName}`,
-                                                size: 'sm',
-                                                color: '#111111',
-                                                align: 'end'
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        margin: 'xxl',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: 'EMAIL',
-                                                size: 'sm',
-                                                color: '#555555'
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
                                             },
                                             {
-                                                type: 'text',
-                                                text: `${contact.email}`,
-                                                size: 'sm',
-                                                color: '#111111',
-                                                align: 'end'
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Email',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: contact.email,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
                                             }
                                         ]
                                     },
@@ -678,47 +670,40 @@ ${price} JPY
                                                             align: 'end'
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'horizontal',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: '決済方法',
+                                                            size: 'sm',
+                                                            color: '#555555'
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: paymentMethodType,
+                                                            size: 'sm',
+                                                            color: '#111111',
+                                                            align: 'end'
+                                                        }
+                                                    ]
                                                 }
                                             ]
-                                        ]
-                                    },
-                                    {
-                                        type: 'separator',
-                                        margin: 'xxl'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        margin: 'md',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '決済方法',
-                                                size: 'xs',
-                                                color: '#aaaaaa',
-                                                flex: 0
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: paymentMethodType,
-                                                color: '#aaaaaa',
-                                                size: 'xs',
-                                                align: 'end'
-                                            }
                                         ]
                                     }
                                 ]
                             },
                             footer: {
                                 type: 'box',
-                                layout: 'horizontal',
+                                layout: 'vertical',
                                 spacing: 'sm',
                                 contents: [
                                     {
                                         type: 'button',
-                                        flex: 2,
+                                        // flex: 2,
                                         style: 'primary',
-                                        color: '#aaaaaa',
                                         action: {
                                             type: 'postback',
                                             label: '注文確定',
@@ -737,26 +722,6 @@ ${price} JPY
                             }
                         }
                     }
-                    // {
-                    //     type: 'template',
-                    //     altText: 'This is a buttons template',
-                    //     template: {
-                    //         type: 'confirm',
-                    //         text: '注文を確定しますか？',
-                    //         actions: [
-                    //             {
-                    //                 type: 'postback',
-                    //                 label: 'Yes',
-                    //                 data: `action=confirmOrder&transactionId=${transactionId}`
-                    //             },
-                    //             {
-                    //                 type: 'postback',
-                    //                 label: 'No',
-                    //                 data: `action=cancelOrder&transactionId=${transactionId}`
-                    //             }
-                    //         ]
-                    //     }
-                    // }
                 ]
             }
         }).promise();
@@ -775,40 +740,6 @@ function confirmOrder(user, transactionId) {
             transactionId: transactionId
         });
         const event = order.acceptedOffers[0].itemOffered.reservationFor;
-        const reservedTickets = order.acceptedOffers.map((orderItem) => {
-            const item = orderItem.itemOffered;
-            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja} ￥${item.reservedTicket.ticketType.charge}`;
-            return str;
-        }).join('\n');
-        const orderDetails = `--------------------
-注文内容
---------------------
-確認番号: ${order.confirmationNumber}
---------------------
-購入者情報
---------------------
-${order.customer.name}
-${order.customer.telephone}
-${order.customer.email}
-${(order.customer.memberOf !== undefined) ? `${order.customer.memberOf.membershipNumber}` : ''}
---------------------
-座席予約
---------------------
-${event.name.ja}
-${moment(event.startDate).format('YYYY-MM-DD HH:mm')}-${moment(event.endDate).format('HH:mm')}
-@${event.superEvent.location.name.ja} ${event.location.name.ja}
-${reservedTickets}
---------------------
-決済方法
---------------------
-${order.paymentMethods.map((p) => p.paymentMethod).join(' ')}
-${order.price}
---------------------
-割引
---------------------
-`;
-        yield LINE.pushMessage(user.userId, orderDetails);
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
