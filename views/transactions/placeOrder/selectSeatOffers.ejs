@@ -10,6 +10,8 @@
     <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
     <script src="/js/jquery.seat-charts.min.js"></script>
     <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="/css/jquery.seat-charts.css">
     <link rel="stylesheet" href="/css/seat-charts.css">
 </head>
@@ -19,23 +21,21 @@
         <div class="container">
             <div id="seat-map">
                 <div class="front-indicator">Front</div>
-
             </div>
             <div class="booking-details">
+                <div id="legend"></div>
                 <h2>Booking Details</h2>
-
-                <h3> Selected Seats (
-                    <span id="counter">0</span>):</h3>
+                <h3> Selected Seats (<span id="counter">0</span>):</h3>
                 <ul id="selected-seats"></ul>
 
-                Total:
+                <!-- Total:
                 <b>$
                     <span id="total">0</span>
-                </b>
+                </b> -->
 
-                <button class="checkout-button">Checkout &raquo;</button>
-
-                <div id="legend"></div>
+                <a class="btn btn-success btn-next checkout-button" href="javascript:void(0);">
+                    <span>Next</span>
+                </a>
             </div>
         </div>
     </div>
@@ -65,15 +65,17 @@
             $total = $('#total'),
             sc = $('#seat-map').seatCharts({
                 map: [
-                    'ee_ee',
-                    'ee_ee',
-                    'ee_ee',
-                    'ee_ee',
-                    'ee___',
-                    'ee_ee',
-                    'ee_ee',
-                    'ee_ee',
-                    'eeeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    '_________',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeee_eeee',
+                    'eeeeeeeee'
                 ],
                 seats: {
                     // f: {
@@ -89,8 +91,8 @@
                 },
                 naming: {
                     top: false,
-                    rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-                    columns: ['1', '2', '3', '4', '5', '6', '7', '8', '8', '10', '11', '12'],
+                    rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'],
+                    columns: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
                     getId: function (character, row, column) {
                         return row + '-' + column;
                     },
@@ -102,14 +104,15 @@
                     node: $('#legend'),
                     items: [
                         // ['f', 'available', 'First Class'],
-                        ['e', 'available', 'Economy Class'],
-                        ['f', 'unavailable', 'Already Booked']
+                        ['e', 'available', 'Normal'],
+                        ['f', 'unavailable', 'Unavailable']
                     ]
                 },
                 click: function () {
                     if (this.status() == 'available') {
                         //let's create a new <li> which we'll add to the cart items
-                        $('<li>' + this.data().category + ' Seat # ' + this.settings.label + ': <b>$' + this.data().price + '</b> <a href="#" class="cancel-cart-item">[cancel]</a></li>')
+                        // $('<li>' + ' # ' + this.settings.label + ' <a href="#" class="cancel-cart-item">[cancel]</a></li>')
+                        $('<li>' + this.settings.label + '</li>')
                             .attr('id', 'cart-item-' + this.settings.id)
                             .data('seatId', this.settings.id)
                             .appendTo($cart);
@@ -121,7 +124,7 @@
                          * 'selected'. This is why we have to add 1 to the length and the current seat price to the total.
                          */
                         $counter.text(sc.find('selected').length + 1);
-                        $total.text(recalculateTotal(sc) + this.data().price);
+                        // $total.text(recalculateTotal(sc) + this.data().price);
 
                         return 'selected';
                     } else if (this.status() == 'selected') {
