@@ -79,7 +79,7 @@ export async function searchEventsByDate(user: User, date: string) {
         });
     }));
     debug(thumbnails);
-    const accessToken = await user.authClient.getAccessToken()
+    const accessToken = await user.authClient.getAccessToken();
 
     await request.post({
         simple: false,
