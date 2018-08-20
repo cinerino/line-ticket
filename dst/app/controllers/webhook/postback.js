@@ -1960,49 +1960,49 @@ function searchAccountMoneyTransferActions(params) {
                                                         },
                                                         {
                                                             type: 'box',
-                                                            layout: 'baseline',
+                                                            layout: 'horizontal',
                                                             spacing: 'sm',
                                                             contents: [
                                                                 {
-                                                                    type: 'text',
-                                                                    text: 'To Name',
-                                                                    wrap: true,
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
+                                                                    type: 'box',
+                                                                    layout: 'vertical',
+                                                                    margin: 'sm',
+                                                                    spacing: 'sm',
+                                                                    flex: 2,
+                                                                    contents: [
+                                                                        {
+                                                                            type: 'text',
+                                                                            text: 'To',
+                                                                            wrap: true,
+                                                                            color: '#aaaaaa',
+                                                                            size: 'sm'
+                                                                        }
+                                                                    ]
                                                                 },
                                                                 {
-                                                                    type: 'text',
-                                                                    // text: `${a.toLocation.name}\n${(<any>a.toLocation).accountNumber}`,
-                                                                    text: `${(a.toLocation.name !== undefined) ? a.toLocation.name : '---'}`,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 5
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'To Account',
-                                                                    wrap: true,
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    text: `${(a.toLocation.accountNumber !== undefined) ? a.toLocation.accountNumber : '---'}`,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 5
+                                                                    type: 'box',
+                                                                    layout: 'vertical',
+                                                                    margin: 'sm',
+                                                                    spacing: 'sm',
+                                                                    flex: 5,
+                                                                    contents: [
+                                                                        {
+                                                                            type: 'text',
+                                                                            // tslint:disable-next-line:max-line-length
+                                                                            text: `${(a.toLocation.name !== undefined) ? a.toLocation.name : '---'}`,
+                                                                            wrap: true,
+                                                                            size: 'sm',
+                                                                            color: '#666666'
+                                                                        },
+                                                                        {
+                                                                            type: 'text',
+                                                                            // tslint:disable-next-line:max-line-length
+                                                                            text: `${(a.toLocation.accountNumber !== undefined) ? a.toLocation.accountNumber : '---'}`,
+                                                                            wrap: true,
+                                                                            size: 'sm',
+                                                                            color: '#666666'
+                                                                        }
+                                                                    ]
                                                                 }
                                                             ]
                                                         },
