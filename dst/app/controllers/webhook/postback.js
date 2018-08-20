@@ -247,8 +247,8 @@ function askPaymentCode(params) {
                             actions: [
                                 {
                                     type: 'uri',
-                                    label: 'QRコード',
-                                    data: liffUri
+                                    label: 'QRコードを読み取る',
+                                    uri: liffUri
                                 }
                             ]
                         }
