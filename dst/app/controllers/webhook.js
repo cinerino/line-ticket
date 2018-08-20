@@ -182,6 +182,14 @@ function postback(event, user) {
                         seatNumbers: seatNumbers
                     });
                     break;
+                // 所有権コード発行
+                case 'authorizeOwnershipInfo':
+                    yield PostbackController.authorizeOwnershipInfo({
+                        user: user,
+                        goodType: data.goodType,
+                        identifier: data.identifier
+                    });
+                    break;
                 default:
             }
         }

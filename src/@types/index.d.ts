@@ -15,7 +15,7 @@ declare global {
 
         interface ITransactionInProgress {
             /**
-             * 取引ID(MongoDBで発行される)
+             * 取引ID
              */
             id: string;
         }

@@ -209,6 +209,15 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 });
                 break;
 
+            // 所有権コード発行
+            case 'authorizeOwnershipInfo':
+                await PostbackController.authorizeOwnershipInfo({
+                    user: user,
+                    goodType: <any>data.goodType,
+                    identifier: <string>data.identifier
+                });
+                break;
+
             default:
         }
     } catch (error) {

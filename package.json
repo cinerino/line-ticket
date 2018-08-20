@@ -10,8 +10,8 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/api-nodejs-client": "^1.0.0-alpha.3",
-    "@cinerino/domain": "^1.0.0-alpha.3",
+    "@cinerino/api-nodejs-client": "^1.0.0-alpha.4",
+    "@cinerino/domain": "^1.0.0-alpha.4",
     "@motionpicture/express-middleware": "^0.1.0",
     "aws-sdk": "^2.250.1",
     "body-parser": "^1.18.3",

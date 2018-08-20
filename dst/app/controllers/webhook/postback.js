@@ -250,9 +250,11 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                 const account = accounts[0];
                 const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
                     transactionId: transactionId,
-                    accountType: cinerinoapi.factory.accountType.Coin,
                     amount: price,
-                    fromAccountNumber: account.accountNumber
+                    fromAccount: {
+                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountNumber: account.accountNumber
+                    }
                 });
                 debug('残高確認済', accountAuthorization);
                 yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
@@ -881,8 +883,10 @@ function confirmFriendPay(user, token) {
         const pecorinoAuthorization = yield placeOrderService.authorizeAccountPayment({
             transactionId: friendPayInfo.transactionId,
             amount: requiredPoint,
-            accountType: cinerinoapi.factory.accountType.Coin,
-            fromAccountNumber: account.accountNumber
+            fromAccount: {
+                accountType: cinerinoapi.factory.accountType.Coin,
+                accountNumber: account.accountNumber
+            }
         });
         debug('残高確認済', pecorinoAuthorization);
         yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
@@ -1228,7 +1232,7 @@ function searchCreditCards(user) {
                                                     type: 'button',
                                                     action: {
                                                         type: 'postback',
-                                                        label: 'トークン発行',
+                                                        label: 'コード発行',
                                                         data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
                                                     }
                                                 }
@@ -1712,9 +1716,13 @@ function searchScreeningEventReservations(user) {
                                                     {
                                                         type: 'button',
                                                         action: {
-                                                            type: 'uri',
-                                                            label: 'チケット発行',
-                                                            uri: 'https://linecorp.com'
+                                                            type: 'postback',
+                                                            label: 'コード発行',
+                                                            data: querystring.stringify({
+                                                                action: 'authorizeOwnershipInfo',
+                                                                goodType: ownershipInfo.typeOfGood.typeOf,
+                                                                identifier: ownershipInfo.identifier
+                                                            })
                                                         }
                                                     }
                                                 ]
@@ -1882,3 +1890,248 @@ function selectSeatOffers(params) {
     });
 }
 exports.selectSeatOffers = selectSeatOffers;
+/**
+ * 所有権コード発行
+ */
+// tslint:disable-next-line:max-func-body-length
+function authorizeOwnershipInfo(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield LINE.pushMessage(params.user.userId, 'コード発行中...');
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const { code } = yield personService.authorizeOwnershipInfo({
+            personId: 'me',
+            goodType: params.goodType,
+            identifier: params.identifier
+        });
+        yield LINE.pushMessage(params.user.userId, 'コードが発行されました');
+        switch (params.goodType) {
+            case cinerinoapi.factory.chevre.reservationType.EventReservation:
+                const ownershipInfos = yield personService.searchScreeningEventReservations({
+                    // goodType: cinerinoapi.factory.reservationType.EventReservation,
+                    personId: 'me'
+                });
+                const reservation = ownershipInfos.find((o) => o.identifier === params.identifier);
+                if (reservation === undefined) {
+                    throw new Error('Reservation not found');
+                }
+                // googleで画像検索
+                const events = [reservation.typeOfGood.reservationFor];
+                const CX = '006320166286449124373:nm_gjsvlgnm';
+                const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
+                const thumbnails = [];
+                yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
+                    return new Promise((resolve) => {
+                        customsearch.cse.list({
+                            cx: CX,
+                            q: event.workPerformed.name,
+                            auth: API_KEY,
+                            num: 1,
+                            rights: 'cc_publicdomain cc_sharealike',
+                            // start: 0,
+                            // imgSize: 'small',
+                            searchType: 'image'
+                        }, (err, res) => {
+                            if (!(err instanceof Error)) {
+                                if (Array.isArray(res.data.items) && res.data.items.length > 0) {
+                                    debug(res.data.items[0]);
+                                    thumbnails.push({
+                                        eventId: event.id,
+                                        link: res.data.items[0].link,
+                                        thumbnailLink: res.data.items[0].image.thumbnailLink
+                                    });
+                                }
+                            }
+                            resolve();
+                        });
+                    });
+                })));
+                debug(thumbnails);
+                const itemOffered = reservation.typeOfGood;
+                const event = itemOffered.reservationFor;
+                const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                const thumbnailImageUrl = (thumbnail !== undefined)
+                    ? thumbnail.thumbnailLink
+                    // tslint:disable-next-line:max-line-length
+                    : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+                yield request.post({
+                    simple: false,
+                    url: 'https://api.line.me/v2/bot/message/push',
+                    auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+                    json: true,
+                    body: {
+                        to: params.user.userId,
+                        messages: [
+                            {
+                                type: 'flex',
+                                altText: 'This is a Flex Message',
+                                contents: {
+                                    type: 'carousel',
+                                    contents: [
+                                        {
+                                            type: 'bubble',
+                                            hero: {
+                                                type: 'image',
+                                                url: thumbnailImageUrl,
+                                                size: 'full',
+                                                aspectRatio: '20:13',
+                                                aspectMode: 'cover',
+                                                action: {
+                                                    type: 'uri',
+                                                    // tslint:disable-next-line:no-http-string
+                                                    uri: 'http://linecorp.com/'
+                                                }
+                                            },
+                                            body: {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                spacing: 'md',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: event.name.ja,
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'vertical',
+                                                        margin: 'lg',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Date',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: moment(event.startDate).format('llll'),
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Place',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: event.location.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Seats',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Ticket Type',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 1
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'vertical',
+                                                                margin: 'xxl',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'spacer'
+                                                                    },
+                                                                    {
+                                                                        type: 'image',
+                                                                        // tslint:disable-next-line:max-line-length
+                                                                        url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
+                                                                        aspectMode: 'cover',
+                                                                        size: 'xl'
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        // tslint:disable-next-line:max-line-length
+                                                                        text: 'You can enter the theater by using this code instead of a ticket',
+                                                                        color: '#aaaaaa',
+                                                                        wrap: true,
+                                                                        margin: 'xxl',
+                                                                        size: 'xs'
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }).promise();
+                break;
+            default:
+                throw new Error(`Unknown goodType ${params.goodType}`);
+        }
+    });
+}
+exports.authorizeOwnershipInfo = authorizeOwnershipInfo;
