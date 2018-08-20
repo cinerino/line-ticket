@@ -1330,12 +1330,23 @@ export async function searchCreditCards(user: User) {
                                         spacing: 'md',
                                         contents: [
                                             {
-                                                type: 'text',
-                                                text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
-                                                wrap: true,
-                                                weight: 'bold',
-                                                gravity: 'center',
-                                                size: 'xl'
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                contents: [
+                                                    {
+                                                        type: 'icon',
+                                                        url: `https://${user.host}/img/labels/credit-card-64.png`
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        margin: 'sm',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    }
+                                                ]
                                             },
                                             {
                                                 type: 'box',
@@ -1516,25 +1527,11 @@ export async function searchCoinAccounts(user: User) {
                                                         text: account.accountNumber,
                                                         wrap: true,
                                                         weight: 'bold',
+                                                        margin: 'sm',
                                                         gravity: 'center',
                                                         size: 'xl'
                                                     }
-                                                    // {
-                                                    //     'type': 'text',
-                                                    //     'text': '400kcl',
-                                                    //     'size': 'sm',
-                                                    //     'align': 'end',
-                                                    //     'color': '#aaaaaa'
-                                                    // }
                                                 ]
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: account.accountNumber,
-                                                wrap: true,
-                                                weight: 'bold',
-                                                gravity: 'center',
-                                                size: 'xl'
                                             },
                                             {
                                                 type: 'box',
