@@ -139,6 +139,8 @@ export async function showCreditCardMenu(user: User) {
     }).promise();
 }
 export async function showCoinAccountMenu(user: User) {
+    const openAccountUri = `https://${user.host}/account/open`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
     await request.post({
         simple: false,
         url: 'https://api.line.me/v2/bot/message/push',
@@ -156,9 +158,9 @@ export async function showCoinAccountMenu(user: User) {
                         text: 'ご用件はなんでしょう？',
                         actions: [
                             {
-                                type: 'postback',
+                                type: 'uri',
                                 label: '口座開設',
-                                data: 'action=openCoinAccounts'
+                                uri: liffUri
                             },
                             {
                                 type: 'postback',

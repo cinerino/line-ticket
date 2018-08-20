@@ -1843,7 +1843,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'Date',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 2
+                                                                flex: 1
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1865,7 +1865,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'Amount',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 2
+                                                                flex: 1
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1887,12 +1887,36 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'From',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 2
+                                                                flex: 1
                                                             },
                                                             {
                                                                 type: 'text',
                                                                 // text: `${a.fromLocation.name}\n${(<any>a.fromLocation).accountNumber}`,
+                                                                // tslint:disable-next-line:max-line-length
                                                                 text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'FromAccount',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                // tslint:disable-next-line:max-line-length
+                                                                text: `${((<any>a.fromLocation).accountNumber !== undefined) ? (<any>a.fromLocation).accountNumber : '---'}`,
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
@@ -1910,7 +1934,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'To',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 2
+                                                                flex: 1
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1930,10 +1954,33 @@ export async function searchAccountMoneyTransferActions(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
+                                                                text: 'ToAccount',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                // tslint:disable-next-line:max-line-length
+                                                                text: `${((<any>a.toLocation).accountNumber !== undefined) ? (<any>a.toLocation).accountNumber : '---'}`,
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
                                                                 text: 'Description',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 2
+                                                                flex: 1
                                                             },
                                                             {
                                                                 type: 'text',
