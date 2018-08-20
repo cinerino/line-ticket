@@ -61,28 +61,30 @@
         function read(a) {
             console.log('result is', a);
             var html = htmlEntities(a);
-            document.getElementById("result").innerHTML = html;
+            $('#result').html(html);
 
-            // LINE送信
-            var transactionId = $('input[name="transactionId"]').val();
-            var message = 'postback:'
-                + 'action=selectPaymentMethodType&paymentMethod=Account'
-                + '&code=' + a
-                + '&transactionId=' + transactionId;
-            console.log('sending message...', message);
-            liff.sendMessages([
-                {
-                    type: 'text',
-                    text: message
-                }
-            ])
-                .then(() => {
-                    console.log('message sent');
-                    liff.closeWindow();
-                })
-                .catch((err) => {
-                    console.log('error', err);
-                });
+            if (!/^error /i.test(a)) {
+                // LINE送信
+                var transactionId = $('input[name="transactionId"]').val();
+                var message = 'postback:'
+                    + 'action=selectPaymentMethodType&paymentMethod=Account'
+                    + '&code=' + a
+                    + '&transactionId=' + transactionId;
+                console.log('sending message...', message);
+                liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: message
+                    }
+                ])
+                    .then(() => {
+                        console.log('message sent');
+                        liff.closeWindow();
+                    })
+                    .catch((err) => {
+                        console.log('error', err);
+                    });
+            }
         }
         function isCanvasSupported() {
             var elem = document.createElement('canvas');
