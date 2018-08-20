@@ -1957,8 +1957,9 @@ export async function searchAccountMoneyTransferActions(params: {
                                                             {
                                                                 type: 'box',
                                                                 layout: 'vertical',
-                                                                margin: 'lg',
+                                                                margin: 'sm',
                                                                 spacing: 'sm',
+                                                                flex: 5,
                                                                 contents: [
                                                                     {
                                                                         type: 'text',
@@ -1966,8 +1967,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                         text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
                                                                         wrap: true,
                                                                         size: 'sm',
-                                                                        color: '#666666',
-                                                                        flex: 5
+                                                                        color: '#666666'
                                                                     },
                                                                     {
                                                                         type: 'text',
@@ -1975,8 +1975,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                         text: `${((<any>a.fromLocation).accountNumber !== undefined) ? (<any>a.fromLocation).accountNumber : '---'}`,
                                                                         wrap: true,
                                                                         size: 'sm',
-                                                                        color: '#666666',
-                                                                        flex: 5
+                                                                        color: '#666666'
                                                                     }
                                                                 ]
                                                             }
