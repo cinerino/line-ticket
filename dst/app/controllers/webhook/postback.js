@@ -102,7 +102,7 @@ function searchEventsByDate(user, date) {
                                         ? thumbnail.thumbnailLink
                                         // tslint:disable-next-line:max-line-length
                                         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-                                    const query = querystring.stringify({ eventId: event.id, accessToken: user.accessToken });
+                                    const query = querystring.stringify({ eventId: event.id, accessToken: user.authClient.getAccessToken() });
                                     const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
                                     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
                                     return {
