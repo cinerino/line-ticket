@@ -1972,7 +1972,6 @@ function authorizeOwnershipInfo(params) {
         switch (params.goodType) {
             case cinerinoapi.factory.chevre.reservationType.EventReservation:
                 const ownershipInfos = yield personService.searchScreeningEventReservations({
-                    // goodType: cinerinoapi.factory.reservationType.EventReservation,
                     personId: 'me'
                 });
                 const reservation = ownershipInfos.find((o) => o.identifier === params.identifier);
@@ -2193,7 +2192,6 @@ function authorizeOwnershipInfo(params) {
                 break;
             case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
                 const accountOwnershipInfos = yield personService.searchAccounts({
-                    // goodType: cinerinoapi.factory.reservationType.EventReservation,
                     personId: 'me',
                     accountType: cinerinoapi.factory.accountType.Coin
                 });

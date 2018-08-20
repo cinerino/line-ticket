@@ -17,7 +17,9 @@
         <input type="hidden" name="transactionId" value="<%= transactionId %>">
         <div class="form-group">
             <!-- <canvas id="out-canvas" width="120" height="120"></canvas> -->
-            <input class="form-control" type="file" onchange="handleFiles(this.files)">
+            <input class="form-control" type="file" onchange="handleFiles(this.files)" name="upfile" id="upfile" accept="image/*" capture="environment"
+            />
+            <!-- <input class="form-control" type="file"> -->
         </div>
         <div id="result"></div>
     </div>
@@ -89,6 +91,7 @@
         function load() {
             if (isCanvasSupported() && window.File && window.FileReader) {
                 qrcode.callback = read;
+                $('#upfile').click();
             } else {
                 var html = '<p id="mp1">QR code scanner for HTML5 capable browsers</p><br>' +
                     '<br><p id="mp2">sorry your browser is not supported</p><br><br>' +
