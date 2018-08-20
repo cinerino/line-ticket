@@ -288,28 +288,6 @@ export async function askScreeningEvent(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
-                                                                text: 'Date',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: moment(event.startDate).format('lll'),
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
                                                                 text: 'Place',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
@@ -1525,6 +1503,31 @@ export async function searchCoinAccounts(user: User) {
                                         layout: 'vertical',
                                         spacing: 'md',
                                         contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                contents: [
+                                                    {
+                                                        type: 'icon',
+                                                        url: `https://${user.host}/img/labels/coin-64.png`
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: account.accountNumber,
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    }
+                                                    // {
+                                                    //     'type': 'text',
+                                                    //     'text': '400kcl',
+                                                    //     'size': 'sm',
+                                                    //     'align': 'end',
+                                                    //     'color': '#aaaaaa'
+                                                    // }
+                                                ]
+                                            },
                                             {
                                                 type: 'text',
                                                 text: account.accountNumber,
