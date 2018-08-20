@@ -51,11 +51,6 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
                         await MessageController.showCoinAccountMenu(user);
                         break;
 
-                    // 口座取引履歴
-                    case /^口座取引履歴$/.test(messageText):
-                        await MessageController.searchAccountTradeActions(user);
-                        break;
-
                     // 顔写真登録
                     case /^顔写真登録$/.test(messageText):
                         await MessageController.startIndexingFace(userId);
@@ -209,6 +204,14 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             // コイン口座検索
             case 'searchCoinAccounts':
                 await PostbackController.searchCoinAccounts(user);
+                break;
+
+            case 'searchAccountMoneyTransferActions':
+                await PostbackController.searchAccountMoneyTransferActions({
+                    user: user,
+                    accountType: <any>data.accountType,
+                    accountNumber: <string>data.accountNumber
+                });
                 break;
 
             case 'askEventStartDate':

@@ -50,10 +50,6 @@ function message(event, user) {
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu(user);
                             break;
-                        // 口座取引履歴
-                        case /^口座取引履歴$/.test(messageText):
-                            yield MessageController.searchAccountTradeActions(user);
-                            break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
                             yield MessageController.startIndexingFace(userId);
@@ -186,6 +182,13 @@ function postback(event, user) {
                 // コイン口座検索
                 case 'searchCoinAccounts':
                     yield PostbackController.searchCoinAccounts(user);
+                    break;
+                case 'searchAccountMoneyTransferActions':
+                    yield PostbackController.searchAccountMoneyTransferActions({
+                        user: user,
+                        accountType: data.accountType,
+                        accountNumber: data.accountNumber
+                    });
                     break;
                 case 'askEventStartDate':
                     yield MessageController.askEventStartDate(user.userId);
