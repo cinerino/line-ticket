@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express = require("express");
+const user_1 = require("../user");
 const transactionsRouter = express.Router();
 /**
  * クレジットカード情報入力フォーム
@@ -33,17 +34,19 @@ transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __aw
  */
 transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const authClient = new cinerinoapi.auth.OAuth2({
-            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
-            clientId: process.env.CINERINO_CLIENT_ID,
-            clientSecret: process.env.CINERINO_CLIENT_SECRET,
-            redirectUri: '',
-            logoutUri: ''
+        const user = new user_1.default({
+            host: req.hostname,
+            userId: req.query.userId,
+            state: ''
         });
-        authClient.setCredentials({ access_token: req.query.accessToken });
+        const credentials = yield req.user.getCredentials();
+        if (credentials === null) {
+            throw new Error('User credentials not found');
+        }
+        user.setCredentials(credentials);
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: authClient
+            auth: user.authClient
         });
         const eventOffers = yield eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
         const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');

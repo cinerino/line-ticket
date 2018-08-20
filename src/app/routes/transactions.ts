@@ -4,6 +4,8 @@
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as express from 'express';
 
+import User from '../user';
+
 const transactionsRouter = express.Router();
 
 /**
@@ -29,17 +31,20 @@ transactionsRouter.get(
     '/transactions/placeOrder/selectSeatOffers',
     async (req, res, next) => {
         try {
-            const authClient = new cinerinoapi.auth.OAuth2({
-                domain: <string>process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
-                clientId: <string>process.env.CINERINO_CLIENT_ID,
-                clientSecret: <string>process.env.CINERINO_CLIENT_SECRET,
-                redirectUri: '',
-                logoutUri: ''
+            const user = new User({
+                host: req.hostname,
+                userId: req.query.userId,
+                state: ''
             });
-            authClient.setCredentials({ access_token: req.query.accessToken });
+
+            const credentials = await req.user.getCredentials();
+            if (credentials === null) {
+                throw new Error('User credentials not found');
+            }
+            user.setCredentials(credentials);
             const eventService = new cinerinoapi.service.Event({
                 endpoint: <string>process.env.CINERINO_ENDPOINT,
-                auth: authClient
+                auth: user.authClient
             });
             const eventOffers = await eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
             const availableSeats = eventOffers[0].containsPlace.filter(
