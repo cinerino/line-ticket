@@ -1912,16 +1912,24 @@ function searchAccountMoneyTransferActions(params) {
                                                         },
                                                         {
                                                             type: 'box',
-                                                            layout: 'baseline',
+                                                            layout: 'horizontal',
                                                             spacing: 'sm',
                                                             contents: [
                                                                 {
-                                                                    type: 'text',
-                                                                    text: 'From',
-                                                                    wrap: true,
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
+                                                                    type: 'box',
+                                                                    layout: 'vertical',
+                                                                    margin: 'sm',
+                                                                    spacing: 'sm',
+                                                                    flex: 2,
+                                                                    contents: [
+                                                                        {
+                                                                            type: 'text',
+                                                                            text: 'From',
+                                                                            wrap: true,
+                                                                            color: '#aaaaaa',
+                                                                            size: 'sm'
+                                                                        }
+                                                                    ]
                                                                 },
                                                                 {
                                                                     type: 'box',
