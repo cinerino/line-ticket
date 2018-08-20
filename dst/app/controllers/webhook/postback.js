@@ -197,7 +197,7 @@ function searchEventsByDate(user, date) {
                                                         type: 'postback',
                                                         label: 'スケジュール選択',
                                                         data: querystring.stringify({
-                                                            action: askScreeningEvent,
+                                                            action: 'askScreeningEvent',
                                                             screeningEventSeriesId: event.id,
                                                             date: date
                                                         })

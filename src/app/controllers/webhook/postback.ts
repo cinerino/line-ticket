@@ -199,7 +199,7 @@ export async function searchEventsByDate(user: User, date: string) {
                                                     type: 'postback',
                                                     label: 'スケジュール選択',
                                                     data: querystring.stringify({
-                                                        action: askScreeningEvent,
+                                                        action: 'askScreeningEvent',
                                                         screeningEventSeriesId: event.id,
                                                         date: date
                                                     })
