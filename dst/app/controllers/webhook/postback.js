@@ -1917,45 +1917,37 @@ function searchAccountMoneyTransferActions(params) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
-                                                                    text: 'From Name',
+                                                                    text: 'From',
                                                                     wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
                                                                 },
                                                                 {
-                                                                    type: 'text',
-                                                                    // text: `${a.fromLocation.name}\n${(<any>a.fromLocation).accountNumber}`,
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 5
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'From Account',
-                                                                    wrap: true,
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    text: `${(a.fromLocation.accountNumber !== undefined) ? a.fromLocation.accountNumber : '---'}`,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 5
+                                                                    type: 'box',
+                                                                    layout: 'vertical',
+                                                                    margin: 'lg',
+                                                                    spacing: 'sm',
+                                                                    contents: [
+                                                                        {
+                                                                            type: 'text',
+                                                                            // tslint:disable-next-line:max-line-length
+                                                                            text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
+                                                                            wrap: true,
+                                                                            size: 'sm',
+                                                                            color: '#666666',
+                                                                            flex: 5
+                                                                        },
+                                                                        {
+                                                                            type: 'text',
+                                                                            // tslint:disable-next-line:max-line-length
+                                                                            text: `${(a.fromLocation.accountNumber !== undefined) ? a.fromLocation.accountNumber : '---'}`,
+                                                                            wrap: true,
+                                                                            size: 'sm',
+                                                                            color: '#666666',
+                                                                            flex: 5
+                                                                        }
+                                                                    ]
                                                                 }
                                                             ]
                                                         },
