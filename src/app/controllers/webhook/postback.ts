@@ -1874,48 +1874,73 @@ export async function selectSeatOffers(params: {
             to: params.user.userId,
             messages: [
                 {
-                    type: 'text', // ①
-                    text: '決済方法を選択してください',
-                    quickReply: {
-                        items: [
+                    type: 'template',
+                    altText: '決済方法',
+                    template: {
+                        type: 'buttons',
+                        title: '決済方法',
+                        text: '決済方法を選択してください',
+                        actions: [
                             {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: 'クレジットカード',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                                        transactionId: transaction.id
-                                    })
-                                }
+                                type: 'postback',
+                                label: 'クレジットカード',
+                                data: querystring.stringify({
+                                    action: 'choosePaymentMethod',
+                                    paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                    transactionId: transaction.id
+                                })
                             },
                             {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: 'コイン',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                        transactionId: transaction.id
-                                    })
-                                }
+                                type: 'postback',
+                                label: 'コイン',
+                                data: querystring.stringify({
+                                    action: 'choosePaymentMethod',
+                                    paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                    transactionId: transaction.id
+                                })
                             },
                             {
-                                type: 'action', // ③
-                                imageUrl: `https://${params.user.host}/img/labels/friend-pay-64.png`,
-                                action: {
-                                    type: 'uri',
-                                    label: 'Friend Pay',
-                                    uri: liffUri
-                                }
+                                type: 'uri',
+                                label: 'Friend Pay',
+                                uri: liffUri
                             }
                         ]
                     }
                 }
+                // {
+                //     type: 'text', // ①
+                //     text: '決済方法を選択してください',
+                //     quickReply: {
+                //         items: [
+                //             {
+                //                 type: 'action',
+                //                 imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                //                 action: {
+                //                     type: 'postback',
+                //                     label: 'クレジットカード',
+                //                     data: querystring.stringify({
+                //                         action: 'choosePaymentMethod',
+                //                         paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                //                         transactionId: transaction.id
+                //                     })
+                //                 }
+                //             },
+                //             {
+                //                 type: 'action',
+                //                 imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                //                 action: {
+                //                     type: 'postback',
+                //                     label: 'コイン',
+                //                     data: querystring.stringify({
+                //                         action: 'choosePaymentMethod',
+                //                         paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                //                         transactionId: transaction.id
+                //                     })
+                //                 }
+                //             }
+                //         ]
+                //     }
+                // }
             ]
         }
     }).promise();
