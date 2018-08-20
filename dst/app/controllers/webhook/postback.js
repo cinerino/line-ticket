@@ -1833,6 +1833,8 @@ function selectSeatOffers(params) {
         //     const friendMessage = `FriendPayToken.${token}`;
         //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
         // line://oaMessage/${LINE_ID}/?${friendMessage}`);
+        const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${transaction.id}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
@@ -1871,16 +1873,16 @@ function selectSeatOffers(params) {
                                             transactionId: transaction.id
                                         })
                                     }
+                                },
+                                {
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/friend-pay-64.png`,
+                                    action: {
+                                        type: 'uri',
+                                        label: 'Friend Pay',
+                                        uri: liffUri
+                                    }
                                 }
-                                // {
-                                //     type: 'action', // ③
-                                //     imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
-                                //     action: {
-                                //         type: 'uri',
-                                //         label: 'Friend Pay',
-                                //         uri: `line://msg/text/?${message}`
-                                //     }
-                                // },
                             ]
                         }
                     }
@@ -1922,11 +1924,11 @@ function authorizeOwnershipInfo(params) {
                 const CX = '006320166286449124373:nm_gjsvlgnm';
                 const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
                 const thumbnails = [];
-                yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
+                yield Promise.all(events.map((e) => __awaiter(this, void 0, void 0, function* () {
                     return new Promise((resolve) => {
                         customsearch.cse.list({
                             cx: CX,
-                            q: event.workPerformed.name,
+                            q: e.workPerformed.name,
                             auth: API_KEY,
                             num: 1,
                             rights: 'cc_publicdomain cc_sharealike',
@@ -1938,7 +1940,7 @@ function authorizeOwnershipInfo(params) {
                                 if (Array.isArray(res.data.items) && res.data.items.length > 0) {
                                     debug(res.data.items[0]);
                                     thumbnails.push({
-                                        eventId: event.id,
+                                        eventId: e.id,
                                         link: res.data.items[0].link,
                                         thumbnailLink: res.data.items[0].image.thumbnailLink
                                     });

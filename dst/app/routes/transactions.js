@@ -41,4 +41,18 @@ transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, n
         next(error);
     }
 }));
+/**
+ * QRスキャン
+ */
+transactionsRouter.get('/transactions/placeOrder/scanQRCode', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    try {
+        // フォーム
+        res.render('transactions/placeOrder/scanQRCode', {
+            eventId: req.query.eventId
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}));
 exports.default = transactionsRouter;

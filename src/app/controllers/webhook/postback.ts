@@ -1862,6 +1862,8 @@ export async function selectSeatOffers(params: {
     //     const friendMessage = `FriendPayToken.${token}`;
     //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
     // line://oaMessage/${LINE_ID}/?${friendMessage}`);
+    const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${transaction.id}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
 
     await request.post({
         simple: false,
@@ -1901,16 +1903,16 @@ export async function selectSeatOffers(params: {
                                         transactionId: transaction.id
                                     })
                                 }
+                            },
+                            {
+                                type: 'action', // ③
+                                imageUrl: `https://${params.user.host}/img/labels/friend-pay-64.png`,
+                                action: {
+                                    type: 'uri',
+                                    label: 'Friend Pay',
+                                    uri: liffUri
+                                }
                             }
-                            // {
-                            //     type: 'action', // ③
-                            //     imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
-                            //     action: {
-                            //         type: 'uri',
-                            //         label: 'Friend Pay',
-                            //         uri: `line://msg/text/?${message}`
-                            //     }
-                            // },
                         ]
                     }
                 }

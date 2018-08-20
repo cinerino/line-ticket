@@ -37,4 +37,20 @@ transactionsRouter.get(
         }
     });
 
+/**
+ * QRスキャン
+ */
+transactionsRouter.get(
+    '/transactions/placeOrder/scanQRCode',
+    async (req, res, next) => {
+        try {
+            // フォーム
+            res.render('transactions/placeOrder/scanQRCode', {
+                eventId: req.query.eventId
+            });
+        } catch (error) {
+            next(error);
+        }
+    });
+
 export default transactionsRouter;
