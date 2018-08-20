@@ -1728,6 +1728,7 @@ function searchAccountMoneyTransferActions(params) {
         if (accountOwnershipInfo === undefined) {
             throw new Error('口座が見つかりません');
         }
+        yield LINE.pushMessage(params.user.userId, '取引履歴を検索しています...');
         let transferActions = yield personService.searchAccountMoneyTransferActions({
             personId: 'me',
             accountType: params.accountType,
@@ -1770,11 +1771,11 @@ function searchAccountMoneyTransferActions(params) {
                                     }
                                     return {
                                         type: 'bubble',
-                                        styles: {
-                                            footer: {
-                                                separator: true
-                                            }
-                                        },
+                                        // styles: {
+                                        //     footer: {
+                                        //         separator: true
+                                        //     }
+                                        // },
                                         body: {
                                             type: 'box',
                                             layout: 'vertical',
@@ -1798,125 +1799,125 @@ function searchAccountMoneyTransferActions(params) {
                                                             size: 'xl'
                                                         }
                                                     ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'vertical',
-                                                    margin: 'lg',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Date',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: moment(a.endDate).format('YY.MM.DD HH:mm'),
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Amount',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: a.amount,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'From',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: `${a.fromLocation.name}\n${a.fromLocation.accountNumber}`,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'To',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: `${a.toLocation.name}\n${a.toLocation.accountNumber}`,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Description',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: (a.description !== undefined) ? a.description : '---',
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
                                                 }
+                                                // {
+                                                //     type: 'box',
+                                                //     layout: 'vertical',
+                                                //     margin: 'lg',
+                                                //     spacing: 'sm',
+                                                //     contents: [
+                                                //         {
+                                                //             type: 'box',
+                                                //             layout: 'baseline',
+                                                //             spacing: 'sm',
+                                                //             contents: [
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: 'Date',
+                                                //                     color: '#aaaaaa',
+                                                //                     size: 'sm',
+                                                //                     flex: 2
+                                                //                 },
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: moment(a.endDate).format('YY.MM.DD HH:mm'),
+                                                //                     wrap: true,
+                                                //                     size: 'sm',
+                                                //                     color: '#666666',
+                                                //                     flex: 4
+                                                //                 }
+                                                //             ]
+                                                //         },
+                                                //         {
+                                                //             type: 'box',
+                                                //             layout: 'baseline',
+                                                //             spacing: 'sm',
+                                                //             contents: [
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: 'Amount',
+                                                //                     color: '#aaaaaa',
+                                                //                     size: 'sm',
+                                                //                     flex: 2
+                                                //                 },
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: a.amount,
+                                                //                     wrap: true,
+                                                //                     size: 'sm',
+                                                //                     color: '#666666',
+                                                //                     flex: 4
+                                                //                 }
+                                                //             ]
+                                                //         },
+                                                //         {
+                                                //             type: 'box',
+                                                //             layout: 'baseline',
+                                                //             spacing: 'sm',
+                                                //             contents: [
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: 'From',
+                                                //                     color: '#aaaaaa',
+                                                //                     size: 'sm',
+                                                //                     flex: 2
+                                                //                 },
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: `${a.fromLocation.name}\n${(<any>a.fromLocation).accountNumber}`,
+                                                //                     wrap: true,
+                                                //                     size: 'sm',
+                                                //                     color: '#666666',
+                                                //                     flex: 4
+                                                //                 }
+                                                //             ]
+                                                //         },
+                                                //         {
+                                                //             type: 'box',
+                                                //             layout: 'baseline',
+                                                //             spacing: 'sm',
+                                                //             contents: [
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: 'To',
+                                                //                     color: '#aaaaaa',
+                                                //                     size: 'sm',
+                                                //                     flex: 2
+                                                //                 },
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: `${a.toLocation.name}\n${(<any>a.toLocation).accountNumber}`,
+                                                //                     wrap: true,
+                                                //                     color: '#666666',
+                                                //                     size: 'sm',
+                                                //                     flex: 4
+                                                //                 }
+                                                //             ]
+                                                //         },
+                                                //         {
+                                                //             type: 'box',
+                                                //             layout: 'baseline',
+                                                //             spacing: 'sm',
+                                                //             contents: [
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: 'Description',
+                                                //                     color: '#aaaaaa',
+                                                //                     size: 'sm',
+                                                //                     flex: 2
+                                                //                 },
+                                                //                 {
+                                                //                     type: 'text',
+                                                //                     text: (a.description !== undefined) ? a.description : '---',
+                                                //                     wrap: true,
+                                                //                     color: '#666666',
+                                                //                     size: 'sm',
+                                                //                     flex: 4
+                                                //                 }
+                                                //             ]
+                                                //         }
+                                                //     ]
+                                                // }
                                             ]
                                         }
                                     };
