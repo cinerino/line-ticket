@@ -1332,11 +1332,11 @@ function searchCoinAccounts(user) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
         });
-        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
-        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-        debug('accounts:', accounts);
-        if (accounts.length === 0) {
+        let accountOwnershipInfos = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin });
+        accountOwnershipInfos = accountOwnershipInfos
+            .filter((o) => o.typeOfGood.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+        debug('accounts:', accountOwnershipInfos);
+        if (accountOwnershipInfos.length === 0) {
             throw new Error('口座未開設です');
         }
         yield request.post({
@@ -1354,7 +1354,8 @@ function searchCoinAccounts(user) {
                             type: 'carousel',
                             contents: [
                                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                                ...accounts.map((account) => {
+                                ...accountOwnershipInfos.map((ownershipInfo) => {
+                                    const account = ownershipInfo.typeOfGood;
                                     return {
                                         type: 'bubble',
                                         styles: {
@@ -1544,6 +1545,18 @@ function searchCoinAccounts(user) {
                                                         type: 'postback',
                                                         label: 'クレジットカードで入金',
                                                         data: 'action=selectDepositAmount'
+                                                    }
+                                                },
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'postback',
+                                                        label: 'コード発行',
+                                                        data: querystring.stringify({
+                                                            action: 'authorizeOwnershipInfo',
+                                                            goodType: ownershipInfo.typeOfGood.typeOf,
+                                                            identifier: ownershipInfo.identifier
+                                                        })
                                                     }
                                                 }
                                             ]
@@ -2133,6 +2146,227 @@ function authorizeOwnershipInfo(params) {
                                                                     {
                                                                         type: 'text',
                                                                         text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'vertical',
+                                                                margin: 'xxl',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'spacer'
+                                                                    },
+                                                                    {
+                                                                        type: 'image',
+                                                                        // tslint:disable-next-line:max-line-length
+                                                                        url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
+                                                                        aspectMode: 'cover',
+                                                                        size: 'xl'
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        // tslint:disable-next-line:max-line-length
+                                                                        text: 'You can enter the theater by using this code instead of a ticket',
+                                                                        color: '#aaaaaa',
+                                                                        wrap: true,
+                                                                        margin: 'xxl',
+                                                                        size: 'xs'
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }).promise();
+                break;
+            case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
+                const accountOwnershipInfos = yield personService.searchAccounts({
+                    // goodType: cinerinoapi.factory.reservationType.EventReservation,
+                    personId: 'me',
+                    accountType: cinerinoapi.factory.accountType.Coin
+                });
+                const accountOwnershipInfo = accountOwnershipInfos.find((o) => o.identifier === params.identifier);
+                if (accountOwnershipInfo === undefined) {
+                    throw new Error('Account not found');
+                }
+                const account = accountOwnershipInfo.typeOfGood;
+                yield request.post({
+                    simple: false,
+                    url: 'https://api.line.me/v2/bot/message/push',
+                    auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+                    json: true,
+                    body: {
+                        to: params.user.userId,
+                        messages: [
+                            {
+                                type: 'flex',
+                                altText: 'This is a Flex Message',
+                                contents: {
+                                    type: 'carousel',
+                                    contents: [
+                                        {
+                                            type: 'bubble',
+                                            styles: {
+                                                footer: {
+                                                    separator: true
+                                                }
+                                            },
+                                            body: {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                spacing: 'md',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: account.accountNumber,
+                                                        wrap: true,
+                                                        weight: 'bold',
+                                                        gravity: 'center',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'vertical',
+                                                        margin: 'lg',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Name',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: account.name,
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Type',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: account.accountType,
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Balance',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: `${account.balance}`,
+                                                                        wrap: true,
+                                                                        size: 'sm',
+                                                                        color: '#666666',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Available',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: `${account.availableBalance}`,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'Status',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: account.status,
+                                                                        wrap: true,
+                                                                        color: '#666666',
+                                                                        size: 'sm',
+                                                                        flex: 4
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                type: 'box',
+                                                                layout: 'baseline',
+                                                                spacing: 'sm',
+                                                                contents: [
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: 'OpenDate',
+                                                                        color: '#aaaaaa',
+                                                                        size: 'sm',
+                                                                        flex: 2
+                                                                    },
+                                                                    {
+                                                                        type: 'text',
+                                                                        text: moment(account.openDate).format('lll'),
                                                                         wrap: true,
                                                                         color: '#666666',
                                                                         size: 'sm',
