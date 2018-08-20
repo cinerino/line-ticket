@@ -39,7 +39,7 @@ transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, n
             userId: req.query.userId,
             state: ''
         });
-        const credentials = yield req.user.getCredentials();
+        const credentials = yield user.getCredentials();
         if (credentials === null) {
             throw new Error('User credentials not found');
         }

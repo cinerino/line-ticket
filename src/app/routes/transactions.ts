@@ -36,8 +36,7 @@ transactionsRouter.get(
                 userId: req.query.userId,
                 state: ''
             });
-
-            const credentials = await req.user.getCredentials();
+            const credentials = await user.getCredentials();
             if (credentials === null) {
                 throw new Error('User credentials not found');
             }
