@@ -129,10 +129,22 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 await PostbackController.searchEventsByDate(user, date);
                 break;
 
+            // 決済コードをたずねる
+            case 'askPaymentCode':
+                await PostbackController.askPaymentCode({
+                    user: user,
+                    transactionId: <string>data.transactionId
+                });
+                break;
+
             // 決済方法選択
-            case 'choosePaymentMethod':
-                await PostbackController.choosePaymentMethod(
-                    user, <PostbackController.PaymentMethodType>data.paymentMethod, <string>data.transactionId, 0);
+            case 'selectPaymentMethodType':
+                await PostbackController.selectPaymentMethodType({
+                    user: user,
+                    paymentMethodType: <PostbackController.PaymentMethodType>data.paymentMethod,
+                    transactionId: <string>data.transactionId,
+                    code: <string>data.code
+                });
                 break;
 
             // 注文確定
@@ -152,10 +164,10 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 break;
 
             // 友達決済承認確定
-            case 'continueTransactionAfterFriendPayConfirmation':
-                await PostbackController.choosePaymentMethod(
-                    user, 'FriendPay', <string>data.transactionId, parseInt(<string>data.price, 10));
-                break;
+            // case 'continueTransactionAfterFriendPayConfirmation':
+            //     await PostbackController.selectPaymentMethodType(
+            //         user, 'FriendPay', <string>data.transactionId, parseInt(<string>data.price, 10));
+            //     break;
 
             // 口座入金金額選択
             case 'selectDepositAmount':

@@ -213,22 +213,75 @@ function searchEventsByDate(user, date) {
     });
 }
 exports.searchEventsByDate = searchEventsByDate;
+/**
+ * 決済コードをたずねる
+ */
+function askPaymentCode(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //     const LINE_ID = process.env.LINE_ID;
+        //     const token = await user.signFriendPayInfo({
+        //         transactionId: transaction.id,
+        //         userId: user.userId,
+        //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
+        //     });
+        //     const friendMessage = `FriendPayToken.${token}`;
+        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
+        // line://oaMessage/${LINE_ID}/?${friendMessage}`);
+        const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+        yield request.post({
+            simple: false,
+            url: 'https://api.line.me/v2/bot/message/push',
+            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+            json: true,
+            body: {
+                to: params.user.userId,
+                messages: [
+                    {
+                        type: 'template',
+                        altText: '決済コード',
+                        template: {
+                            type: 'buttons',
+                            title: '決済コード',
+                            text: '決済コードを入力してください',
+                            actions: [
+                                {
+                                    type: 'uri',
+                                    label: 'QRコード',
+                                    data: liffUri
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }).promise();
+    });
+}
+exports.askPaymentCode = askPaymentCode;
+/**
+ * 決済方法選択
+ */
 // tslint:disable-next-line:max-func-body-length
-function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPrice) {
+function selectPaymentMethodType(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
+            auth: params.user.authClient
         });
         const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
+            auth: params.user.authClient
+        });
+        const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
         });
         let price = 0;
         const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
         const transactionRepo = new cinerino.repository.Transaction(cinerino.mongoose.connection);
-        const authorizeActions = yield actionRepo.findAuthorizeByTransactionId(transactionId);
-        const transaction = yield transactionRepo.findById(cinerinoapi.factory.transactionType.PlaceOrder, transactionId);
+        const authorizeActions = yield actionRepo.findAuthorizeByTransactionId(params.transactionId);
+        const transaction = yield transactionRepo.findById(cinerinoapi.factory.transactionType.PlaceOrder, params.transactionId);
         const seatReservations = authorizeActions
             .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
             .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
@@ -236,31 +289,35 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
         price = authorizeSeatReservationResult.price;
         const tmpReservations = authorizeSeatReservationResult.responseBody.object.reservations;
         // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
-        switch (paymentMethodType) {
+        switch (params.paymentMethodType) {
             case cinerinoapi.factory.paymentMethodType.Account:
-                yield LINE.pushMessage(user.userId, '残高を確認しています...');
-                // 口座番号取得
-                let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-                    .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
-                accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-                debug('accounts:', accounts);
-                if (accounts.length === 0) {
-                    throw new Error('口座未開設です');
-                }
-                const account = accounts[0];
-                const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
-                    transactionId: transactionId,
-                    amount: price,
-                    fromAccount: {
-                        accountType: cinerinoapi.factory.accountType.Coin,
-                        accountNumber: account.accountNumber
+                yield LINE.pushMessage(params.user.userId, '残高を確認しています...');
+                let account;
+                if (params.code === undefined) {
+                    // 口座番号取得
+                    let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+                        .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
+                    accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+                    debug('accounts:', accounts);
+                    if (accounts.length === 0) {
+                        throw new Error('口座未開設です');
                     }
+                    account = accounts[0];
+                }
+                else {
+                    const { token } = yield ownershipInfoService.getToken({ code: params.code });
+                    account = token;
+                }
+                const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
+                    transactionId: params.transactionId,
+                    amount: price,
+                    fromAccount: account
                 });
                 debug('残高確認済', accountAuthorization);
-                yield LINE.pushMessage(user.userId, '残高の確認がとれました。');
+                yield LINE.pushMessage(params.user.userId, '残高の確認がとれました。');
                 break;
             case cinerinoapi.factory.paymentMethodType.CreditCard:
-                yield LINE.pushMessage(user.userId, 'クレジットカードを確認しています...');
+                yield LINE.pushMessage(params.user.userId, 'クレジットカードを確認しています...');
                 // 口座番号取得
                 const creditCards = yield personService.searchCreditCards({ personId: 'me' });
                 if (creditCards.length === 0) {
@@ -269,7 +326,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                 const creditCard = creditCards[0];
                 const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
                 yield placeOrderService.authorizeCreditCardPayment({
-                    transactionId: transactionId,
+                    transactionId: params.transactionId,
                     amount: price,
                     orderId: orderId,
                     method: '1',
@@ -279,17 +336,15 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                         // cardPass?: string;
                     }
                 });
-                yield LINE.pushMessage(user.userId, `${creditCard.cardNo}で決済を受け付けます`);
+                yield LINE.pushMessage(params.user.userId, `${creditCard.cardNo}で決済を受け付けます`);
                 break;
-            case 'FriendPay':
-                price = friendPayPrice;
             default:
-                throw new Error(`Unknown payment method ${paymentMethodType}`);
+                throw new Error(`Unknown payment method ${params.paymentMethodType}`);
         }
         // const loginTicket = user.authClient.verifyIdToken({});
         let contact = yield personService.getContacts({ personId: 'me' });
-        const lineProfile = yield LINE.getProfile(user.userId);
-        yield LINE.pushMessage(user.userId, `Your display name is ${lineProfile.displayName}`);
+        const lineProfile = yield LINE.getProfile(params.user.userId);
+        yield LINE.pushMessage(params.user.userId, `Your display name is ${lineProfile.displayName}`);
         contact = {
             givenName: lineProfile.displayName,
             familyName: 'LINE',
@@ -297,7 +352,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
             telephone: '+819012345678' // dummy
         };
         yield placeOrderService.setCustomerContact({
-            transactionId: transactionId,
+            transactionId: params.transactionId,
             contact: contact
         });
         debug('customer contact set.');
@@ -308,7 +363,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
             auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
             json: true,
             body: {
-                to: user.userId,
+                to: params.user.userId,
                 messages: [
                     {
                         type: 'flex',
@@ -540,7 +595,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: paymentMethodType,
+                                                            text: params.paymentMethodType,
                                                             size: 'sm',
                                                             color: '#111111',
                                                             align: 'end'
@@ -564,7 +619,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                                         action: {
                                             type: 'postback',
                                             label: '注文確定',
-                                            data: `action=confirmOrder&transactionId=${transactionId}`
+                                            data: `action=confirmOrder&transactionId=${params.transactionId}`
                                         }
                                     },
                                     {
@@ -572,7 +627,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
                                         action: {
                                             type: 'postback',
                                             label: 'キャンセル',
-                                            data: `action=cancelOrder&transactionId=${transactionId}`
+                                            data: `action=cancelOrder&transactionId=${params.transactionId}`
                                         }
                                     }
                                 ]
@@ -584,7 +639,7 @@ function choosePaymentMethod(user, paymentMethodType, transactionId, friendPayPr
         }).promise();
     });
 }
-exports.choosePaymentMethod = choosePaymentMethod;
+exports.selectPaymentMethodType = selectPaymentMethodType;
 // tslint:disable-next-line:max-func-body-length
 function confirmOrder(user, transactionId) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1824,17 +1879,6 @@ function selectSeatOffers(params) {
         });
         debug('seatReservationAuthorization:', seatReservationAuthorization);
         yield LINE.pushMessage(params.user.userId, `座席 ${params.seatNumbers.join(' ')} を確保しました。`);
-        //     const LINE_ID = process.env.LINE_ID;
-        //     const token = await user.signFriendPayInfo({
-        //         transactionId: transaction.id,
-        //         userId: user.userId,
-        //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
-        //     });
-        //     const friendMessage = `FriendPayToken.${token}`;
-        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
-        // line://oaMessage/${LINE_ID}/?${friendMessage}`);
-        const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${transaction.id}`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
@@ -1844,73 +1888,51 @@ function selectSeatOffers(params) {
                 to: params.user.userId,
                 messages: [
                     {
-                        type: 'template',
-                        altText: '決済方法',
-                        template: {
-                            type: 'buttons',
-                            title: '決済方法',
-                            text: '決済方法を選択してください',
-                            actions: [
+                        type: 'text',
+                        text: '決済方法を選択してください',
+                        quickReply: {
+                            items: [
                                 {
-                                    type: 'postback',
-                                    label: 'クレジットカード',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                                        transactionId: transaction.id
-                                    })
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'クレジットカード',
+                                        data: querystring.stringify({
+                                            action: 'selectPaymentMethodType',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                            transactionId: transaction.id
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'postback',
-                                    label: 'コイン',
-                                    data: querystring.stringify({
-                                        action: 'choosePaymentMethod',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                        transactionId: transaction.id
-                                    })
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'コイン',
+                                        data: querystring.stringify({
+                                            action: 'selectPaymentMethodType',
+                                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                            transactionId: transaction.id
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'uri',
-                                    label: 'Friend Pay',
-                                    uri: liffUri
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: 'Friend Pay',
+                                        data: querystring.stringify({
+                                            action: 'askPaymentCode',
+                                            transactionId: transaction.id
+                                        })
+                                    }
                                 }
                             ]
                         }
                     }
-                    // {
-                    //     type: 'text', // ①
-                    //     text: '決済方法を選択してください',
-                    //     quickReply: {
-                    //         items: [
-                    //             {
-                    //                 type: 'action',
-                    //                 imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                    //                 action: {
-                    //                     type: 'postback',
-                    //                     label: 'クレジットカード',
-                    //                     data: querystring.stringify({
-                    //                         action: 'choosePaymentMethod',
-                    //                         paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                    //                         transactionId: transaction.id
-                    //                     })
-                    //                 }
-                    //             },
-                    //             {
-                    //                 type: 'action',
-                    //                 imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                    //                 action: {
-                    //                     type: 'postback',
-                    //                     label: 'コイン',
-                    //                     data: querystring.stringify({
-                    //                         action: 'choosePaymentMethod',
-                    //                         paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                    //                         transactionId: transaction.id
-                    //                     })
-                    //                 }
-                    //             }
-                    //         ]
-                    //     }
-                    // }
                 ]
             }
         }).promise();

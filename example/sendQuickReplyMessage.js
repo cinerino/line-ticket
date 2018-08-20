@@ -20,7 +20,7 @@ request.post({
                             action: {
                                 type: 'postback',
                                 label: 'クレジットカード',
-                                data: 'action=choosePaymentMethod'
+                                data: 'action=selectPaymentMethodType'
                             }
                         },
                         {

@@ -8,7 +8,7 @@ request.post(
             events: [
                 {
                     postback: {
-                        data: 'action=choosePaymentMethod&paymentMethod=Pecorino&transactionId=5a71967a1d0999237cc5b82a'
+                        data: 'action=selectPaymentMethodType&paymentMethod=Pecorino&transactionId=5a71967a1d0999237cc5b82a'
                     },
                     replyToken: '26d0dd0923a94583871ecd7e6efec8e2',
                     source: {

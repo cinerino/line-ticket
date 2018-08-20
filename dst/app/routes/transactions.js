@@ -48,7 +48,7 @@ transactionsRouter.get('/transactions/placeOrder/scanQRCode', (req, res, next) =
     try {
         // フォーム
         res.render('transactions/placeOrder/scanQRCode', {
-            eventId: req.query.eventId
+            transactionId: req.query.transactionId
         });
     }
     catch (error) {

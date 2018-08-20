@@ -119,9 +119,21 @@ function postback(event, user) {
                     const date = (data.date !== undefined) ? data.date : event.postback.params.date;
                     yield PostbackController.searchEventsByDate(user, date);
                     break;
+                // 決済コードをたずねる
+                case 'askPaymentCode':
+                    yield PostbackController.askPaymentCode({
+                        user: user,
+                        transactionId: data.transactionId
+                    });
+                    break;
                 // 決済方法選択
-                case 'choosePaymentMethod':
-                    yield PostbackController.choosePaymentMethod(user, data.paymentMethod, data.transactionId, 0);
+                case 'selectPaymentMethodType':
+                    yield PostbackController.selectPaymentMethodType({
+                        user: user,
+                        paymentMethodType: data.paymentMethod,
+                        transactionId: data.transactionId,
+                        code: data.code
+                    });
                     break;
                 // 注文確定
                 case 'confirmOrder':
@@ -136,9 +148,10 @@ function postback(event, user) {
                     yield PostbackController.confirmTransferMoney(user, data.token, parseInt(data.price, 10));
                     break;
                 // 友達決済承認確定
-                case 'continueTransactionAfterFriendPayConfirmation':
-                    yield PostbackController.choosePaymentMethod(user, 'FriendPay', data.transactionId, parseInt(data.price, 10));
-                    break;
+                // case 'continueTransactionAfterFriendPayConfirmation':
+                //     await PostbackController.selectPaymentMethodType(
+                //         user, 'FriendPay', <string>data.transactionId, parseInt(<string>data.price, 10));
+                //     break;
                 // 口座入金金額選択
                 case 'selectDepositAmount':
                     yield PostbackController.selectDepositAmount(user);

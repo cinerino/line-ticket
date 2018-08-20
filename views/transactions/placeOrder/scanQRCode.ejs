@@ -4,49 +4,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
-    <title>Web QR</title>
+    <title>Cinerino LIFF App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
     <script type="text/javascript" src="/js/llqrcode.js"></script>
-    <script type="text/javascript" src="/js/webqr.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
         crossorigin="anonymous">
 </head>
 
 <body>
-    <div id="main">
-        <div id="mainbody">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <img class="selector" id="qrimg" src="/img/cam.png" onclick="setimg()">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div id="outdiv"> </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div id="result">- scanning -</div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="container">
+        <input type="hidden" name="transactionId" value="<%= transactionId %>">
+        <div class="form-group">
+            <!-- <canvas id="out-canvas" width="120" height="120"></canvas> -->
+            <input class="form-control" type="file" onchange="handleFiles(this.files)">
         </div>
+        <div id="result"></div>
     </div>
-    <canvas id="qr-canvas"></canvas>
-
-    <script type="text/javascript">load();</script>
+    </div>
     <script>
         liff.init(
             data => {
@@ -64,6 +39,65 @@
                 // LIFF initialization failed
             }
         );
+
+        // QRCODE reader Copyright 2011 Lazar Laszlo
+        // http://www.webqr.com
+        function handleFiles(f) {
+            for (var i = 0; i < f.length; i++) {
+                var reader = new FileReader();
+                reader.onload = (function (theFile) {
+                    return function (e) {
+                        qrcode.decode(e.target.result);
+                    };
+                })(f[i]);
+                reader.readAsDataURL(f[i]);
+            }
+        }
+        function htmlEntities(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function read(a) {
+            console.log('result is', a);
+            var html = htmlEntities(a);
+            document.getElementById("result").innerHTML = html;
+
+            // LINE送信
+            var transactionId = $('input[name="transactionId"]').val();
+            var message = 'postback:'
+                + 'action=selectPaymentMethodType&paymentMethod=Account'
+                + '&code=' + a
+                + '&transactionId=' + transactionId;
+            console.log('sending message...', message);
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: message
+                }
+            ])
+                .then(() => {
+                    console.log('message sent');
+                    liff.closeWindow();
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        }
+        function isCanvasSupported() {
+            var elem = document.createElement('canvas');
+            return !!(elem.getContext && elem.getContext('2d'));
+        }
+        function load() {
+            if (isCanvasSupported() && window.File && window.FileReader) {
+                qrcode.callback = read;
+            } else {
+                var html = '<p id="mp1">QR code scanner for HTML5 capable browsers</p><br>' +
+                    '<br><p id="mp2">sorry your browser is not supported</p><br><br>' +
+                    '<p id="mp1">try <a href="http://www.mozilla.com/firefox"><img src="firefox.png"/></a> or <a href="http://chrome.google.com"><img src="chrome_logo.gif"/></a> or <a href="http://www.opera.com"><img src="Opera-logo.png"/></a></p>';
+                $('.container').html(html);
+            }
+        }
+
+        load();
     </script>
 
 </html>
