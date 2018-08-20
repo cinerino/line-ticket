@@ -1269,6 +1269,7 @@ export async function depositCoinByCreditCard(params: {
     if (creditCards.length === 0) {
         throw new Error('クレジットカード未登録です');
     }
+    const lineProfile = await LINE.getProfile(params.user.userId);
     // 入金取引開始
     const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
         endpoint: <string>process.env.PECORINO_ENDPOINT,
@@ -1280,13 +1281,13 @@ export async function depositCoinByCreditCard(params: {
         agent: {
             typeOf: 'Person',
             id: params.user.userId,
-            name: params.user.userId,
+            name: lineProfile.displayName,
             url: ''
         },
         recipient: {
             typeOf: 'Person',
             id: params.user.userId,
-            name: params.user.userId,
+            name: lineProfile.displayName,
             url: ''
         },
         amount: params.amount,
