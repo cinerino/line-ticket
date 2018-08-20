@@ -115,7 +115,7 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
 /**
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
  */
-// tslint:disable-next-line:max-func-body-length
+// tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 export async function postback(event: LINE.IWebhookEvent, user: User) {
     const data = querystring.parse(event.postback.data);
     debug('data:', data);
@@ -127,6 +127,14 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             case 'searchEventsByDate':
                 const date = (data.date !== undefined) ? <string>data.date : <string>event.postback.params.date;
                 await PostbackController.searchEventsByDate(user, date);
+                break;
+
+            case 'askScreeningEvent':
+                await PostbackController.askScreeningEvent({
+                    user: user,
+                    screeningEventSeriesId: <string>data.screeningEventSeriesId,
+                    date: <string>data.date
+                });
                 break;
 
             // 決済コードをたずねる

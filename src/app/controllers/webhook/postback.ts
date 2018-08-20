@@ -34,21 +34,24 @@ export async function searchEventsByDate(user: User, date: string) {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: user.authClient
     });
-    let events = await eventService.searchScreeningEvents({
+    const screeningEvents = await eventService.searchScreeningEvents({
         startFrom: moment(`${date}T00:00:00+09:00`).toDate(),
         startThrough: moment(`${date}T00:00:00+09:00`).add(1, 'day').toDate()
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
+    // 上映イベントシリーズをユニークに
+    let superEvents = screeningEvents.map((e) => e.superEvent);
+    superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
     // tslint:disable-next-line:no-magic-numbers
-    events = events.slice(0, 10);
+    superEvents = superEvents.slice(0, 10);
 
-    await LINE.pushMessage(user.userId, `${events.length}件のイベントがみつかりました。`);
+    await LINE.pushMessage(user.userId, `${superEvents.length}件の作品がみつかりました。`);
 
     // googleで画像検索
     const CX = '006320166286449124373:nm_gjsvlgnm';
     const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
     const thumbnails: any[] = [];
-    await Promise.all(events.map(async (event) => {
+    await Promise.all(superEvents.map(async (event) => {
         return new Promise((resolve) => {
             customsearch.cse.list(
                 {
@@ -96,7 +99,7 @@ export async function searchEventsByDate(user: User, date: string) {
                         type: 'carousel',
                         contents: [
                             // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...events.slice(0, 10).map((event) => {
+                            ...superEvents.slice(0, 10).map((event) => {
                                 // const itemOffered = ownershipInfo.typeOfGood;
                                 // const event = itemOffered.reservationFor;
                                 const thumbnail = thumbnails.find((t) => t.eventId === event.id);
@@ -104,9 +107,6 @@ export async function searchEventsByDate(user: User, date: string) {
                                     ? thumbnail.thumbnailLink
                                     // tslint:disable-next-line:max-line-length
                                     : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-                                const query = querystring.stringify({ eventId: event.id, userId: user.userId });
-                                const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
-                                const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
 
                                 return {
                                     type: 'bubble',
@@ -155,7 +155,147 @@ export async function searchEventsByDate(user: User, date: string) {
                                                             },
                                                             {
                                                                 type: 'text',
-                                                                text: moment(event.startDate).format('llll'),
+                                                                text: moment(event.startDate).format('lll'),
+                                                                wrap: true,
+                                                                size: 'sm',
+                                                                color: '#666666',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Place',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: event.location.name.ja,
+                                                                wrap: true,
+                                                                color: '#666666',
+                                                                size: 'sm',
+                                                                flex: 4
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    footer: {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'postback',
+                                                    label: 'スケジュール選択',
+                                                    data: querystring.stringify({
+                                                        action: askScreeningEvent,
+                                                        screeningEventSeriesId: event.id,
+                                                        date: date
+                                                    })
+                                                }
+                                            }
+                                        ]
+                                    }
+                                };
+                            })
+                        ]
+                    }
+                }
+            ]
+        }
+    }).promise();
+}
+
+/**
+ * 上映イベントスケジュールをたずねる
+ */
+export async function askScreeningEvent(params: {
+    user: User;
+    screeningEventSeriesId: string;
+    date: string;
+}) {
+    await LINE.pushMessage(params.user.userId, `${params.date}のイベントを検索しています...`);
+
+    const eventService = new cinerinoapi.service.Event({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    let screeningEvents = await eventService.searchScreeningEvents({
+        startFrom: moment(`${params.date}T00:00:00+09:00`).toDate(),
+        startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
+        // superEventLocationIdentifiers: ['MovieTheater-118']
+    });
+    // 上映イベントシリーズをユニークに
+    screeningEvents = screeningEvents.filter((e) => e.superEvent.id === params.screeningEventSeriesId);
+    await LINE.pushMessage(params.user.userId, `${screeningEvents.length}件のスケジュールがみつかりました。`);
+
+    await request.post({
+        simple: false,
+        url: 'https://api.line.me/v2/bot/message/push',
+        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+        json: true,
+        body: {
+            to: params.user.userId,
+            messages: [
+                {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: {
+                        type: 'carousel',
+                        contents: [
+                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                            ...screeningEvents.slice(0, 10).map((event) => {
+                                const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
+                                const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
+                                const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
+
+                                return {
+                                    type: 'bubble',
+                                    body: {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        spacing: 'md',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: event.name.ja,
+                                                wrap: true,
+                                                weight: 'bold',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'lg',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'box',
+                                                        layout: 'baseline',
+                                                        spacing: 'sm',
+                                                        contents: [
+                                                            {
+                                                                type: 'text',
+                                                                text: 'Date',
+                                                                color: '#aaaaaa',
+                                                                size: 'sm',
+                                                                flex: 1
+                                                            },
+                                                            {
+                                                                type: 'text',
+                                                                text: moment(event.startDate).format('lll'),
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',

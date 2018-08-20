@@ -106,7 +106,7 @@ exports.message = message;
 /**
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
  */
-// tslint:disable-next-line:max-func-body-length
+// tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 function postback(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = querystring.parse(event.postback.data);
@@ -118,6 +118,13 @@ function postback(event, user) {
                 case 'searchEventsByDate':
                     const date = (data.date !== undefined) ? data.date : event.postback.params.date;
                     yield PostbackController.searchEventsByDate(user, date);
+                    break;
+                case 'askScreeningEvent':
+                    yield PostbackController.askScreeningEvent({
+                        user: user,
+                        screeningEventSeriesId: data.screeningEventSeriesId,
+                        date: data.date
+                    });
                     break;
                 // 決済コードをたずねる
                 case 'askPaymentCode':

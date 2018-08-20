@@ -40,19 +40,22 @@ function searchEventsByDate(user, date) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
         });
-        let events = yield eventService.searchScreeningEvents({
+        const screeningEvents = yield eventService.searchScreeningEvents({
             startFrom: moment(`${date}T00:00:00+09:00`).toDate(),
             startThrough: moment(`${date}T00:00:00+09:00`).add(1, 'day').toDate()
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
+        // 上映イベントシリーズをユニークに
+        let superEvents = screeningEvents.map((e) => e.superEvent);
+        superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
         // tslint:disable-next-line:no-magic-numbers
-        events = events.slice(0, 10);
-        yield LINE.pushMessage(user.userId, `${events.length}件のイベントがみつかりました。`);
+        superEvents = superEvents.slice(0, 10);
+        yield LINE.pushMessage(user.userId, `${superEvents.length}件の作品がみつかりました。`);
         // googleで画像検索
         const CX = '006320166286449124373:nm_gjsvlgnm';
         const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
         const thumbnails = [];
-        yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
+        yield Promise.all(superEvents.map((event) => __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
                 customsearch.cse.list({
                     cx: CX,
@@ -95,7 +98,7 @@ function searchEventsByDate(user, date) {
                             type: 'carousel',
                             contents: [
                                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                                ...events.slice(0, 10).map((event) => {
+                                ...superEvents.slice(0, 10).map((event) => {
                                     // const itemOffered = ownershipInfo.typeOfGood;
                                     // const event = itemOffered.reservationFor;
                                     const thumbnail = thumbnails.find((t) => t.eventId === event.id);
@@ -103,9 +106,6 @@ function searchEventsByDate(user, date) {
                                         ? thumbnail.thumbnailLink
                                         // tslint:disable-next-line:max-line-length
                                         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-                                    const query = querystring.stringify({ eventId: event.id, userId: user.userId });
-                                    const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
-                                    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
                                     return {
                                         type: 'bubble',
                                         hero: {
@@ -153,7 +153,142 @@ function searchEventsByDate(user, date) {
                                                                 },
                                                                 {
                                                                     type: 'text',
-                                                                    text: moment(event.startDate).format('llll'),
+                                                                    text: moment(event.startDate).format('lll'),
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Place',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: event.location.name.ja,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        footer: {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'postback',
+                                                        label: 'スケジュール選択',
+                                                        data: querystring.stringify({
+                                                            action: askScreeningEvent,
+                                                            screeningEventSeriesId: event.id,
+                                                            date: date
+                                                        })
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    };
+                                })
+                            ]
+                        }
+                    }
+                ]
+            }
+        }).promise();
+    });
+}
+exports.searchEventsByDate = searchEventsByDate;
+/**
+ * 上映イベントスケジュールをたずねる
+ */
+function askScreeningEvent(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield LINE.pushMessage(params.user.userId, `${params.date}のイベントを検索しています...`);
+        const eventService = new cinerinoapi.service.Event({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        let screeningEvents = yield eventService.searchScreeningEvents({
+            startFrom: moment(`${params.date}T00:00:00+09:00`).toDate(),
+            startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
+            // superEventLocationIdentifiers: ['MovieTheater-118']
+        });
+        // 上映イベントシリーズをユニークに
+        screeningEvents = screeningEvents.filter((e) => e.superEvent.id === params.screeningEventSeriesId);
+        yield LINE.pushMessage(params.user.userId, `${screeningEvents.length}件のスケジュールがみつかりました。`);
+        yield request.post({
+            simple: false,
+            url: 'https://api.line.me/v2/bot/message/push',
+            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
+            json: true,
+            body: {
+                to: params.user.userId,
+                messages: [
+                    {
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: {
+                            type: 'carousel',
+                            contents: [
+                                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                                ...screeningEvents.slice(0, 10).map((event) => {
+                                    const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
+                                    const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
+                                    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
+                                    return {
+                                        type: 'bubble',
+                                        body: {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            spacing: 'md',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: event.name.ja,
+                                                    wrap: true,
+                                                    weight: 'bold',
+                                                    gravity: 'center',
+                                                    size: 'xl'
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'lg',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Date',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 1
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: moment(event.startDate).format('lll'),
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
@@ -211,7 +346,7 @@ function searchEventsByDate(user, date) {
         }).promise();
     });
 }
-exports.searchEventsByDate = searchEventsByDate;
+exports.askScreeningEvent = askScreeningEvent;
 /**
  * 決済コードをたずねる
  */
