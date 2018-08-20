@@ -1155,53 +1155,62 @@ exports.confirmTransferMoney = confirmTransferMoney;
 /**
  * クレジットから口座へ入金する
  */
-function selectDepositAmount(user) {
+function selectDepositAmount(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const personService = new cinerinoapi.service.Person({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
-        });
-        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
-        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-        debug('accounts:', accounts);
-        if (accounts.length === 0) {
-            throw new Error('口座未開設です');
-        }
-        const account = accounts[0];
         yield request.post({
             simple: false,
             url: 'https://api.line.me/v2/bot/message/push',
             auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
             json: true,
             body: {
-                to: user.userId,
+                to: params.user.userId,
                 messages: [
                     {
-                        type: 'template',
-                        altText: 'コイン口座入金',
-                        template: {
-                            type: 'buttons',
-                            title: 'コイン口座へ入金する',
-                            text: 'いくら入金しますか?',
-                            actions: [
+                        type: 'text',
+                        text: 'いくら入金しますか?',
+                        quickReply: {
+                            items: [
                                 {
-                                    type: 'postback',
-                                    label: '100',
-                                    // tslint:disable-next-line:max-line-length
-                                    data: `action=depositCoinByCreditCard&amount=100&toAccountNumber=${account.accountNumber}`
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: '100',
+                                        data: querystring.stringify({
+                                            action: 'depositCoinByCreditCard',
+                                            amount: 100,
+                                            accountType: params.accountType,
+                                            toAccountNumber: params.accountNumber
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'postback',
-                                    label: '1000',
-                                    // tslint:disable-next-line:max-line-length
-                                    data: `action=depositCoinByCreditCard&amount=1000&toAccountNumber=${account.accountNumber}`
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: '1000',
+                                        data: querystring.stringify({
+                                            action: 'depositCoinByCreditCard',
+                                            amount: 1000,
+                                            accountType: params.accountType,
+                                            toAccountNumber: params.accountNumber
+                                        })
+                                    }
                                 },
                                 {
-                                    type: 'postback',
-                                    label: '10000',
-                                    // tslint:disable-next-line:max-line-length
-                                    data: `action=depositCoinByCreditCard&amount=10000&toAccountNumber=${account.accountNumber}`
+                                    type: 'action',
+                                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                                    action: {
+                                        type: 'postback',
+                                        label: '10000',
+                                        data: querystring.stringify({
+                                            action: 'depositCoinByCreditCard',
+                                            amount: 10000,
+                                            accountType: params.accountType,
+                                            toAccountNumber: params.accountNumber
+                                        })
+                                    }
                                 }
                             ]
                         }
@@ -1248,7 +1257,7 @@ function depositCoinByCreditCard(params) {
             },
             amount: params.amount,
             notes: 'LINEチケット入金',
-            accountType: cinerinoapi.factory.accountType.Coin,
+            accountType: params.accountType,
             toAccountNumber: params.toAccountNumber
         });
         yield depositTransaction.confirm({
@@ -1706,7 +1715,11 @@ function searchCoinAccounts(user) {
                                                     action: {
                                                         type: 'postback',
                                                         label: 'クレジットカードで入金',
-                                                        data: 'action=selectDepositAmount'
+                                                        data: querystring.stringify({
+                                                            action: 'selectDepositAmount',
+                                                            accountType: cinerinoapi.factory.accountType.Coin,
+                                                            accountNumber: account.accountNumber
+                                                        })
                                                     }
                                                 },
                                                 {

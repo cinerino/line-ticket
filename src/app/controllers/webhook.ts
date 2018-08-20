@@ -172,20 +172,6 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
             //         user, 'FriendPay', <string>data.transactionId, parseInt(<string>data.price, 10));
             //     break;
 
-            // 口座入金金額選択
-            case 'selectDepositAmount':
-                await PostbackController.selectDepositAmount(user);
-                break;
-
-            // 口座入金金額選択
-            case 'depositCoinByCreditCard':
-                await PostbackController.depositCoinByCreditCard({
-                    user: user,
-                    amount: Number(<string>data.amount),
-                    toAccountNumber: <string>data.toAccountNumber
-                });
-                break;
-
             // クレジットカード検索
             case 'searchCreditCards':
                 await PostbackController.searchCreditCards(user);
@@ -229,6 +215,25 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                     user: user,
                     accountType: <any>data.accountType,
                     accountNumber: <string>data.accountNumber
+                });
+                break;
+
+            // 口座入金金額選択
+            case 'selectDepositAmount':
+                await PostbackController.selectDepositAmount({
+                    user: user,
+                    accountType: <any>data.accountType,
+                    accountNumber: <string>data.accountNumber
+                });
+                break;
+
+            // 口座入金金額選択
+            case 'depositCoinByCreditCard':
+                await PostbackController.depositCoinByCreditCard({
+                    user: user,
+                    amount: Number(<string>data.amount),
+                    accountType: <any>data.accountType,
+                    toAccountNumber: <string>data.toAccountNumber
                 });
                 break;
 

@@ -155,18 +155,6 @@ function postback(event, user) {
                 //     await PostbackController.selectPaymentMethodType(
                 //         user, 'FriendPay', <string>data.transactionId, parseInt(<string>data.price, 10));
                 //     break;
-                // 口座入金金額選択
-                case 'selectDepositAmount':
-                    yield PostbackController.selectDepositAmount(user);
-                    break;
-                // 口座入金金額選択
-                case 'depositCoinByCreditCard':
-                    yield PostbackController.depositCoinByCreditCard({
-                        user: user,
-                        amount: Number(data.amount),
-                        toAccountNumber: data.toAccountNumber
-                    });
-                    break;
                 // クレジットカード検索
                 case 'searchCreditCards':
                     yield PostbackController.searchCreditCards(user);
@@ -204,6 +192,23 @@ function postback(event, user) {
                         user: user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
+                    });
+                    break;
+                // 口座入金金額選択
+                case 'selectDepositAmount':
+                    yield PostbackController.selectDepositAmount({
+                        user: user,
+                        accountType: data.accountType,
+                        accountNumber: data.accountNumber
+                    });
+                    break;
+                // 口座入金金額選択
+                case 'depositCoinByCreditCard':
+                    yield PostbackController.depositCoinByCreditCard({
+                        user: user,
+                        amount: Number(data.amount),
+                        accountType: data.accountType,
+                        toAccountNumber: data.toAccountNumber
                     });
                     break;
                 case 'askEventStartDate':
