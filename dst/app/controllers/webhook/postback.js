@@ -1872,6 +1872,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'Date',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -1894,6 +1895,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'Amount',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -1916,6 +1918,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'From Name',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -1940,6 +1943,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'From Account',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -1963,6 +1967,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'To Name',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -1986,6 +1991,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'To Account',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
@@ -2009,6 +2015,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                 {
                                                                     type: 'text',
                                                                     text: 'Description',
+                                                                    wrap: true,
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
                                                                     flex: 2
