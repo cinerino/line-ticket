@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 取引ルーター
  */
+const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express = require("express");
 const transactionsRouter = express.Router();
 /**
@@ -32,9 +33,25 @@ transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __aw
  */
 transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
+        const authClient = new cinerinoapi.auth.OAuth2({
+            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: process.env.CINERINO_CLIENT_ID,
+            clientSecret: process.env.CINERINO_CLIENT_SECRET,
+            redirectUri: '',
+            logoutUri: ''
+        });
+        authClient.setCredentials({ access_token: req.query.accessToken });
+        const eventService = new cinerinoapi.service.Event({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: authClient
+        });
+        const eventOffers = yield eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
+        const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
+        const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
         // フォーム
         res.render('transactions/placeOrder/selectSeatOffers', {
-            eventId: req.query.eventId
+            eventId: req.query.eventId,
+            availableSeatNumbers: availableSeatNumbers
         });
     }
     catch (error) {

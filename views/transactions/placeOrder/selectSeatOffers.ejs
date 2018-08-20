@@ -24,24 +24,24 @@
             </div>
             <div class="booking-details">
                 <div id="legend"></div>
-                <h2>Booking Details</h2>
-                <h3> Selected Seats (<span id="counter">0</span>):</h3>
+                <!-- <h2>Booking Details</h2> -->
+                <h3>Selected Seats (<span id="counter">0</span>):</h3>
                 <ul id="selected-seats"></ul>
-
                 <!-- Total:
                 <b>$
                     <span id="total">0</span>
                 </b> -->
-
                 <a class="btn btn-success btn-next checkout-button" href="javascript:void(0);">
                     <span>Next</span>
                 </a>
             </div>
+            <input type="hidden" name="availableSeatNumbers" value="<%= availableSeatNumbers.join(',') %>">
         </div>
     </div>
 </body>
 
 <script>
+    var availableSeatNumbers = $('input[name="availableSeatNumbers"]').val().split(',');
     liff.init(
         data => {
             // Now you can call LIFF API
@@ -65,17 +65,17 @@
             $total = $('#total'),
             sc = $('#seat-map').seatCharts({
                 map: [
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeee_eeee',
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'ffff_ffff',
                     '_________',
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeee_eeee',
-                    'eeeeeeeee'
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'ffff_ffff',
+                    'fffffffff'
                 ],
                 seats: {
                     // f: {
@@ -153,9 +153,9 @@
             sc.get($(this).parents('li:first').data('seatId')).click();
         });
 
-        //let's pretend some seats have already been booked
-        sc.get(['A-2', 'D-1']).status('unavailable');
-        // sc.status('1_1', 'unavailable');
+        // let's pretend some seats have already been booked
+        sc.find('f').status('unavailable');
+        sc.get(availableSeatNumbers).status('available');
 
         $('.checkout-button').on('click', function () {
             var seatNumbers = [];
