@@ -1472,6 +1472,40 @@ export async function deleteCreditCard(user: User, cardSeq: string) {
     await personService.deleteCreditCard({ personId: 'me', cardSeq: cardSeq });
     await LINE.pushMessage(user.userId, `クレジットカードが削除されました`);
 }
+/**
+ * 口座開設
+ */
+export async function openAccount(params: {
+    user: User;
+    name: string;
+    accountType: cinerinoapi.factory.accountType;
+}) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const accountOwnershipInfo = await personService.openAccount({
+        personId: 'me',
+        name: params.name,
+        accountType: params.accountType
+    });
+    await LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`);
+}
+/**
+ * 口座解約
+ */
+export async function closeAccount(params: {
+    user: User;
+    accountType: cinerinoapi.factory.accountType;
+    accountNumber: string;
+}) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    await personService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
+    await LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${params.accountNumber} が解約されました`);
+}
 export async function searchCoinAccounts(user: User) {
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -1695,14 +1729,6 @@ export async function searchCoinAccounts(user: User) {
                                             {
                                                 type: 'button',
                                                 action: {
-                                                    type: 'message',
-                                                    label: 'おこづかいをもらう',
-                                                    text: 'おこづかい'
-                                                }
-                                            },
-                                            {
-                                                type: 'button',
-                                                action: {
                                                     type: 'postback',
                                                     label: 'クレジットカードで入金',
                                                     data: 'action=selectDepositAmount'
@@ -1717,6 +1743,26 @@ export async function searchCoinAccounts(user: User) {
                                                         action: 'authorizeOwnershipInfo',
                                                         goodType: ownershipInfo.typeOfGood.typeOf,
                                                         identifier: ownershipInfo.identifier
+                                                    })
+                                                }
+                                            },
+                                            // {
+                                            //     type: 'button',
+                                            //     action: {
+                                            //         type: 'message',
+                                            //         label: 'おこづかいをもらう',
+                                            //         text: 'おこづかい'
+                                            //     }
+                                            // },
+                                            {
+                                                type: 'button',
+                                                action: {
+                                                    type: 'postback',
+                                                    label: '解約',
+                                                    data: querystring.stringify({
+                                                        action: 'closeAccount',
+                                                        accountType: account.accountType,
+                                                        accountNumber: account.accountNumber
                                                     })
                                                 }
                                             }
@@ -1843,7 +1889,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'Date',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1851,7 +1897,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1865,7 +1911,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'Amount',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1873,7 +1919,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1884,10 +1930,10 @@ export async function searchAccountMoneyTransferActions(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
-                                                                text: 'From',
+                                                                text: 'From Name',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1897,7 +1943,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1908,10 +1954,10 @@ export async function searchAccountMoneyTransferActions(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
-                                                                text: 'FromAccount',
+                                                                text: 'From Account',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1920,7 +1966,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1931,10 +1977,10 @@ export async function searchAccountMoneyTransferActions(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
-                                                                text: 'To',
+                                                                text: 'To Name',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1943,7 +1989,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 color: '#666666',
                                                                 size: 'sm',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1954,10 +2000,10 @@ export async function searchAccountMoneyTransferActions(params: {
                                                         contents: [
                                                             {
                                                                 type: 'text',
-                                                                text: 'ToAccount',
+                                                                text: 'To Account',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1966,7 +2012,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 size: 'sm',
                                                                 color: '#666666',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     },
@@ -1980,7 +2026,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 text: 'Description',
                                                                 color: '#aaaaaa',
                                                                 size: 'sm',
-                                                                flex: 1
+                                                                flex: 2
                                                             },
                                                             {
                                                                 type: 'text',
@@ -1988,7 +2034,7 @@ export async function searchAccountMoneyTransferActions(params: {
                                                                 wrap: true,
                                                                 color: '#666666',
                                                                 size: 'sm',
-                                                                flex: 4
+                                                                flex: 5
                                                             }
                                                         ]
                                                     }

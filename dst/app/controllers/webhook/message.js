@@ -154,7 +154,7 @@ function showCreditCardMenu(user) {
 exports.showCreditCardMenu = showCreditCardMenu;
 function showCoinAccountMenu(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const openAccountUri = `https://${user.host}/account/open`;
+        const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
         yield request.post({
             simple: false,

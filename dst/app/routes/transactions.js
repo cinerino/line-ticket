@@ -18,7 +18,7 @@ const transactionsRouter = express.Router();
 /**
  * クレジットカード情報入力フォーム
  */
-transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/inputCreditCard', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/inputCreditCard', {
@@ -32,7 +32,7 @@ transactionsRouter.get('/transactions/inputCreditCard', (req, res, next) => __aw
 /**
  * 座席選択フォーム
  */
-transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
         const user = new user_1.default({
             host: req.hostname,
@@ -64,7 +64,7 @@ transactionsRouter.get('/transactions/placeOrder/selectSeatOffers', (req, res, n
 /**
  * QRスキャン
  */
-transactionsRouter.get('/transactions/placeOrder/scanQRCode', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/scanQRCode', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/placeOrder/scanQRCode', {

@@ -12,7 +12,7 @@ const transactionsRouter = express.Router();
  * クレジットカード情報入力フォーム
  */
 transactionsRouter.get(
-    '/transactions/inputCreditCard',
+    '/inputCreditCard',
     async (req, res, next) => {
         try {
             // フォーム
@@ -28,7 +28,7 @@ transactionsRouter.get(
  * 座席選択フォーム
  */
 transactionsRouter.get(
-    '/transactions/placeOrder/selectSeatOffers',
+    '/placeOrder/selectSeatOffers',
     async (req, res, next) => {
         try {
             const user = new User({
@@ -64,7 +64,7 @@ transactionsRouter.get(
  * QRスキャン
  */
 transactionsRouter.get(
-    '/transactions/placeOrder/scanQRCode',
+    '/placeOrder/scanQRCode',
     async (req, res, next) => {
         try {
             // フォーム

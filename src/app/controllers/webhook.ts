@@ -201,6 +201,24 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
                 await PostbackController.deleteCreditCard(user, <string>data.cardSeq);
                 break;
 
+            // 口座開設
+            case 'openAccount':
+                await PostbackController.openAccount({
+                    user: user,
+                    name: <string>data.name,
+                    accountType: <any>data.accountType
+                });
+                break;
+
+            // 口座解約
+            case 'closeAccount':
+                await PostbackController.closeAccount({
+                    user: user,
+                    accountType: <any>data.accountType,
+                    accountNumber: <string>data.accountNumber
+                });
+                break;
+
             // コイン口座検索
             case 'searchCoinAccounts':
                 await PostbackController.searchCoinAccounts(user);

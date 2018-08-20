@@ -1449,6 +1449,38 @@ function deleteCreditCard(user, cardSeq) {
     });
 }
 exports.deleteCreditCard = deleteCreditCard;
+/**
+ * 口座開設
+ */
+function openAccount(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const accountOwnershipInfo = yield personService.openAccount({
+            personId: 'me',
+            name: params.name,
+            accountType: params.accountType
+        });
+        yield LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`);
+    });
+}
+exports.openAccount = openAccount;
+/**
+ * 口座解約
+ */
+function closeAccount(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        yield personService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
+        yield LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${params.accountNumber} が解約されました`);
+    });
+}
+exports.closeAccount = closeAccount;
 function searchCoinAccounts(user) {
     return __awaiter(this, void 0, void 0, function* () {
         const personService = new cinerinoapi.service.Person({
@@ -1672,14 +1704,6 @@ function searchCoinAccounts(user) {
                                                 {
                                                     type: 'button',
                                                     action: {
-                                                        type: 'message',
-                                                        label: 'おこづかいをもらう',
-                                                        text: 'おこづかい'
-                                                    }
-                                                },
-                                                {
-                                                    type: 'button',
-                                                    action: {
                                                         type: 'postback',
                                                         label: 'クレジットカードで入金',
                                                         data: 'action=selectDepositAmount'
@@ -1694,6 +1718,26 @@ function searchCoinAccounts(user) {
                                                             action: 'authorizeOwnershipInfo',
                                                             goodType: ownershipInfo.typeOfGood.typeOf,
                                                             identifier: ownershipInfo.identifier
+                                                        })
+                                                    }
+                                                },
+                                                // {
+                                                //     type: 'button',
+                                                //     action: {
+                                                //         type: 'message',
+                                                //         label: 'おこづかいをもらう',
+                                                //         text: 'おこづかい'
+                                                //     }
+                                                // },
+                                                {
+                                                    type: 'button',
+                                                    action: {
+                                                        type: 'postback',
+                                                        label: '解約',
+                                                        data: querystring.stringify({
+                                                            action: 'closeAccount',
+                                                            accountType: account.accountType,
+                                                            accountNumber: account.accountNumber
                                                         })
                                                     }
                                                 }
@@ -1816,7 +1860,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     text: 'Date',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1824,7 +1868,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1838,7 +1882,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     text: 'Amount',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1846,7 +1890,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1857,10 +1901,10 @@ function searchAccountMoneyTransferActions(params) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
-                                                                    text: 'From',
+                                                                    text: 'From Name',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1870,7 +1914,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1881,10 +1925,10 @@ function searchAccountMoneyTransferActions(params) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
-                                                                    text: 'FromAccount',
+                                                                    text: 'From Account',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1893,7 +1937,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1904,10 +1948,10 @@ function searchAccountMoneyTransferActions(params) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
-                                                                    text: 'To',
+                                                                    text: 'To Name',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1916,7 +1960,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     color: '#666666',
                                                                     size: 'sm',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1927,10 +1971,10 @@ function searchAccountMoneyTransferActions(params) {
                                                             contents: [
                                                                 {
                                                                     type: 'text',
-                                                                    text: 'ToAccount',
+                                                                    text: 'To Account',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1939,7 +1983,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     size: 'sm',
                                                                     color: '#666666',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         },
@@ -1953,7 +1997,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     text: 'Description',
                                                                     color: '#aaaaaa',
                                                                     size: 'sm',
-                                                                    flex: 1
+                                                                    flex: 2
                                                                 },
                                                                 {
                                                                     type: 'text',
@@ -1961,7 +2005,7 @@ function searchAccountMoneyTransferActions(params) {
                                                                     wrap: true,
                                                                     color: '#666666',
                                                                     size: 'sm',
-                                                                    flex: 4
+                                                                    flex: 5
                                                                 }
                                                             ]
                                                         }

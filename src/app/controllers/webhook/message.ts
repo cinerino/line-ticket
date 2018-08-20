@@ -139,7 +139,7 @@ export async function showCreditCardMenu(user: User) {
     }).promise();
 }
 export async function showCoinAccountMenu(user: User) {
-    const openAccountUri = `https://${user.host}/account/open`;
+    const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
     await request.post({
         simple: false,

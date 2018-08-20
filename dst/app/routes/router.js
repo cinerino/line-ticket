@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * defaultルーター
  */
 const express = require("express");
+const accounts_1 = require("./accounts");
 const auth_1 = require("./auth");
 const liff_1 = require("./liff");
 const transactions_1 = require("./transactions");
@@ -14,6 +15,7 @@ const router = express.Router();
 //   next()
 // })
 router.use(auth_1.default);
+router.use('/accounts', accounts_1.default);
 router.use('/liff', liff_1.default);
-router.use(transactions_1.default);
+router.use('/transactions', transactions_1.default);
 exports.default = router;

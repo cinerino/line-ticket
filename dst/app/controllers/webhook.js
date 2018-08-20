@@ -179,6 +179,22 @@ function postback(event, user) {
                 case 'deleteCreditCard':
                     yield PostbackController.deleteCreditCard(user, data.cardSeq);
                     break;
+                // 口座開設
+                case 'openAccount':
+                    yield PostbackController.openAccount({
+                        user: user,
+                        name: data.name,
+                        accountType: data.accountType
+                    });
+                    break;
+                // 口座解約
+                case 'closeAccount':
+                    yield PostbackController.closeAccount({
+                        user: user,
+                        accountType: data.accountType,
+                        accountNumber: data.accountNumber
+                    });
+                    break;
                 // コイン口座検索
                 case 'searchCoinAccounts':
                     yield PostbackController.searchCoinAccounts(user);
