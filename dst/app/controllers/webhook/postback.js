@@ -1799,125 +1799,127 @@ function searchAccountMoneyTransferActions(params) {
                                                             size: 'xl'
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'lg',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Date',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: moment(a.endDate).format('YY.MM.DD HH:mm'),
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Amount',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: a.amount,
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'From',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    // text: `${a.fromLocation.name}\n${(<any>a.fromLocation).accountNumber}`,
+                                                                    text: `${a.fromLocation.name}`,
+                                                                    wrap: true,
+                                                                    size: 'sm',
+                                                                    color: '#666666',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'To',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    // text: `${a.toLocation.name}\n${(<any>a.toLocation).accountNumber}`,
+                                                                    text: `${a.toLocation.name}`,
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            type: 'box',
+                                                            layout: 'baseline',
+                                                            spacing: 'sm',
+                                                            contents: [
+                                                                {
+                                                                    type: 'text',
+                                                                    text: 'Description',
+                                                                    color: '#aaaaaa',
+                                                                    size: 'sm',
+                                                                    flex: 2
+                                                                },
+                                                                {
+                                                                    type: 'text',
+                                                                    text: (a.description !== undefined) ? a.description : '---',
+                                                                    wrap: true,
+                                                                    color: '#666666',
+                                                                    size: 'sm',
+                                                                    flex: 4
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
-                                                // {
-                                                //     type: 'box',
-                                                //     layout: 'vertical',
-                                                //     margin: 'lg',
-                                                //     spacing: 'sm',
-                                                //     contents: [
-                                                //         {
-                                                //             type: 'box',
-                                                //             layout: 'baseline',
-                                                //             spacing: 'sm',
-                                                //             contents: [
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: 'Date',
-                                                //                     color: '#aaaaaa',
-                                                //                     size: 'sm',
-                                                //                     flex: 2
-                                                //                 },
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: moment(a.endDate).format('YY.MM.DD HH:mm'),
-                                                //                     wrap: true,
-                                                //                     size: 'sm',
-                                                //                     color: '#666666',
-                                                //                     flex: 4
-                                                //                 }
-                                                //             ]
-                                                //         },
-                                                //         {
-                                                //             type: 'box',
-                                                //             layout: 'baseline',
-                                                //             spacing: 'sm',
-                                                //             contents: [
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: 'Amount',
-                                                //                     color: '#aaaaaa',
-                                                //                     size: 'sm',
-                                                //                     flex: 2
-                                                //                 },
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: a.amount,
-                                                //                     wrap: true,
-                                                //                     size: 'sm',
-                                                //                     color: '#666666',
-                                                //                     flex: 4
-                                                //                 }
-                                                //             ]
-                                                //         },
-                                                //         {
-                                                //             type: 'box',
-                                                //             layout: 'baseline',
-                                                //             spacing: 'sm',
-                                                //             contents: [
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: 'From',
-                                                //                     color: '#aaaaaa',
-                                                //                     size: 'sm',
-                                                //                     flex: 2
-                                                //                 },
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: `${a.fromLocation.name}\n${(<any>a.fromLocation).accountNumber}`,
-                                                //                     wrap: true,
-                                                //                     size: 'sm',
-                                                //                     color: '#666666',
-                                                //                     flex: 4
-                                                //                 }
-                                                //             ]
-                                                //         },
-                                                //         {
-                                                //             type: 'box',
-                                                //             layout: 'baseline',
-                                                //             spacing: 'sm',
-                                                //             contents: [
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: 'To',
-                                                //                     color: '#aaaaaa',
-                                                //                     size: 'sm',
-                                                //                     flex: 2
-                                                //                 },
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: `${a.toLocation.name}\n${(<any>a.toLocation).accountNumber}`,
-                                                //                     wrap: true,
-                                                //                     color: '#666666',
-                                                //                     size: 'sm',
-                                                //                     flex: 4
-                                                //                 }
-                                                //             ]
-                                                //         },
-                                                //         {
-                                                //             type: 'box',
-                                                //             layout: 'baseline',
-                                                //             spacing: 'sm',
-                                                //             contents: [
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: 'Description',
-                                                //                     color: '#aaaaaa',
-                                                //                     size: 'sm',
-                                                //                     flex: 2
-                                                //                 },
-                                                //                 {
-                                                //                     type: 'text',
-                                                //                     text: (a.description !== undefined) ? a.description : '---',
-                                                //                     wrap: true,
-                                                //                     color: '#666666',
-                                                //                     size: 'sm',
-                                                //                     flex: 4
-                                                //                 }
-                                                //             ]
-                                                //         }
-                                                //     ]
-                                                // }
                                             ]
                                         }
                                     };
