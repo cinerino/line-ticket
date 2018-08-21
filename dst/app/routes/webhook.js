@@ -14,10 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const line = require("@line/bot-sdk");
 const createDebug = require("debug");
 const express = require("express");
-const http_status_1 = require("http-status");
 const WebhookController = require("../controllers/webhook");
-const authentication_1 = require("../middlewares/authentication");
-const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
 const config = {
@@ -25,15 +22,34 @@ const config = {
     channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
 };
 // const client = new line.Client(config);
-webhookRouter.all('/', faceLogin_1.default, authentication_1.default, line.middleware(config), (req, res) => __awaiter(this, void 0, void 0, function* () {
-    debug('body:', JSON.stringify(req.body));
-    yield Promise.all(req.body.events.map((e) => __awaiter(this, void 0, void 0, function* () {
-        yield handleEvent(e, req.user);
-    })));
-    // .then((result) => res.json(result));
-    res.status(http_status_1.OK).send('ok');
-}));
-function handleEvent(event, user) {
+webhookRouter.post('', line.middleware(config), (req, res) => {
+    Promise
+        .all(req.body.events.map(handleEvent))
+        .then((result) => res.json(result));
+});
+const client = new line.Client(config);
+function handleEvent(event) {
+    if (event.type !== 'message' || event.message.type !== 'text') {
+        return Promise.resolve(null);
+    }
+    return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: event.message.text
+    });
+}
+// webhookRouter.all(
+//     '/',
+//     faceLogin,
+//     authentication,
+//     line.middleware(config),
+//     async (req, res) => {
+//         debug('body:', JSON.stringify(req.body));
+//         await Promise.all(req.body.events.map(async (e: line.WebhookEvent) => {
+//             await handleEvent(e, req.user);
+//         }));
+//         res.status(OK).send('ok');
+//     });
+function handleEvent2(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             switch (event.type) {
