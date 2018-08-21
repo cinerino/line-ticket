@@ -40,7 +40,7 @@ async function handleEvent(event: line.WebhookEvent, user: User) {
                 break;
 
             case 'postback':
-                await WebhookController.postback(event, <any>null);
+                await WebhookController.postback(event, user);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment

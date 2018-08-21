@@ -38,7 +38,7 @@ function handleEvent(event, user) {
                     yield WebhookController.message(event, user);
                     break;
                 case 'postback':
-                    yield WebhookController.postback(event, null);
+                    yield WebhookController.postback(event, user);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */

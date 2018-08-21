@@ -28,49 +28,46 @@ const client = new line.Client({
 // tslint:disable-next-line:max-func-body-length
 function message(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const userId = event.source.userId;
+        // const userId = <string>event.source.userId;
         try {
-            if (event.message === undefined) {
-                throw new Error('event.message not found.');
-            }
             switch (event.message.type) {
                 case 'text':
                     const messageText = event.message.text;
                     switch (true) {
                         // [購入番号]で検索
                         case /^\d{6}$/.test(messageText):
-                            yield MessageController.askReservationEventDate(userId, messageText);
+                            yield MessageController.askReservationEventDate(event.replyToken, messageText);
                             break;
                         // ログアウト
                         case /^logout$/.test(messageText):
-                            yield MessageController.logout(user);
+                            yield MessageController.logout(event.replyToken, user);
                             break;
                         case /^座席予約$/.test(messageText):
-                            yield MessageController.showSeatReservationMenu(user);
+                            yield MessageController.showSeatReservationMenu(event.replyToken);
                             break;
                         case /^クレジットカード$/.test(messageText):
-                            yield MessageController.showCreditCardMenu(user);
+                            yield MessageController.showCreditCardMenu(event.replyToken);
                             break;
                         case /^コイン$/.test(messageText):
-                            yield MessageController.showCoinAccountMenu(user);
+                            yield MessageController.showCoinAccountMenu(event.replyToken, user);
                             break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
-                            yield MessageController.startIndexingFace(userId);
+                            yield MessageController.startIndexingFace(event.replyToken);
                             break;
                         // 友達決済承認ワンタイムメッセージ
                         case /^FriendPayToken/.test(messageText):
                             const token = messageText.replace('FriendPayToken.', '');
-                            yield MessageController.askConfirmationOfFriendPay(user, token);
+                            yield MessageController.askConfirmationOfFriendPay(event.replyToken, token);
                             break;
                         // おこづかいをもらう
                         case /^おこづかい$/.test(messageText):
-                            yield MessageController.selectWhomAskForMoney(user);
+                            yield MessageController.selectWhomAskForMoney(event.replyToken, user);
                             break;
                         // おこづかい承認メッセージ
                         case /^TransferMoneyToken/.test(messageText):
                             const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
-                            yield MessageController.askConfirmationOfTransferMoney(user, transferMoneyToken);
+                            yield MessageController.askConfirmationOfTransferMoney(event.replyToken, user, transferMoneyToken);
                             break;
                         // メッセージで強制的にpostbackイベントを発動
                         case /^postback:/.test(messageText):
@@ -86,7 +83,7 @@ function message(event, user) {
                             break;
                         default:
                             // 予約照会方法をアドバイス
-                            yield MessageController.pushHowToUse(userId);
+                            yield MessageController.pushHowToUse(event.replyToken);
                     }
                     break;
                 case 'image':
@@ -224,7 +221,7 @@ function postback(event, user) {
                     });
                     break;
                 case 'askEventStartDate':
-                    yield MessageController.askEventStartDate(user.userId);
+                    yield MessageController.askEventStartDate(event.replyToken);
                     break;
                 case 'searchScreeningEventReservations':
                     yield PostbackController.searchScreeningEventReservations(user);
