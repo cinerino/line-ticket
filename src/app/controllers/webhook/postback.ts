@@ -2876,7 +2876,7 @@ export async function searchOrders(params: {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を検索しています...' });
     const orderRepo = new cinerino.repository.Order(cinerino.mongoose.connection);
     const username = <string>params.user.authClient.verifyIdToken({}).getUsername();
-    const orders = await orderRepo.search({
+    let orders = await orderRepo.search({
         customerMembershipNumbers: [username],
         orderDateFrom: moment(now).add(-1, 'month').toDate(),
         orderDateThrough: now
@@ -2885,6 +2885,8 @@ export async function searchOrders(params: {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
     } else {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `${orders.length}件の注文が見つかりました` });
+        // tslint:disable-next-line:no-magic-numbers
+        orders = orders.slice(0, 10);
         // tslint:disable-next-line:max-func-body-length
         const contents: FlexBubble[] = orders.map<FlexBubble>((order) => {
             const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;

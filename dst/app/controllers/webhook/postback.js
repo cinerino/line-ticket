@@ -2795,7 +2795,7 @@ function searchOrders(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文を検索しています...' });
         const orderRepo = new cinerino.repository.Order(cinerino.mongoose.connection);
         const username = params.user.authClient.verifyIdToken({}).getUsername();
-        const orders = yield orderRepo.search({
+        let orders = yield orderRepo.search({
             customerMembershipNumbers: [username],
             orderDateFrom: moment(now).add(-1, 'month').toDate(),
             orderDateThrough: now
@@ -2805,6 +2805,8 @@ function searchOrders(params) {
         }
         else {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${orders.length}件の注文が見つかりました` });
+            // tslint:disable-next-line:no-magic-numbers
+            orders = orders.slice(0, 10);
             // tslint:disable-next-line:max-func-body-length
             const contents = orders.map((order) => {
                 const event = order.acceptedOffers[0].itemOffered.reservationFor;
