@@ -51,7 +51,7 @@ export async function searchEventsByDate(params: {
     superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
     // tslint:disable-next-line:no-magic-numbers
     superEvents = superEvents.slice(0, 10);
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
+    await client.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
 
     // googleで画像検索
     const CX = '006320166286449124373:nm_gjsvlgnm';
@@ -248,7 +248,7 @@ export async function askScreeningEvent(params: {
         .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
         // tslint:disable-next-line:no-magic-numbers
         .slice(0, 10);
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
+    await client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
     const bubbles: line.FlexBubble[] = screeningEvents.map<line.FlexBubble>((event) => {
         const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
         const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
@@ -317,7 +317,7 @@ export async function askScreeningEvent(params: {
             }
         };
     });
-    await client.replyMessage(params.replyToken, [
+    await client.pushMessage(params.user.userId, [
         {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -430,7 +430,7 @@ export async function selectPaymentMethodType(params: {
                 fromAccount: account
             });
             debug('残高確認済', accountAuthorization);
-            await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
+            await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
             break;
 
         case cinerinoapi.factory.paymentMethodType.CreditCard:
@@ -454,7 +454,7 @@ export async function selectPaymentMethodType(params: {
                     // cardPass?: string;
                 }
             });
-            await client.replyMessage(params.replyToken, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
+            await client.pushMessage(params.user.userId, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
             break;
 
         default:
@@ -475,7 +475,7 @@ export async function selectPaymentMethodType(params: {
     });
     debug('customer contact set.');
     // 注文内容確認
-    await client.replyMessage(params.replyToken, [
+    await client.pushMessage(params.user.userId, [
         {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -763,7 +763,7 @@ export async function confirmOrder(params: {
         transactionId: params.transactionId
     });
     const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
-    await client.replyMessage(params.replyToken, [
+    await client.pushMessage(params.user.userId, [
 
         {
             type: 'flex',
@@ -989,7 +989,7 @@ export async function confirmFriendPay(params: {
 }) {
     const friendPayInfo = await params.user.verifyFriendPayToken(params.token);
     await client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます。` });
-    await client.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
 
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -1025,8 +1025,8 @@ export async function confirmFriendPay(params: {
         }
     });
     debug('残高確認済', pecorinoAuthorization);
-    await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
-    await client.replyMessage(params.replyToken, { type: 'text', text: '友達決済を承認しました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
     const template: line.TemplateMessage = {
         type: 'template',
         altText: 'This is a buttons template',
@@ -1049,7 +1049,7 @@ export async function confirmFriendPay(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [template]);
+    await client.pushMessage(params.user.userId, [template]);
 }
 /**
  * おこづかい承認確定
@@ -1098,19 +1098,19 @@ export async function confirmTransferMoney(params: {
         toAccountNumber: transferMoneyInfo.accountNumber
     });
     debug('transaction started.', transaction.id);
-    await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
 
     // バックエンドで確定
     await transferService.confirm({
         transactionId: transaction.id
     });
     debug('transaction confirmed.');
-    await client.replyMessage(params.replyToken, { type: 'text', text: '転送が完了しました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
 
     const contact = await personService.getContacts({ personId: 'me' });
 
     // 振込先に通知
-    await client.replyMessage(params.replyToken, {
+    await client.pushMessage(params.user.userId, {
         type: 'text',
         text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました。`
     });
@@ -1174,7 +1174,7 @@ export async function selectDepositAmount(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [message]);
+    await client.pushMessage(params.user.userId, [message]);
 }
 /**
  * クレジットから口座へ入金する
@@ -1224,7 +1224,7 @@ export async function depositCoinByCreditCard(params: {
     await depositTransaction.confirm({
         transactionId: transaction.id
     });
-    await client.replyMessage(params.replyToken, { type: 'text', text: '入金処理が完了しました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
 }
 /**
  * クレジットカード検索
@@ -1239,7 +1239,7 @@ export async function searchCreditCards(params: {
         auth: params.user.authClient
     });
     const creditCards = await personService.searchCreditCards({ personId: 'me' });
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
+    await client.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
     const flex: line.FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
@@ -1383,7 +1383,7 @@ export async function searchCreditCards(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [flex]);
+    await client.pushMessage(params.user.userId, [flex]);
 }
 export async function addCreditCard(params: {
     replyToken: string;
@@ -1714,7 +1714,7 @@ export async function searchCoinAccounts(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [flex]);
+    await client.pushMessage(params.user.userId, [flex]);
 }
 /**
  * 口座取引履歴検索
@@ -1745,7 +1745,7 @@ export async function searchAccountMoneyTransferActions(params: {
         accountNumber: params.accountNumber
     });
     if (transferActions.length === 0) {
-        await client.replyMessage(params.replyToken, { type: 'text', text: 'まだ取引履歴はありません' });
+        await client.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
 
         return;
     }
@@ -1985,7 +1985,7 @@ export async function searchAccountMoneyTransferActions(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [flex]);
+    await client.pushMessage(params.user.userId, [flex]);
 }
 /**
  * ユーザーのチケット(座席予約)を検索する
@@ -2007,7 +2007,7 @@ export async function searchScreeningEventReservations(params: {
     debug(ownershipInfos.length, 'ownershipInfos found.');
 
     if (ownershipInfos.length === 0) {
-        await client.replyMessage(params.replyToken, { type: 'text', text: '座席予約が見つかりませんでした' });
+        await client.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
     } else {
         // googleで画像検索
         const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
@@ -2215,7 +2215,7 @@ export async function searchScreeningEventReservations(params: {
                 ]
             }
         };
-        await client.replyMessage(params.replyToken, [flex]);
+        await client.pushMessage(params.user.userId, [flex]);
     }
 }
 /**
@@ -2315,7 +2315,7 @@ export async function selectSeatOffers(params: {
         notes: 'test from samples'
     });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
-    await client.replyMessage(params.replyToken, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
+    await client.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
     const message: line.TextMessage = {
         type: 'text',
         text: '決済方法を選択してください',
@@ -2362,7 +2362,7 @@ export async function selectSeatOffers(params: {
             ]
         }
     };
-    await client.replyMessage(params.replyToken, [message]);
+    await client.pushMessage(params.user.userId, [message]);
 }
 /**
  * 所有権コード発行
@@ -2384,7 +2384,7 @@ export async function authorizeOwnershipInfo(params: {
         goodType: params.goodType,
         identifier: params.identifier
     });
-    await client.replyMessage(params.replyToken, { type: 'text', text: 'コードが発行されました' });
+    await client.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
     let flex: line.FlexMessage;
     switch (params.goodType) {
         case cinerinoapi.factory.chevre.reservationType.EventReservation:
@@ -2603,7 +2603,7 @@ export async function authorizeOwnershipInfo(params: {
                     ]
                 }
             };
-            await client.replyMessage(params.replyToken, [flex]);
+            await client.pushMessage(params.user.userId, [flex]);
             break;
 
         case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
@@ -2816,7 +2816,7 @@ export async function authorizeOwnershipInfo(params: {
                     ]
                 }
             };
-            await client.replyMessage(params.replyToken, [flex]);
+            await client.pushMessage(params.user.userId, [flex]);
             break;
 
         default:

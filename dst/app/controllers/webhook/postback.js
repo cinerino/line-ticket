@@ -54,7 +54,7 @@ function searchEventsByDate(params) {
         superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
         // tslint:disable-next-line:no-magic-numbers
         superEvents = superEvents.slice(0, 10);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
         // googleで画像検索
         const CX = '006320166286449124373:nm_gjsvlgnm';
         const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
@@ -240,7 +240,7 @@ function askScreeningEvent(params) {
             .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
             // tslint:disable-next-line:no-magic-numbers
             .slice(0, 10);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
         const bubbles = screeningEvents.map((event) => {
             const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
             const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
@@ -308,7 +308,7 @@ function askScreeningEvent(params) {
                 }
             };
         });
-        yield client.replyMessage(params.replyToken, [
+        yield client.pushMessage(params.user.userId, [
             {
                 type: 'flex',
                 altText: 'This is a Flex Message',
@@ -413,7 +413,7 @@ function selectPaymentMethodType(params) {
                     fromAccount: account
                 });
                 debug('残高確認済', accountAuthorization);
-                yield client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
+                yield client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
                 break;
             case cinerinoapi.factory.paymentMethodType.CreditCard:
                 yield client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
@@ -435,7 +435,7 @@ function selectPaymentMethodType(params) {
                         // cardPass?: string;
                     }
                 });
-                yield client.replyMessage(params.replyToken, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
+                yield client.pushMessage(params.user.userId, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
                 break;
             default:
                 throw new Error(`Unknown payment method ${params.paymentMethodType}`);
@@ -455,7 +455,7 @@ function selectPaymentMethodType(params) {
         });
         debug('customer contact set.');
         // 注文内容確認
-        yield client.replyMessage(params.replyToken, [
+        yield client.pushMessage(params.user.userId, [
             {
                 type: 'flex',
                 altText: 'This is a Flex Message',
@@ -739,7 +739,7 @@ function confirmOrder(params) {
             transactionId: params.transactionId
         });
         const event = order.acceptedOffers[0].itemOffered.reservationFor;
-        yield client.replyMessage(params.replyToken, [
+        yield client.pushMessage(params.user.userId, [
             {
                 type: 'flex',
                 altText: 'This is a Flex Message',
@@ -959,7 +959,7 @@ function confirmFriendPay(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const friendPayInfo = yield params.user.verifyFriendPayToken(params.token);
         yield client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます。` });
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
@@ -992,8 +992,8 @@ function confirmFriendPay(params) {
             }
         });
         debug('残高確認済', pecorinoAuthorization);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '友達決済を承認しました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
         const template = {
             type: 'template',
             altText: 'This is a buttons template',
@@ -1016,7 +1016,7 @@ function confirmFriendPay(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [template]);
+        yield client.pushMessage(params.user.userId, [template]);
     });
 }
 exports.confirmFriendPay = confirmFriendPay;
@@ -1063,16 +1063,16 @@ function confirmTransferMoney(params) {
             toAccountNumber: transferMoneyInfo.accountNumber
         });
         debug('transaction started.', transaction.id);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
         // バックエンドで確定
         yield transferService.confirm({
             transactionId: transaction.id
         });
         debug('transaction confirmed.');
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '転送が完了しました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
         const contact = yield personService.getContacts({ personId: 'me' });
         // 振込先に通知
-        yield client.replyMessage(params.replyToken, {
+        yield client.pushMessage(params.user.userId, {
             type: 'text',
             text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました。`
         });
@@ -1134,7 +1134,7 @@ function selectDepositAmount(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [message]);
+        yield client.pushMessage(params.user.userId, [message]);
     });
 }
 exports.selectDepositAmount = selectDepositAmount;
@@ -1181,7 +1181,7 @@ function depositCoinByCreditCard(params) {
         yield depositTransaction.confirm({
             transactionId: transaction.id
         });
-        yield client.replyMessage(params.replyToken, { type: 'text', text: '入金処理が完了しました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
     });
 }
 exports.depositCoinByCreditCard = depositCoinByCreditCard;
@@ -1196,7 +1196,7 @@ function searchCreditCards(params) {
             auth: params.user.authClient
         });
         const creditCards = yield personService.searchCreditCards({ personId: 'me' });
-        yield client.replyMessage(params.replyToken, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
         const flex = {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -1340,7 +1340,7 @@ function searchCreditCards(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [flex]);
+        yield client.pushMessage(params.user.userId, [flex]);
     });
 }
 exports.searchCreditCards = searchCreditCards;
@@ -1664,7 +1664,7 @@ function searchCoinAccounts(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [flex]);
+        yield client.pushMessage(params.user.userId, [flex]);
     });
 }
 exports.searchCoinAccounts = searchCoinAccounts;
@@ -1693,7 +1693,7 @@ function searchAccountMoneyTransferActions(params) {
             accountNumber: params.accountNumber
         });
         if (transferActions.length === 0) {
-            yield client.replyMessage(params.replyToken, { type: 'text', text: 'まだ取引履歴はありません' });
+            yield client.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
             return;
         }
         // tslint:disable-next-line:no-magic-numbers
@@ -1930,7 +1930,7 @@ function searchAccountMoneyTransferActions(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [flex]);
+        yield client.pushMessage(params.user.userId, [flex]);
     });
 }
 exports.searchAccountMoneyTransferActions = searchAccountMoneyTransferActions;
@@ -1951,7 +1951,7 @@ function searchScreeningEventReservations(params) {
         });
         debug(ownershipInfos.length, 'ownershipInfos found.');
         if (ownershipInfos.length === 0) {
-            yield client.replyMessage(params.replyToken, { type: 'text', text: '座席予約が見つかりませんでした' });
+            yield client.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
         }
         else {
             // googleで画像検索
@@ -2155,7 +2155,7 @@ function searchScreeningEventReservations(params) {
                     ]
                 }
             };
-            yield client.replyMessage(params.replyToken, [flex]);
+            yield client.pushMessage(params.user.userId, [flex]);
         }
     });
 }
@@ -2244,7 +2244,7 @@ function selectSeatOffers(params) {
             notes: 'test from samples'
         });
         debug('seatReservationAuthorization:', seatReservationAuthorization);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
         const message = {
             type: 'text',
             text: '決済方法を選択してください',
@@ -2291,7 +2291,7 @@ function selectSeatOffers(params) {
                 ]
             }
         };
-        yield client.replyMessage(params.replyToken, [message]);
+        yield client.pushMessage(params.user.userId, [message]);
     });
 }
 exports.selectSeatOffers = selectSeatOffers;
@@ -2311,7 +2311,7 @@ function authorizeOwnershipInfo(params) {
             goodType: params.goodType,
             identifier: params.identifier
         });
-        yield client.replyMessage(params.replyToken, { type: 'text', text: 'コードが発行されました' });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
         let flex;
         switch (params.goodType) {
             case cinerinoapi.factory.chevre.reservationType.EventReservation:
@@ -2524,7 +2524,7 @@ function authorizeOwnershipInfo(params) {
                         ]
                     }
                 };
-                yield client.replyMessage(params.replyToken, [flex]);
+                yield client.pushMessage(params.user.userId, [flex]);
                 break;
             case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
                 const accountOwnershipInfos = yield personService.searchAccounts({
@@ -2735,7 +2735,7 @@ function authorizeOwnershipInfo(params) {
                         ]
                     }
                 };
-                yield client.replyMessage(params.replyToken, [flex]);
+                yield client.pushMessage(params.user.userId, [flex]);
                 break;
             default:
                 throw new Error(`Unknown goodType ${params.goodType}`);
