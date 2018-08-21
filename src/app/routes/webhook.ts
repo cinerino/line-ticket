@@ -9,7 +9,7 @@ import { OK } from 'http-status';
 import * as WebhookController from '../controllers/webhook';
 import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
-import User from '../user';
+// import User from '../user';
 
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
@@ -26,12 +26,12 @@ webhookRouter.all(
     line.middleware(config),
     async (req, res) => {
         debug('body:', JSON.stringify(req.body));
-        await Promise.all(req.body.events.map(handleEvent, req.user));
+        await Promise.all(req.body.events.map(handleEvent));
         // .then((result) => res.json(result));
         res.status(OK).send('ok');
     });
 
-async function handleEvent(event: line.WebhookEvent, user: User) {
+async function handleEvent(event: line.WebhookEvent) {
     try {
         switch (event.type) {
             case 'message':
@@ -46,7 +46,7 @@ async function handleEvent(event: line.WebhookEvent, user: User) {
                 break;
 
             case 'postback':
-                await WebhookController.postback(event, user);
+                await WebhookController.postback(event, <any>null);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment

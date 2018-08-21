@@ -18,6 +18,7 @@ const http_status_1 = require("http-status");
 const WebhookController = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
+// import User from '../user';
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
 const config = {
@@ -27,11 +28,11 @@ const config = {
 const client = new line.Client(config);
 webhookRouter.all('/', faceLogin_1.default, authentication_1.default, line.middleware(config), (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));
-    yield Promise.all(req.body.events.map(handleEvent, req.user));
+    yield Promise.all(req.body.events.map(handleEvent));
     // .then((result) => res.json(result));
     res.status(http_status_1.OK).send('ok');
 }));
-function handleEvent(event, user) {
+function handleEvent(event) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             switch (event.type) {
@@ -43,7 +44,7 @@ function handleEvent(event, user) {
                     });
                     break;
                 case 'postback':
-                    yield WebhookController.postback(event, user);
+                    yield WebhookController.postback(event, null);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
