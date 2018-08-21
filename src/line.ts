@@ -1,6 +1,5 @@
 /**
  * LINEモジュール
- * @namespace line
  */
 
 export interface IMessage {

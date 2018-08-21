@@ -1,7 +1,6 @@
 "use strict";
 /**
  * LINEモジュール
- * @namespace line
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {

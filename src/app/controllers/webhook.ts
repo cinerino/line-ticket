@@ -1,101 +1,90 @@
 /**
- * LINE webhookコントローラー
+ * LINE Webhookコントローラー
  */
+import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as querystring from 'querystring';
 
-import * as LINE from '../../line';
 import User from '../user';
 import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
 
 const debug = createDebug('cinerino-line-ticket:*');
+const client = new line.Client({
+    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
+});
 
 /**
  * メッセージが送信されたことを示すEvent Objectです。
  */
 // tslint:disable-next-line:max-func-body-length
-export async function message(event: LINE.IWebhookEvent, user: User) {
-    const userId = event.source.userId;
-
+export async function message(event: line.MessageEvent, user: User) {
+    const userId = <string>event.source.userId;
     try {
         if (event.message === undefined) {
             throw new Error('event.message not found.');
         }
-
         switch (event.message.type) {
-            case LINE.MessageType.text:
-                const messageText = <string>event.message.text;
-
+            case 'text':
+                const messageText = event.message.text;
                 switch (true) {
                     // [購入番号]で検索
                     case /^\d{6}$/.test(messageText):
                         await MessageController.askReservationEventDate(userId, messageText);
                         break;
-
                     // ログアウト
                     case /^logout$/.test(messageText):
                         await MessageController.logout(user);
                         break;
-
                     case /^座席予約$/.test(messageText):
                         await MessageController.showSeatReservationMenu(user);
                         break;
-
                     case /^クレジットカード$/.test(messageText):
                         await MessageController.showCreditCardMenu(user);
                         break;
-
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu(user);
                         break;
-
                     // 顔写真登録
                     case /^顔写真登録$/.test(messageText):
                         await MessageController.startIndexingFace(userId);
                         break;
-
                     // 友達決済承認ワンタイムメッセージ
                     case /^FriendPayToken/.test(messageText):
                         const token = messageText.replace('FriendPayToken.', '');
                         await MessageController.askConfirmationOfFriendPay(user, token);
                         break;
-
                     // おこづかいをもらう
                     case /^おこづかい$/.test(messageText):
                         await MessageController.selectWhomAskForMoney(user);
                         break;
-
                     // おこづかい承認メッセージ
                     case /^TransferMoneyToken/.test(messageText):
                         const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
                         await MessageController.askConfirmationOfTransferMoney(user, transferMoneyToken);
                         break;
-
                     // メッセージで強制的にpostbackイベントを発動
                     case /^postback:/.test(messageText):
                         const postbackData = messageText.replace('postback:', '');
-                        const postbackEvent: LINE.IWebhookEvent = {
+                        const postbackEvent: line.PostbackEvent = {
                             type: 'postback',
                             timestamp: event.timestamp,
                             source: event.source,
-                            message: event.message,
-                            postback: { data: postbackData }
+                            postback: { data: postbackData },
+                            replyToken: event.replyToken
                         };
                         await postback(postbackEvent, user);
                         break;
-
                     default:
                         // 予約照会方法をアドバイス
                         await MessageController.pushHowToUse(userId);
                 }
-
                 break;
 
-            case LINE.MessageType.image:
+            case 'image':
                 await ImageMessageController.indexFace(user, event.message.id);
-
                 break;
 
             default:
@@ -103,7 +92,13 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
         }
     } catch (error) {
         // エラーメッセージ表示
-        await LINE.pushMessage(userId, error.toString());
+        await client.replyMessage(
+            event.replyToken,
+            {
+                type: 'text',
+                text: error.toString()
+            }
+        );
     }
 }
 
@@ -111,16 +106,19 @@ export async function message(event: LINE.IWebhookEvent, user: User) {
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
-export async function postback(event: LINE.IWebhookEvent, user: User) {
+export async function postback(event: line.PostbackEvent, user: User) {
     const data = querystring.parse(event.postback.data);
     debug('data:', data);
-    const userId = event.source.userId;
-
     try {
         switch (data.action) {
             // イベント検索
             case 'searchEventsByDate':
-                const date = (data.date !== undefined) ? <string>data.date : <string>event.postback.params.date;
+                let date = '';
+                if (event.postback.params !== undefined && event.postback.params.date !== undefined) {
+                    date = event.postback.params.date;
+                } else {
+                    date = <string>data.date;
+                }
                 await PostbackController.searchEventsByDate(user, date);
                 break;
 
@@ -269,41 +267,47 @@ export async function postback(event: LINE.IWebhookEvent, user: User) {
     } catch (error) {
         console.error(error);
         // エラーメッセージ表示
-        await LINE.pushMessage(userId, error.toString());
+        await client.replyMessage(
+            event.replyToken,
+            {
+                type: 'text',
+                text: error.toString()
+            }
+        );
     }
 }
 
 /**
  * イベント送信元に友だち追加（またはブロック解除）されたことを示すEvent Objectです。
  */
-export async function follow(event: LINE.IWebhookEvent) {
+export async function follow(event: line.FollowEvent) {
     debug('event is', event);
 }
 
 /**
  * イベント送信元にブロックされたことを示すevent objectです。
  */
-export async function unfollow(event: LINE.IWebhookEvent) {
+export async function unfollow(event: line.UnfollowEvent) {
     debug('event is', event);
 }
 
 /**
  * イベントの送信元グループまたはトークルームに参加したことを示すevent objectです。
  */
-export async function join(event: LINE.IWebhookEvent) {
+export async function join(event: line.JoinEvent) {
     debug('event is', event);
 }
 
 /**
  * イベントの送信元グループから退出させられたことを示すevent objectです。
  */
-export async function leave(event: LINE.IWebhookEvent) {
+export async function leave(event: line.LeaveEvent) {
     debug('event is', event);
 }
 
 /**
  * イベント送信元のユーザがLINE Beaconデバイスの受信圏内に出入りしたことなどを表すイベントです。
  */
-export async function beacon(event: LINE.IWebhookEvent) {
+export async function beacon(event: line.BeaconEvent) {
     debug('event is', event);
 }

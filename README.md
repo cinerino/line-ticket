@@ -37,6 +37,7 @@
 | `FACE_MATCH_THRESHOLD`             | true     |                        | Face match threshold            |
 | `LINE_ID`                          | true     |                        | LINE Bot application ID         |
 | `LINE_BOT_CHANNEL_ACCESS_TOKEN`    | true     |                        |                                 |
+| `LINE_BOT_CHANNEL_SECRET`          | true     |                        |                                 |
 | `LIFF_ID`                          | true     |                        |                                 |
 
 ## Code Samples

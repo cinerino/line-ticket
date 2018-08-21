@@ -3,6 +3,9 @@ const request = require('request-promise-native');
 request.post(
     'http://localhost:8080/webhook',
     {
+        headers: {
+            'X-Line-Signature': 'xxxx'
+        },
         json: true,
         body: {
             events: [

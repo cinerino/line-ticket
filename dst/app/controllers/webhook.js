@@ -9,15 +9,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * LINE webhookコントローラー
+ * LINE Webhookコントローラー
  */
+const line = require("@line/bot-sdk");
 const createDebug = require("debug");
 const querystring = require("querystring");
-const LINE = require("../../line");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
 const PostbackController = require("./webhook/postback");
 const debug = createDebug('cinerino-line-ticket:*');
+const client = new line.Client({
+    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
+});
 /**
  * メッセージが送信されたことを示すEvent Objectです。
  */
@@ -30,7 +34,7 @@ function message(event, user) {
                 throw new Error('event.message not found.');
             }
             switch (event.message.type) {
-                case LINE.MessageType.text:
+                case 'text':
                     const messageText = event.message.text;
                     switch (true) {
                         // [購入番号]で検索
@@ -75,8 +79,8 @@ function message(event, user) {
                                 type: 'postback',
                                 timestamp: event.timestamp,
                                 source: event.source,
-                                message: event.message,
-                                postback: { data: postbackData }
+                                postback: { data: postbackData },
+                                replyToken: event.replyToken
                             };
                             yield postback(postbackEvent, user);
                             break;
@@ -85,7 +89,7 @@ function message(event, user) {
                             yield MessageController.pushHowToUse(userId);
                     }
                     break;
-                case LINE.MessageType.image:
+                case 'image':
                     yield ImageMessageController.indexFace(user, event.message.id);
                     break;
                 default:
@@ -94,7 +98,10 @@ function message(event, user) {
         }
         catch (error) {
             // エラーメッセージ表示
-            yield LINE.pushMessage(userId, error.toString());
+            yield client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: error.toString()
+            });
         }
     });
 }
@@ -107,12 +114,17 @@ function postback(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = querystring.parse(event.postback.data);
         debug('data:', data);
-        const userId = event.source.userId;
         try {
             switch (data.action) {
                 // イベント検索
                 case 'searchEventsByDate':
-                    const date = (data.date !== undefined) ? data.date : event.postback.params.date;
+                    let date = '';
+                    if (event.postback.params !== undefined && event.postback.params.date !== undefined) {
+                        date = event.postback.params.date;
+                    }
+                    else {
+                        date = data.date;
+                    }
                     yield PostbackController.searchEventsByDate(user, date);
                     break;
                 case 'askScreeningEvent':
@@ -240,7 +252,10 @@ function postback(event, user) {
         catch (error) {
             console.error(error);
             // エラーメッセージ表示
-            yield LINE.pushMessage(userId, error.toString());
+            yield client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: error.toString()
+            });
         }
     });
 }

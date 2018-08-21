@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * webhookルーター
  */
+const line = require("@line/bot-sdk");
 const createDebug = require("debug");
 const express = require("express");
 const http_status_1 = require("http-status");
@@ -19,17 +20,30 @@ const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
-webhookRouter.all('/', faceLogin_1.default, authentication_1.default, (req, res) => __awaiter(this, void 0, void 0, function* () {
+const config = {
+    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
+};
+const client = new line.Client(config);
+webhookRouter.all('/', faceLogin_1.default, authentication_1.default, line.middleware(config), (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));
-    try {
-        const event = (req.body.events !== undefined) ? req.body.events[0] : undefined;
-        if (event !== undefined) {
+    yield Promise.all(req.body.events.map(handleEvent, req.user));
+    // .then((result) => res.json(result));
+    res.status(http_status_1.OK).send('ok');
+}));
+function handleEvent(event, user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
             switch (event.type) {
                 case 'message':
-                    yield WebhookController.message(event, req.user);
+                    // await WebhookController.message(event, user);
+                    yield client.replyMessage(event.replyToken, {
+                        type: 'text',
+                        text: 'hello'
+                    });
                     break;
                 case 'postback':
-                    yield WebhookController.postback(event, req.user);
+                    yield WebhookController.postback(event, user);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
@@ -54,15 +68,14 @@ webhookRouter.all('/', faceLogin_1.default, authentication_1.default, (req, res)
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'beacon':
-                    yield WebhookController.postback(event, req.user);
+                    yield WebhookController.beacon(event);
                     break;
                 default:
             }
         }
-    }
-    catch (error) {
-        debug(error);
-    }
-    res.status(http_status_1.OK).send('ok');
-}));
+        catch (error) {
+            debug(error);
+        }
+    });
+}
 exports.default = webhookRouter;
