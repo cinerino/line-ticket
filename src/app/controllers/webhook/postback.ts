@@ -3,13 +3,13 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as cinerino from '@cinerino/domain';
-import * as line from '@line/bot-sdk';
+import { FlexBox, FlexBubble, FlexMessage, TemplateMessage, TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import { google } from 'googleapis';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
-import * as request from 'request-promise-native';
 
+import LINE from '../../../lineClient';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:*');
@@ -20,10 +20,6 @@ const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
     clientSecret: <string>process.env.PECORINO_CLIENT_SECRET,
     scopes: [],
     state: ''
-});
-const client = new line.Client({
-    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
 });
 
 /**
@@ -36,7 +32,7 @@ export async function searchEventsByDate(params: {
     user: User;
     date: string;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -52,7 +48,7 @@ export async function searchEventsByDate(params: {
     superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
     // tslint:disable-next-line:no-magic-numbers
     superEvents = superEvents.slice(0, 10);
-    await client.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
 
     // googleで画像検索
     const CX = '006320166286449124373:nm_gjsvlgnm';
@@ -90,138 +86,128 @@ export async function searchEventsByDate(params: {
     }));
     debug(thumbnails);
     // const accessToken = await params.user.authClient.getAccessToken();
+    const flex: FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: [
+                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                ...superEvents.slice(0, 10).map<FlexBubble>((event) => {
+                    // const itemOffered = ownershipInfo.typeOfGood;
+                    // const event = itemOffered.reservationFor;
+                    const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                    const thumbnailImageUrl = (thumbnail !== undefined)
+                        ? thumbnail.thumbnailLink
+                        // tslint:disable-next-line:max-line-length
+                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
 
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'carousel',
-                        contents: [
-                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...superEvents.slice(0, 10).map((event) => {
-                                // const itemOffered = ownershipInfo.typeOfGood;
-                                // const event = itemOffered.reservationFor;
-                                const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                                const thumbnailImageUrl = (thumbnail !== undefined)
-                                    ? thumbnail.thumbnailLink
-                                    // tslint:disable-next-line:max-line-length
-                                    : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-
-                                return {
-                                    type: 'bubble',
-                                    hero: {
-                                        type: 'image',
-                                        url: thumbnailImageUrl,
-                                        size: 'full',
-                                        aspectRatio: '20:13',
-                                        aspectMode: 'cover',
-                                        action: {
-                                            type: 'uri',
-                                            // tslint:disable-next-line:no-http-string
-                                            uri: 'http://linecorp.com/'
-                                        }
-                                    },
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: event.name.ja,
-                                                wrap: true,
-                                                weight: 'bold',
-                                                gravity: 'center',
-                                                size: 'xl'
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Date',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: moment(event.startDate).format('lll'),
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Place',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: event.location.name.ja,
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    footer: {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        contents: [
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: 'スケジュール選択',
-                                                    data: querystring.stringify({
-                                                        action: 'askScreeningEvent',
-                                                        screeningEventSeriesId: event.id,
-                                                        date: params.date
-                                                    })
+                    return {
+                        type: 'bubble',
+                        hero: {
+                            type: 'image',
+                            url: thumbnailImageUrl,
+                            size: 'full',
+                            aspectRatio: '20:13',
+                            aspectMode: 'cover',
+                            action: {
+                                type: 'uri',
+                                label: 'event',
+                                // tslint:disable-next-line:no-http-string
+                                uri: 'http://linecorp.com/'
+                            }
+                        },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'md',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: event.name.ja,
+                                    wrap: true,
+                                    weight: 'bold',
+                                    gravity: 'center',
+                                    size: 'xl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Date',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: moment(event.startDate).format('lll'),
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            }
-                                        ]
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Place',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: event.location.name.ja,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        footer: {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: 'スケジュール選択',
+                                        data: querystring.stringify({
+                                            action: 'askScreeningEvent',
+                                            screeningEventSeriesId: event.id,
+                                            date: params.date
+                                        })
                                     }
-                                };
-                            })
-                        ]
-                    }
-                }
+                                }
+                            ]
+                        }
+                    };
+                })
             ]
         }
-    }).promise();
+    };
+    await LINE.pushMessage(params.user.userId, [flex]);
 }
 
 /**
@@ -234,7 +220,7 @@ export async function askScreeningEvent(params: {
     screeningEventSeriesId: string;
     date: string;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -250,9 +236,9 @@ export async function askScreeningEvent(params: {
         .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
         // tslint:disable-next-line:no-magic-numbers
         .slice(0, 10);
-    await client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
     // tslint:disable-next-line:max-func-body-length
-    const bubbles: line.FlexBubble[] = screeningEvents.map<line.FlexBubble>((event) => {
+    const bubbles: FlexBubble[] = screeningEvents.map<FlexBubble>((event) => {
         const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
         const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
@@ -364,7 +350,7 @@ export async function askScreeningEvent(params: {
             }
         };
     });
-    await client.pushMessage(params.user.userId, [
+    await LINE.pushMessage(params.user.userId, [
         {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -395,7 +381,7 @@ export async function askPaymentCode(params: {
     // line://oaMessage/${LINE_ID}/?${friendMessage}`);
     const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
-    await client.replyMessage(params.replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: '決済コード',
@@ -455,7 +441,7 @@ export async function selectPaymentMethodType(params: {
 
     switch (params.paymentMethodType) {
         case cinerinoapi.factory.paymentMethodType.Account:
-            await client.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
+            await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
             let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType.Coin> | string;
             if (params.code === undefined) {
                 // 口座番号取得
@@ -477,11 +463,11 @@ export async function selectPaymentMethodType(params: {
                 fromAccount: account
             });
             debug('残高確認済', accountAuthorization);
-            await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+            await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
             break;
 
         case cinerinoapi.factory.paymentMethodType.CreditCard:
-            await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
+            await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
 
             // 口座番号取得
             const creditCards = await personService.searchCreditCards({ personId: 'me' });
@@ -501,7 +487,7 @@ export async function selectPaymentMethodType(params: {
                     // cardPass?: string;
                 }
             });
-            await client.pushMessage(params.user.userId, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
+            await LINE.pushMessage(params.user.userId, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
             break;
 
         default:
@@ -509,7 +495,7 @@ export async function selectPaymentMethodType(params: {
     }
     // const loginTicket = params.user.authClient.verifyIdToken({});
     let contact = await personService.getContacts({ personId: 'me' });
-    const lineProfile = await client.getProfile(params.user.userId);
+    const lineProfile = await LINE.getProfile(params.user.userId);
     contact = {
         givenName: lineProfile.displayName,
         familyName: 'LINE',
@@ -522,7 +508,7 @@ export async function selectPaymentMethodType(params: {
     });
     debug('customer contact set.');
     // 注文内容確認
-    await client.pushMessage(params.user.userId, [
+    await LINE.pushMessage(params.user.userId, [
         {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -673,7 +659,7 @@ export async function selectPaymentMethodType(params: {
                                         }
                                     ]
                                 },
-                                ...tmpReservations.map<line.FlexBox>((r) => {
+                                ...tmpReservations.map<FlexBox>((r) => {
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     const str = `${r.reservedTicket.ticketedSeat.seatNumber} ${r.reservedTicket.ticketType.name.ja}`;
 
@@ -801,7 +787,7 @@ export async function confirmOrder(params: {
     user: User;
     transactionId: string;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
     const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -810,7 +796,7 @@ export async function confirmOrder(params: {
         transactionId: params.transactionId
     });
     const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
-    await client.pushMessage(params.user.userId, [
+    await LINE.pushMessage(params.user.userId, [
 
         {
             type: 'flex',
@@ -920,7 +906,7 @@ export async function confirmOrder(params: {
                                         }
                                     ]
                                 },
-                                ...order.acceptedOffers.map<line.FlexBox>((orderItem) => {
+                                ...order.acceptedOffers.map<FlexBox>((orderItem) => {
                                     const item = <IEventReservation>orderItem.itemOffered;
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
@@ -1035,8 +1021,8 @@ export async function confirmFriendPay(params: {
     token: string;
 }) {
     const friendPayInfo = await params.user.verifyFriendPayToken(params.token);
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます` });
-    await client.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます` });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
 
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -1072,9 +1058,9 @@ export async function confirmFriendPay(params: {
         }
     });
     debug('残高確認済', pecorinoAuthorization);
-    await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
-    await client.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
-    const template: line.TemplateMessage = {
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
+    const template: TemplateMessage = {
         type: 'template',
         altText: 'This is a buttons template',
         template: {
@@ -1096,7 +1082,7 @@ export async function confirmFriendPay(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [template]);
+    await LINE.pushMessage(params.user.userId, [template]);
 }
 /**
  * おこづかい承認確定
@@ -1108,7 +1094,7 @@ export async function confirmTransferMoney(params: {
     price: number;
 }) {
     const transferMoneyInfo = await params.user.verifyTransferMoneyToken(params.token);
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${transferMoneyInfo.name}に${params.price}円の振込を実行します...` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${transferMoneyInfo.name}に${params.price}円の振込を実行します...` });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1145,19 +1131,19 @@ export async function confirmTransferMoney(params: {
         toAccountNumber: transferMoneyInfo.accountNumber
     });
     debug('transaction started.', transaction.id);
-    await client.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
 
     // バックエンドで確定
     await transferService.confirm({
         transactionId: transaction.id
     });
     debug('transaction confirmed.');
-    await client.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
 
     const contact = await personService.getContacts({ personId: 'me' });
 
     // 振込先に通知
-    await client.pushMessage(params.user.userId, {
+    await LINE.pushMessage(params.user.userId, {
         type: 'text',
         text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました`
     });
@@ -1171,7 +1157,7 @@ export async function selectDepositAmount(params: {
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
 }) {
-    const message: line.TextMessage = {
+    const message: TextMessage = {
         type: 'text',
         text: 'いくら入金しますか?',
         quickReply: {
@@ -1221,7 +1207,7 @@ export async function selectDepositAmount(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [message]);
+    await LINE.pushMessage(params.user.userId, [message]);
 }
 /**
  * クレジットから口座へ入金する
@@ -1233,7 +1219,7 @@ export async function depositCoinByCreditCard(params: {
     accountType: cinerinoapi.factory.accountType;
     toAccountNumber: string;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1242,7 +1228,7 @@ export async function depositCoinByCreditCard(params: {
     if (creditCards.length === 0) {
         throw new Error('クレジットカード未登録です');
     }
-    const lineProfile = await client.getProfile(params.user.userId);
+    const lineProfile = await LINE.getProfile(params.user.userId);
     // 入金取引開始
     const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
         endpoint: <string>process.env.PECORINO_ENDPOINT,
@@ -1271,7 +1257,7 @@ export async function depositCoinByCreditCard(params: {
     await depositTransaction.confirm({
         transactionId: transaction.id
     });
-    await client.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
 }
 /**
  * クレジットカード検索
@@ -1280,21 +1266,21 @@ export async function searchCreditCards(params: {
     replyToken: string;
     user: User;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを検索しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを検索しています...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
     const creditCards = await personService.searchCreditCards({ personId: 'me' });
-    await client.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
-    const flex: line.FlexMessage = {
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
+    const flex: FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
         contents: {
             type: 'carousel',
             contents: [
                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                ...creditCards.map<line.FlexBubble>((creditCard) => {
+                ...creditCards.map<FlexBubble>((creditCard) => {
                     return {
                         type: 'bubble',
                         styles: {
@@ -1430,7 +1416,7 @@ export async function searchCreditCards(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [flex]);
+    await LINE.pushMessage(params.user.userId, [flex]);
 }
 export async function addCreditCard(params: {
     replyToken: string;
@@ -1442,7 +1428,7 @@ export async function addCreditCard(params: {
         auth: params.user.authClient
     });
     const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: params.token } });
-    await client.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
 }
 export async function deleteCreditCard(params: {
     replyToken: string;
@@ -1454,7 +1440,7 @@ export async function deleteCreditCard(params: {
         auth: params.user.authClient
     });
     await personService.deleteCreditCard({ personId: 'me', cardSeq: params.cardSeq });
-    await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
 }
 /**
  * 口座開設
@@ -1474,7 +1460,7 @@ export async function openAccount(params: {
         name: params.name,
         accountType: params.accountType
     });
-    await client.replyMessage(params.replyToken, {
+    await LINE.replyMessage(params.replyToken, {
         type: 'text',
         text: `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`
     });
@@ -1493,7 +1479,7 @@ export async function closeAccount(params: {
         auth: params.user.authClient
     });
     await personService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
 }
 export async function searchCoinAccounts(params: {
     replyToken: string;
@@ -1510,14 +1496,14 @@ export async function searchCoinAccounts(params: {
     if (accountOwnershipInfos.length === 0) {
         throw new Error('口座未開設です');
     }
-    const flex: line.FlexMessage = {
+    const flex: FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
         contents: {
             type: 'carousel',
             contents: [
                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                ...accountOwnershipInfos.map<line.FlexBubble>((ownershipInfo) => {
+                ...accountOwnershipInfos.map<FlexBubble>((ownershipInfo) => {
                     const account = ownershipInfo.typeOfGood;
 
                     return {
@@ -1761,7 +1747,7 @@ export async function searchCoinAccounts(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [flex]);
+    await LINE.pushMessage(params.user.userId, [flex]);
 }
 /**
  * 口座取引履歴検索
@@ -1785,27 +1771,27 @@ export async function searchAccountMoneyTransferActions(params: {
     if (accountOwnershipInfo === undefined) {
         throw new Error('口座が見つかりません');
     }
-    await client.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
     let transferActions = await personService.searchAccountMoneyTransferActions({
         personId: 'me',
         accountType: params.accountType,
         accountNumber: params.accountNumber
     });
     if (transferActions.length === 0) {
-        await client.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
 
         return;
     }
     // tslint:disable-next-line:no-magic-numbers
     transferActions = transferActions.slice(0, 10);
-    const flex: line.FlexMessage = {
+    const flex: FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
         contents: {
             type: 'carousel',
             contents: [
                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                ...transferActions.map<line.FlexBubble>((a) => {
+                ...transferActions.map<FlexBubble>((a) => {
                     let actionName = '';
                     switch (a.purpose.typeOf) {
                         case cinerinoapi.factory.pecorino.transactionType.Withdraw:
@@ -2032,7 +2018,7 @@ export async function searchAccountMoneyTransferActions(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [flex]);
+    await LINE.pushMessage(params.user.userId, [flex]);
 }
 /**
  * ユーザーのチケット(座席予約)を検索する
@@ -2043,7 +2029,7 @@ export async function searchScreeningEventReservations(params: {
     user: User;
 }) {
     const now = new Date();
-    await client.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -2057,7 +2043,7 @@ export async function searchScreeningEventReservations(params: {
     ownershipInfos = ownershipInfos.filter((o) => o.typeOfGood.reservationFor.startDate >= now);
 
     if (ownershipInfos.length === 0) {
-        await client.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
     } else {
         // googleで画像検索
         const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
@@ -2095,7 +2081,7 @@ export async function searchScreeningEventReservations(params: {
             });
         }));
         debug(thumbnails);
-        const flex: line.FlexMessage = {
+        const flex: FlexMessage = {
             type: 'flex',
             altText: 'This is a Flex Message',
             contents: {
@@ -2107,7 +2093,7 @@ export async function searchScreeningEventReservations(params: {
                         // tslint:disable-next-line:no-magic-numbers
                         .slice(0, 10)
                         // tslint:disable-next-line:max-func-body-length
-                        .map<line.FlexBubble>((ownershipInfo) => {
+                        .map<FlexBubble>((ownershipInfo) => {
                             const itemOffered = ownershipInfo.typeOfGood;
                             const event = itemOffered.reservationFor;
                             const thumbnail = thumbnails.find((t) => t.eventId === event.id);
@@ -2265,7 +2251,7 @@ export async function searchScreeningEventReservations(params: {
                 ]
             }
         };
-        await client.pushMessage(params.user.userId, [flex]);
+        await LINE.pushMessage(params.user.userId, [flex]);
     }
 }
 /**
@@ -2293,7 +2279,7 @@ export async function selectSeatOffers(params: {
     });
 
     const event = await eventService.findScreeningEventById({ eventId: params.eventId });
-    await client.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
 
     // 販売者情報取得
     const sellers = await organizationService.searchMovieTheaters({});
@@ -2365,8 +2351,8 @@ export async function selectSeatOffers(params: {
         notes: 'test from samples'
     });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
-    await client.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
-    const message: line.TextMessage = {
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
+    const message: TextMessage = {
         type: 'text',
         text: '決済方法を選択してください',
         quickReply: {
@@ -2412,7 +2398,7 @@ export async function selectSeatOffers(params: {
             ]
         }
     };
-    await client.pushMessage(params.user.userId, [message]);
+    await LINE.pushMessage(params.user.userId, [message]);
 }
 /**
  * 所有権コード発行
@@ -2424,7 +2410,7 @@ export async function authorizeOwnershipInfo(params: {
     goodType: cinerinoapi.factory.ownershipInfo.IGoodType;
     identifier: string;
 }) {
-    await client.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -2434,8 +2420,8 @@ export async function authorizeOwnershipInfo(params: {
         goodType: params.goodType,
         identifier: params.identifier
     });
-    await client.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
-    let flex: line.FlexMessage;
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
+    let flex: FlexMessage;
     switch (params.goodType) {
         case cinerinoapi.factory.chevre.reservationType.EventReservation:
             const ownershipInfos = await personService.searchScreeningEventReservations({
@@ -2653,7 +2639,7 @@ export async function authorizeOwnershipInfo(params: {
                     ]
                 }
             };
-            await client.pushMessage(params.user.userId, [flex]);
+            await LINE.pushMessage(params.user.userId, [flex]);
             break;
 
         case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
@@ -2866,7 +2852,7 @@ export async function authorizeOwnershipInfo(params: {
                     ]
                 }
             };
-            await client.pushMessage(params.user.userId, [flex]);
+            await LINE.pushMessage(params.user.userId, [flex]);
             break;
 
         default:

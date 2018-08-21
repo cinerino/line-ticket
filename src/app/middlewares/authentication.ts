@@ -1,27 +1,33 @@
 /**
  * oauthミドルウェア
- * @module middlewares.authentication
  * @see https://aws.amazon.com/blogs/mobile/integrating-amazon-cognito-user-pools-with-api-gateway/
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import { TemplateMessage, WebhookEvent } from '@line/bot-sdk';
 import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
 import * as querystring from 'querystring';
-import * as request from 'request-promise-native';
 import { URL } from 'url';
 
-import * as LINE from '../../line';
+import LINE from '../../lineClient';
 import User from '../user';
 
 export default async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const event: LINE.IWebhookEvent | undefined = (req.body.events !== undefined) ? req.body.events[0] : undefined;
+        const events: WebhookEvent[] = req.body.events;
+        const event = events[0];
         if (event === undefined) {
             throw new Error('Invalid request.');
         }
 
         const userId = event.source.userId;
+        if (userId === undefined) {
+            next();
+
+            return;
+        }
+
         req.user = new User({
             host: req.hostname,
             userId: userId,
@@ -120,25 +126,14 @@ export async function sendLoginButton(user: User) {
             uri: signUpUrl.href
         });
     }
-
-    await request.post({
-        simple: false,
-        url: LINE.URL_PUSH_MESSAGE,
-        auth: { bearer: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: user.userId,
-            messages: [
-                {
-                    type: 'template',
-                    altText: 'ログインボタン',
-                    template: {
-                        type: 'buttons',
-                        text: text,
-                        actions: actions
-                    }
-                }
-            ]
+    const template: TemplateMessage = {
+        type: 'template',
+        altText: 'ログインボタン',
+        template: {
+            type: 'buttons',
+            text: text,
+            actions: actions
         }
-    }).promise();
+    };
+    await LINE.pushMessage(user.userId, [template]);
 }

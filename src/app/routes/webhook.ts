@@ -6,6 +6,7 @@ import * as createDebug from 'debug';
 import * as express from 'express';
 import { OK } from 'http-status';
 
+// import LINE from '../../lineClient';
 import * as WebhookController from '../controllers/webhook';
 import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
@@ -13,13 +14,8 @@ import User from '../user';
 
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
-// const config = {
-//     channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-//     channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-// };
-// const client = new line.Client(config);
 
-webhookRouter.all(
+webhookRouter.post(
     '/webhook',
     faceLogin,
     authentication,

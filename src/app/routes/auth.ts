@@ -4,13 +4,10 @@
 import * as line from '@line/bot-sdk';
 import * as express from 'express';
 
+import LINE from '../../lineClient';
 import User from '../user';
 
 const authRouter = express.Router();
-const client = new line.Client({
-    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-});
 
 /**
  * サインイン
@@ -33,7 +30,7 @@ authRouter.get(
             });
 
             await user.signIn(req.query.code);
-            await client.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
+            await LINE.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
             res.render('auth/signIn', {
                 username: user.payload.username
             });

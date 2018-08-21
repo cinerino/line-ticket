@@ -11,17 +11,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const createDebug = require("debug");
 const express = require("express");
 const http_status_1 = require("http-status");
+// import LINE from '../../lineClient';
 const WebhookController = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
-// const config = {
-//     channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-//     channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-// };
-// const client = new line.Client(config);
-webhookRouter.all('/webhook', faceLogin_1.default, authentication_1.default, 
+webhookRouter.post('/webhook', faceLogin_1.default, authentication_1.default, 
 // line.middleware(config),
 (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));

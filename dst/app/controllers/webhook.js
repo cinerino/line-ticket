@@ -8,20 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * LINE Webhookコントローラー
- */
-const line = require("@line/bot-sdk");
 const createDebug = require("debug");
 const querystring = require("querystring");
+const lineClient_1 = require("../../lineClient");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
 const PostbackController = require("./webhook/postback");
 const debug = createDebug('cinerino-line-ticket:*');
-const client = new line.Client({
-    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
-});
 /**
  * メッセージが送信されたことを示すEvent Objectです
  */
@@ -95,7 +88,7 @@ function message(event, user) {
         }
         catch (error) {
             // エラーメッセージ表示
-            yield client.replyMessage(event.replyToken, {
+            yield lineClient_1.default.replyMessage(event.replyToken, {
                 type: 'text',
                 text: error.toString()
             });
@@ -293,7 +286,7 @@ function postback(event, user) {
         catch (error) {
             console.error(error);
             // エラーメッセージ表示
-            yield client.replyMessage(event.replyToken, {
+            yield lineClient_1.default.replyMessage(event.replyToken, {
                 type: 'text',
                 text: error.toString()
             });

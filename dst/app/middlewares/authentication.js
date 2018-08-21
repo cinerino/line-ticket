@@ -10,24 +10,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * oauthミドルウェア
- * @module middlewares.authentication
  * @see https://aws.amazon.com/blogs/mobile/integrating-amazon-cognito-user-pools-with-api-gateway/
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express_middleware_1 = require("@motionpicture/express-middleware");
 const http_status_1 = require("http-status");
 const querystring = require("querystring");
-const request = require("request-promise-native");
 const url_1 = require("url");
-const LINE = require("../../line");
+const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
 exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const event = (req.body.events !== undefined) ? req.body.events[0] : undefined;
+        const events = req.body.events;
+        const event = events[0];
         if (event === undefined) {
             throw new Error('Invalid request.');
         }
         const userId = event.source.userId;
+        if (userId === undefined) {
+            next();
+            return;
+        }
         req.user = new user_1.default({
             host: req.hostname,
             userId: userId,
@@ -119,26 +122,16 @@ function sendLoginButton(user) {
                 uri: signUpUrl.href
             });
         }
-        yield request.post({
-            simple: false,
-            url: LINE.URL_PUSH_MESSAGE,
-            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-            json: true,
-            body: {
-                to: user.userId,
-                messages: [
-                    {
-                        type: 'template',
-                        altText: 'ログインボタン',
-                        template: {
-                            type: 'buttons',
-                            text: text,
-                            actions: actions
-                        }
-                    }
-                ]
+        const template = {
+            type: 'template',
+            altText: 'ログインボタン',
+            template: {
+                type: 'buttons',
+                text: text,
+                actions: actions
             }
-        }).promise();
+        };
+        yield lineClient_1.default.pushMessage(user.userId, [template]);
     });
 }
 exports.sendLoginButton = sendLoginButton;

@@ -1,21 +1,25 @@
 /**
  * 画像メッセージハンドラー
- * @namespace app.controllers.webhook.message.image
  */
+import * as stream from 'stream';
 
-// import * as createDebug from 'debug';
-
-import * as LINE from '../../../../line';
+import LINE from '../../../../lineClient';
 import User from '../../../user';
 
-// const debug = createDebug('cinerino-line-ticket:*');
-
 export async function indexFace(user: User, messageId: string) {
-    const content = await LINE.getContent(messageId);
-
     // faceをコレクションに登録
-    const source = new Buffer(content);
+    const content = await LINE.getMessageContent(messageId);
+    const source = await streamToBuffer(content);
     await user.indexFace(source);
-
-    await LINE.pushMessage(user.userId, '顔写真を登録しましたので、Face Loginをご利用できます');
+    await LINE.pushMessage(user.userId, { type: 'text', text: '顔写真を登録しましたので、Face Loginをご利用できます' });
+}
+async function streamToBuffer(readable: stream.Readable) {
+    return new Promise<Buffer>((resolve, reject) => {
+        const buffers: Uint8Array[] = [];
+        readable.on('error', reject)
+            .on('data', (data) => buffers.push(data))
+            .on('end', () => {
+                resolve(Buffer.concat(buffers));
+            });
+    });
 }

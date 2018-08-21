@@ -8,17 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * 認証ルーター
- */
-const line = require("@line/bot-sdk");
 const express = require("express");
+const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
 const authRouter = express.Router();
-const client = new line.Client({
-    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
-});
 /**
  * サインイン
  * Cognitoからリダイレクトしてくる
@@ -37,7 +30,7 @@ authRouter.get('/signIn', (req, res, next) => __awaiter(this, void 0, void 0, fu
             state: req.query.state
         });
         yield user.signIn(req.query.code);
-        yield client.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
+        yield lineClient_1.default.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
         res.render('auth/signIn', {
             username: user.payload.username
         });

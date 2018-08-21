@@ -12,21 +12,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * LINE Webhook messageコントローラー
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
-const line = require("@line/bot-sdk");
 const createDebug = require("debug");
 const moment = require("moment");
 const querystring = require("querystring");
+const lineClient_1 = require("../../../lineClient");
 const debug = createDebug('cinerino-line-ticket:*');
-const client = new line.Client({
-    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
-});
 /**
  * 使い方を送信する
  */
 function pushHowToUse(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'How to use',
@@ -72,7 +68,7 @@ exports.pushHowToUse = pushHowToUse;
  */
 function showSeatReservationMenu(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: '座席予約メニュー',
@@ -101,7 +97,7 @@ exports.showSeatReservationMenu = showSeatReservationMenu;
 function showCreditCardMenu(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'クレジットカード管理',
@@ -131,7 +127,7 @@ function showCoinAccountMenu(replyToken, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'コイン口座管理',
@@ -162,7 +158,7 @@ exports.showCoinAccountMenu = showCoinAccountMenu;
  */
 function startIndexingFace(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
+        yield lineClient_1.default.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
     });
 }
 exports.startIndexingFace = startIndexingFace;
@@ -171,7 +167,7 @@ exports.startIndexingFace = startIndexingFace;
  */
 function askConfirmationOfFriendPay(replyToken, token) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'This is a buttons template',
@@ -202,7 +198,7 @@ exports.askConfirmationOfFriendPay = askConfirmationOfFriendPay;
 function askConfirmationOfTransferMoney(replyToken, user, transferMoneyToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const transferMoneyInfo = yield user.verifyTransferMoneyToken(transferMoneyToken);
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'おこづかい金額選択',
@@ -265,7 +261,7 @@ function selectWhomAskForMoney(replyToken, user) {
         const message = encodeURIComponent(`おこづかいちょーだい！
 よければ下のリンクを押してそのままメッセージを送信してね
 line://oaMessage/${LINE_ID}/?${friendMessage}`);
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'This is a buttons template',
@@ -296,7 +292,7 @@ function pushButtonsReserveNumOrTel(replyToken, userId, message) {
         const theater = datas[0];
         const reserveNumOrTel = datas[1];
         // キュー実行のボタン表示
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'aaa',
@@ -326,7 +322,7 @@ exports.pushButtonsReserveNumOrTel = pushButtonsReserveNumOrTel;
  */
 function askReservationEventDate(replyToken, paymentNo) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: '日付選択',
@@ -353,7 +349,7 @@ exports.askReservationEventDate = askReservationEventDate;
  */
 function askEventStartDate(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'text',
                 text: '上映日を選択してください',
@@ -405,7 +401,7 @@ exports.askEventStartDate = askEventStartDate;
  */
 function askFromWhenAndToWhen(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: '日付選択',
@@ -431,7 +427,7 @@ function logout(replyToken, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
-        yield client.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(replyToken, [
             {
                 type: 'template',
                 altText: 'ログアウトボタン',

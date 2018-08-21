@@ -5,16 +5,13 @@ import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as querystring from 'querystring';
 
+import LINE from '../../lineClient';
 import User from '../user';
 import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
 
 const debug = createDebug('cinerino-line-ticket:*');
-const client = new line.Client({
-    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-});
 
 /**
  * メッセージが送信されたことを示すEvent Objectです
@@ -89,7 +86,7 @@ export async function message(event: line.MessageEvent, user: User) {
         }
     } catch (error) {
         // エラーメッセージ表示
-        await client.replyMessage(
+        await LINE.replyMessage(
             event.replyToken,
             {
                 type: 'text',
@@ -286,7 +283,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
     } catch (error) {
         console.error(error);
         // エラーメッセージ表示
-        await client.replyMessage(
+        await LINE.replyMessage(
             event.replyToken,
             {
                 type: 'text',

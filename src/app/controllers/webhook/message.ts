@@ -2,24 +2,20 @@
  * LINE Webhook messageコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
 
+import LINE from '../../../lineClient';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:*');
-const client = new line.Client({
-    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-});
 
 /**
  * 使い方を送信する
  */
 export async function pushHowToUse(replyToken: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'How to use',
@@ -62,7 +58,7 @@ export async function pushHowToUse(replyToken: string) {
  * 座席予約メニューを表示する
  */
 export async function showSeatReservationMenu(replyToken: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: '座席予約メニュー',
@@ -88,7 +84,7 @@ export async function showSeatReservationMenu(replyToken: string) {
 }
 export async function showCreditCardMenu(replyToken: string) {
     const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'クレジットカード管理',
@@ -115,7 +111,7 @@ export async function showCreditCardMenu(replyToken: string) {
 export async function showCoinAccountMenu(replyToken: string, user: User) {
     const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'コイン口座管理',
@@ -143,14 +139,14 @@ export async function showCoinAccountMenu(replyToken: string, user: User) {
  * 顔写真登録を開始する
  */
 export async function startIndexingFace(replyToken: string) {
-    await client.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
+    await LINE.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
 }
 
 /**
  * 友達決済承認確認
  */
 export async function askConfirmationOfFriendPay(replyToken: string, token: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'This is a buttons template',
@@ -179,7 +175,7 @@ export async function askConfirmationOfFriendPay(replyToken: string, token: stri
  */
 export async function askConfirmationOfTransferMoney(replyToken: string, user: User, transferMoneyToken: string) {
     const transferMoneyInfo = await user.verifyTransferMoneyToken(transferMoneyToken);
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'おこづかい金額選択',
@@ -241,7 +237,7 @@ export async function selectWhomAskForMoney(replyToken: string, user: User) {
     const message = encodeURIComponent(`おこづかいちょーだい！
 よければ下のリンクを押してそのままメッセージを送信してね
 line://oaMessage/${LINE_ID}/?${friendMessage}`);
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'This is a buttons template',
@@ -271,7 +267,7 @@ export async function pushButtonsReserveNumOrTel(replyToken: string, userId: str
     const reserveNumOrTel = datas[1];
 
     // キュー実行のボタン表示
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'aaa',
@@ -299,7 +295,7 @@ export async function pushButtonsReserveNumOrTel(replyToken: string, userId: str
  * 予約のイベント日選択を求める
  */
 export async function askReservationEventDate(replyToken: string, paymentNo: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: '日付選択',
@@ -323,7 +319,7 @@ export async function askReservationEventDate(replyToken: string, paymentNo: str
  * 日付選択を求める
  */
 export async function askEventStartDate(replyToken: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'text', // ①
             text: '上映日を選択してください',
@@ -372,7 +368,7 @@ export async function askEventStartDate(replyToken: string) {
  * 日付選択を求める
  */
 export async function askFromWhenAndToWhen(replyToken: string) {
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: '日付選択',
@@ -396,7 +392,7 @@ export async function askFromWhenAndToWhen(replyToken: string) {
 export async function logout(replyToken: string, user: User) {
     const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
-    await client.replyMessage(replyToken, [
+    await LINE.replyMessage(replyToken, [
         {
             type: 'template',
             altText: 'ログアウトボタン',
