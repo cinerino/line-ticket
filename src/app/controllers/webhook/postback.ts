@@ -2044,7 +2044,7 @@ export async function searchScreeningEventReservations(params: {
     });
     debug(ownershipInfos.length, 'ownershipInfos found.');
     // 未来の予約
-    ownershipInfos = ownershipInfos.filter((o) => o.typeOfGood.reservationFor.startDate >= now);
+    ownershipInfos = ownershipInfos.filter((o) => moment(o.typeOfGood.reservationFor.startDate).toDate() >= now);
 
     if (ownershipInfos.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
