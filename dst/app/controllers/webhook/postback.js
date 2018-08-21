@@ -39,7 +39,7 @@ function searchEventsByDate(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
+        const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const screeningEvents = yield eventService.searchScreeningEvents({
             startFrom: startFrom,
             startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
@@ -218,7 +218,7 @@ function askScreeningEvent(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
+        const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
         yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
@@ -1509,7 +1509,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Name',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
@@ -1531,7 +1531,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Type',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
@@ -1553,7 +1553,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Balance',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
@@ -1575,7 +1575,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Available',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
@@ -1597,7 +1597,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Status',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
@@ -1619,7 +1619,7 @@ function searchCoinAccounts(params) {
                                                         text: 'OpenDate',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 2
+                                                        flex: 1
                                                     },
                                                     {
                                                         type: 'text',
