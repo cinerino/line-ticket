@@ -220,7 +220,7 @@ function askScreeningEvent(params) {
         });
         const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
-        yield lineClient_1.default.pushMessage(params.replyToken, {
+        yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
             text: `${startFrom.toISOString()}-${startThrough.toISOString()}のイベントを検索しています...`
         });
