@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - コイン口座管理機能を追加。
 - 座席予約管理機能を追加。
 - ユーザー認証機能をLIFF実装。
+- line-bot-sdkで再構築。
 
 ### Changed
 

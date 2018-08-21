@@ -17,7 +17,7 @@ const client = new line.Client({
 });
 
 /**
- * メッセージが送信されたことを示すEvent Objectです。
+ * メッセージが送信されたことを示すEvent Objectです
  */
 // tslint:disable-next-line:max-func-body-length
 export async function message(event: line.MessageEvent, user: User) {
@@ -100,7 +100,7 @@ export async function message(event: line.MessageEvent, user: User) {
 }
 
 /**
- * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
+ * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 export async function postback(event: line.PostbackEvent, user: User) {
@@ -301,35 +301,35 @@ export async function postback(event: line.PostbackEvent, user: User) {
 }
 
 /**
- * イベント送信元に友だち追加（またはブロック解除）されたことを示すEvent Objectです。
+ * イベント送信元に友だち追加（またはブロック解除）されたことを示すEvent Objectです
  */
 export async function follow(event: line.FollowEvent) {
     debug('event is', event);
 }
 
 /**
- * イベント送信元にブロックされたことを示すevent objectです。
+ * イベント送信元にブロックされたことを示すevent objectです
  */
 export async function unfollow(event: line.UnfollowEvent) {
     debug('event is', event);
 }
 
 /**
- * イベントの送信元グループまたはトークルームに参加したことを示すevent objectです。
+ * イベントの送信元グループまたはトークルームに参加したことを示すevent objectです
  */
 export async function join(event: line.JoinEvent) {
     debug('event is', event);
 }
 
 /**
- * イベントの送信元グループから退出させられたことを示すevent objectです。
+ * イベントの送信元グループから退出させられたことを示すevent objectです
  */
 export async function leave(event: line.LeaveEvent) {
     debug('event is', event);
 }
 
 /**
- * イベント送信元のユーザがLINE Beaconデバイスの受信圏内に出入りしたことなどを表すイベントです。
+ * イベント送信元のユーザがLINE Beaconデバイスの受信圏内に出入りしたことなどを表すイベントです
  */
 export async function beacon(event: line.BeaconEvent) {
     debug('event is', event);

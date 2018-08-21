@@ -54,7 +54,7 @@ function searchEventsByDate(params) {
         superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
         // tslint:disable-next-line:no-magic-numbers
         superEvents = superEvents.slice(0, 10);
-        yield client.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
         // googleで画像検索
         const CX = '006320166286449124373:nm_gjsvlgnm';
         const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
@@ -230,8 +230,9 @@ function askScreeningEvent(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
+        const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         let screeningEvents = yield eventService.searchScreeningEvents({
-            startFrom: moment(`${params.date}T00:00:00+09:00`).toDate(),
+            startFrom: startFrom,
             startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
@@ -240,7 +241,7 @@ function askScreeningEvent(params) {
             .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
             // tslint:disable-next-line:no-magic-numbers
             .slice(0, 10);
-        yield client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
         const bubbles = screeningEvents.map((event) => {
             const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
             const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
@@ -333,7 +334,7 @@ function askPaymentCode(params) {
         //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
         //     });
         //     const friendMessage = `FriendPayToken.${token}`;
-        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください。
+        //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください
         // line://oaMessage/${LINE_ID}/?${friendMessage}`);
         const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
@@ -958,7 +959,7 @@ exports.confirmOrder = confirmOrder;
 function confirmFriendPay(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const friendPayInfo = yield params.user.verifyFriendPayToken(params.token);
-        yield client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます。` });
+        yield client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます` });
         yield client.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
@@ -999,7 +1000,7 @@ function confirmFriendPay(params) {
             altText: 'This is a buttons template',
             template: {
                 type: 'confirm',
-                text: '友達決済の承認が確認できました。取引を続行しますか?',
+                text: '取引を続行しますか?',
                 actions: [
                     {
                         type: 'postback',
@@ -1074,7 +1075,7 @@ function confirmTransferMoney(params) {
         // 振込先に通知
         yield client.pushMessage(params.user.userId, {
             type: 'text',
-            text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました。`
+            text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました`
         });
     });
 }
@@ -1940,16 +1941,19 @@ exports.searchAccountMoneyTransferActions = searchAccountMoneyTransferActions;
 // tslint:disable-next-line:max-func-body-length
 function searchScreeningEventReservations(params) {
     return __awaiter(this, void 0, void 0, function* () {
+        const now = new Date();
         yield client.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const ownershipInfos = yield personService.searchScreeningEventReservations({
+        let ownershipInfos = yield personService.searchScreeningEventReservations({
             // goodType: cinerinoapi.factory.reservationType.EventReservation,
             personId: 'me'
         });
         debug(ownershipInfos.length, 'ownershipInfos found.');
+        // 未来の予約
+        ownershipInfos = ownershipInfos.filter((o) => o.typeOfGood.reservationFor.startDate >= now);
         if (ownershipInfos.length === 0) {
             yield client.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
         }
@@ -2244,7 +2248,7 @@ function selectSeatOffers(params) {
             notes: 'test from samples'
         });
         debug('seatReservationAuthorization:', seatReservationAuthorization);
-        yield client.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
+        yield client.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
         const message = {
             type: 'text',
             text: '決済方法を選択してください',

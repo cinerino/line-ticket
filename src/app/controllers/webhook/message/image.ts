@@ -17,5 +17,5 @@ export async function indexFace(user: User, messageId: string) {
     const source = new Buffer(content);
     await user.indexFace(source);
 
-    await LINE.pushMessage(user.userId, '顔写真を登録しました。Face Loginをご利用できます。');
+    await LINE.pushMessage(user.userId, '顔写真を登録しましたので、Face Loginをご利用できます');
 }

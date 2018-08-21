@@ -23,7 +23,7 @@ const client = new line.Client({
     channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
 });
 /**
- * メッセージが送信されたことを示すEvent Objectです。
+ * メッセージが送信されたことを示すEvent Objectです
  */
 // tslint:disable-next-line:max-func-body-length
 function message(event, user) {
@@ -104,7 +104,7 @@ function message(event, user) {
 }
 exports.message = message;
 /**
- * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです。
+ * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 function postback(event, user) {
@@ -306,7 +306,7 @@ function postback(event, user) {
 }
 exports.postback = postback;
 /**
- * イベント送信元に友だち追加（またはブロック解除）されたことを示すEvent Objectです。
+ * イベント送信元に友だち追加（またはブロック解除）されたことを示すEvent Objectです
  */
 function follow(event) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -315,7 +315,7 @@ function follow(event) {
 }
 exports.follow = follow;
 /**
- * イベント送信元にブロックされたことを示すevent objectです。
+ * イベント送信元にブロックされたことを示すevent objectです
  */
 function unfollow(event) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -324,7 +324,7 @@ function unfollow(event) {
 }
 exports.unfollow = unfollow;
 /**
- * イベントの送信元グループまたはトークルームに参加したことを示すevent objectです。
+ * イベントの送信元グループまたはトークルームに参加したことを示すevent objectです
  */
 function join(event) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -333,7 +333,7 @@ function join(event) {
 }
 exports.join = join;
 /**
- * イベントの送信元グループから退出させられたことを示すevent objectです。
+ * イベントの送信元グループから退出させられたことを示すevent objectです
  */
 function leave(event) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -342,7 +342,7 @@ function leave(event) {
 }
 exports.leave = leave;
 /**
- * イベント送信元のユーザがLINE Beaconデバイスの受信圏内に出入りしたことなどを表すイベントです。
+ * イベント送信元のユーザがLINE Beaconデバイスの受信圏内に出入りしたことなどを表すイベントです
  */
 function beacon(event) {
     return __awaiter(this, void 0, void 0, function* () {

@@ -26,7 +26,7 @@ export async function pushHowToUse(replyToken: string) {
             template: {
                 type: 'buttons',
                 title: '何をしますか？',
-                text: '画面下部メニューから操作することもできます。',
+                text: '画面下部メニューから操作することもできます',
                 actions: [
                     {
                         type: 'message',
@@ -143,7 +143,7 @@ export async function showCoinAccountMenu(replyToken: string, user: User) {
  * 顔写真登録を開始する
  */
 export async function startIndexingFace(replyToken: string) {
-    await client.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください。' });
+    await client.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
 }
 
 /**
@@ -185,21 +185,21 @@ export async function askConfirmationOfTransferMoney(replyToken: string, user: U
             altText: 'おこづかい金額選択',
             template: {
                 type: 'buttons',
-                text: `${transferMoneyInfo.name}がおこづかいを要求しています。どのくらいあげますか？`,
+                text: `${transferMoneyInfo.name}がおこづかいを要求しています`,
                 actions: [
                     {
                         type: 'postback',
-                        label: '10',
+                        label: '10円あげる',
                         data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=10`
                     },
                     {
                         type: 'postback',
-                        label: '100',
+                        label: '100円あげる',
                         data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=100`
                     },
                     {
                         type: 'postback',
-                        label: '1000',
+                        label: '1000円あげる',
                         data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=1000`
                     },
                     {
@@ -239,7 +239,7 @@ export async function selectWhomAskForMoney(replyToken: string, user: User) {
     });
     const friendMessage = `TransferMoneyToken.${token}`;
     const message = encodeURIComponent(`おこづかいちょーだい！
-よければ下のリンクを押してそのままメッセージを送信してね。
+よければ下のリンクを押してそのままメッセージを送信してね
 line://oaMessage/${LINE_ID}/?${friendMessage}`);
     await client.replyMessage(replyToken, [
         {
@@ -248,7 +248,7 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
             template: {
                 type: 'buttons',
                 title: 'おこづかいをもらう',
-                text: '友達を選択してメッセージを送信しましょう。',
+                text: '友達を選択してメッセージを送信しましょう',
                 actions: [
                     {
                         type: 'uri',
@@ -305,7 +305,7 @@ export async function askReservationEventDate(replyToken: string, paymentNo: str
             altText: '日付選択',
             template: {
                 type: 'buttons',
-                text: 'ツアーの開演日を教えてください。',
+                text: 'ツアーの開演日を教えてください',
                 actions: [
                     {
                         type: 'datetimepicker',
@@ -378,7 +378,7 @@ export async function askFromWhenAndToWhen(replyToken: string) {
             altText: '日付選択',
             template: {
                 type: 'buttons',
-                text: '日付を選択するか、期間をYYYYMMDD-YYYYMMDD形式で教えてください。',
+                text: '日付を選択するか、期間をYYYYMMDD-YYYYMMDD形式で教えてください',
                 actions: [
                     {
                         type: 'datetimepicker',

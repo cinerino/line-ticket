@@ -21,7 +21,7 @@ function indexFace(user, messageId) {
         // faceをコレクションに登録
         const source = new Buffer(content);
         yield user.indexFace(source);
-        yield LINE.pushMessage(user.userId, '顔写真を登録しました。Face Loginをご利用できます。');
+        yield LINE.pushMessage(user.userId, '顔写真を登録しましたので、Face Loginをご利用できます');
     });
 }
 exports.indexFace = indexFace;

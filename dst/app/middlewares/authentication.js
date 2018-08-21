@@ -74,7 +74,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
 function sendLoginButton(user) {
     return __awaiter(this, void 0, void 0, function* () {
         // tslint:disable-next-line:no-multiline-string
-        let text = 'ログインしてください。一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます。';
+        let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
         const signInUrl = new url_1.URL(user.generateAuthUrl());
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
         const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
@@ -97,7 +97,7 @@ function sendLoginButton(user) {
         const faces = yield user.searchFaces();
         // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
         if (refreshToken !== null && faces.length > 0) {
-            text = 'ログインしてください。';
+            text = 'ログインしてください';
             // actions.push({
             //     type: 'postback',
             //     label: 'Face Login',

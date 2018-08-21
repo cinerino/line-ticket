@@ -1,6 +1,6 @@
 /**
- * middlewares/authenticationにて、expressのrequestオブジェクトにAPIユーザー情報を追加している。
- * ユーザーの型をここで定義しています。
+ * middlewares/authenticationにて、expressのrequestオブジェクトにAPIユーザー情報を追加している
+ * ユーザーの型をここで定義しています
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as express from 'express';

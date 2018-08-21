@@ -42,7 +42,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
             if (data.action === 'loginByFace') {
                 // ログイン前のstateを保管
                 await req.user.saveCallbackState(<string>data.state);
-                await LINE.pushMessage(userId, '顔写真を送信してください。');
+                await LINE.pushMessage(userId, '顔写真を送信してください');
                 res.status(OK).send('ok');
 
                 return;
@@ -56,24 +56,24 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                     const faces = await req.user.searchFaces();
                     if (faces.length === 0) {
                         // 顔登録済でなければメッセージ送信
-                        await LINE.pushMessage(userId, '顔写真を少なくとも1枚登録してください。');
+                        await LINE.pushMessage(userId, '顔写真を少なくとも1枚登録してください');
                     } else {
                         await LINE.pushMessage(userId, `画像を検証中...${event.message.id}`);
                         const content = await LINE.getContent(event.message.id);
                         const searchFacesByImageResponse = await req.user.verifyFace(new Buffer(content));
                         // const searchFacesByImageResponse = await searchFacesByImage(new Buffer(content));
                         if (!Array.isArray(searchFacesByImageResponse.FaceMatches)) {
-                            await LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
+                            await LINE.pushMessage(userId, '類似画像が見つかりませんでした');
                         } else if (searchFacesByImageResponse.FaceMatches.length === 0) {
-                            await LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
+                            await LINE.pushMessage(userId, '類似画像が見つかりませんでした');
                         } else {
                             const similarity = searchFacesByImageResponse.FaceMatches[0].Similarity;
                             if (similarity === undefined) {
                                 await LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
                             } else if (similarity < FACE_MATCH_THRESHOLD) {
-                                await LINE.pushMessage(userId, `ログインできません。類似率は${searchFacesByImageResponse.FaceMatches[0].Similarity}%です。`);
+                                await LINE.pushMessage(userId, `類似率(${searchFacesByImageResponse.FaceMatches[0].Similarity}%)が低すぎます`);
                             } else {
-                                await LINE.pushMessage(userId, `${searchFacesByImageResponse.FaceMatches[0].Similarity}%の確立で一致しました。`);
+                                await LINE.pushMessage(userId, `${searchFacesByImageResponse.FaceMatches[0].Similarity}%の確立で一致しました`);
 
                                 // 一致結果があれば、リフレッシュトークンでアクセストークンを手動更新して、ログイン
                                 const refreshToken = await req.user.getRefreshToken();

@@ -44,7 +44,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
             if (data.action === 'loginByFace') {
                 // ログイン前のstateを保管
                 yield req.user.saveCallbackState(data.state);
-                yield LINE.pushMessage(userId, '顔写真を送信してください。');
+                yield LINE.pushMessage(userId, '顔写真を送信してください');
                 res.status(http_status_1.OK).send('ok');
                 return;
             }
@@ -56,7 +56,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                     const faces = yield req.user.searchFaces();
                     if (faces.length === 0) {
                         // 顔登録済でなければメッセージ送信
-                        yield LINE.pushMessage(userId, '顔写真を少なくとも1枚登録してください。');
+                        yield LINE.pushMessage(userId, '顔写真を少なくとも1枚登録してください');
                     }
                     else {
                         yield LINE.pushMessage(userId, `画像を検証中...${event.message.id}`);
@@ -64,10 +64,10 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                         const searchFacesByImageResponse = yield req.user.verifyFace(new Buffer(content));
                         // const searchFacesByImageResponse = await searchFacesByImage(new Buffer(content));
                         if (!Array.isArray(searchFacesByImageResponse.FaceMatches)) {
-                            yield LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
+                            yield LINE.pushMessage(userId, '類似画像が見つかりませんでした');
                         }
                         else if (searchFacesByImageResponse.FaceMatches.length === 0) {
-                            yield LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
+                            yield LINE.pushMessage(userId, '類似画像が見つかりませんでした');
                         }
                         else {
                             const similarity = searchFacesByImageResponse.FaceMatches[0].Similarity;
@@ -75,10 +75,10 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                                 yield LINE.pushMessage(userId, '類似画像が見つかりませんでした。');
                             }
                             else if (similarity < FACE_MATCH_THRESHOLD) {
-                                yield LINE.pushMessage(userId, `ログインできません。類似率は${searchFacesByImageResponse.FaceMatches[0].Similarity}%です。`);
+                                yield LINE.pushMessage(userId, `類似率(${searchFacesByImageResponse.FaceMatches[0].Similarity}%)が低すぎます`);
                             }
                             else {
-                                yield LINE.pushMessage(userId, `${searchFacesByImageResponse.FaceMatches[0].Similarity}%の確立で一致しました。`);
+                                yield LINE.pushMessage(userId, `${searchFacesByImageResponse.FaceMatches[0].Similarity}%の確立で一致しました`);
                                 // 一致結果があれば、リフレッシュトークンでアクセストークンを手動更新して、ログイン
                                 const refreshToken = yield req.user.getRefreshToken();
                                 if (refreshToken === null) {
