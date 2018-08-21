@@ -219,9 +219,11 @@ function askScreeningEvent(params) {
             auth: params.user.authClient
         });
         const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
+        const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${startFrom}-${startThrough}のイベントを検索しています...` });
         let screeningEvents = yield eventService.searchScreeningEvents({
             startFrom: startFrom,
-            startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
+            startThrough: startThrough
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
         // 上映イベントシリーズをユニークに
