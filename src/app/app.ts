@@ -34,8 +34,8 @@ cinerino.mongoose.connect(<string>process.env.MONGOLAB_URI, mongooseConnectionOp
 // routers
 import router from './routes/router';
 import webhookRouter from './routes/webhook';
-app.use('/', router);
-app.use('/webhook', webhookRouter);
+app.use(router);
+app.use(webhookRouter);
 
 // 404
 app.use(notFoundHandler);

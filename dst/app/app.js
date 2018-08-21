@@ -27,8 +27,8 @@ cinerino.mongoose.connect(process.env.MONGOLAB_URI, mongooseConnectionOptions_1.
 // routers
 const router_1 = require("./routes/router");
 const webhook_1 = require("./routes/webhook");
-app.use('/', router_1.default);
-app.use('/webhook', webhook_1.default);
+app.use(router_1.default);
+app.use(webhook_1.default);
 // 404
 app.use(notFoundHandler_1.default);
 // error handlers

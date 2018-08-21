@@ -22,10 +22,15 @@ const config = {
     channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
 };
 // const client = new line.Client(config);
-webhookRouter.post('', line.middleware(config), (req, res) => {
+webhookRouter.post('/webhook', line.middleware(config), (req, res) => {
     Promise
         .all(req.body.events.map(handleEvent))
-        .then((result) => res.json(result));
+        .then((result) => res.json(result))
+        .catch((err) => {
+        console.error(err);
+        // tslint:disable-next-line:no-magic-numbers
+        res.status(500).end();
+    });
 });
 const client = new line.Client(config);
 function handleEvent(event) {
