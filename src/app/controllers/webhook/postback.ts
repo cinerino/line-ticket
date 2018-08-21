@@ -800,224 +800,15 @@ export async function confirmOrder(params: {
     const { order } = await placeOrderService.confirm({
         transactionId: params.transactionId
     });
-    const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
-    await LINE.pushMessage(params.user.userId, [
-        {
-            type: 'flex',
-            altText: 'This is a Flex Message',
-            contents: {
-                type: 'bubble',
-                styles: {
-                    footer: {
-                        separator: true
-                    }
-                },
-                body: {
-                    type: 'box',
-                    layout: 'vertical',
-                    contents: [
-                        {
-                            type: 'text',
-                            text: 'RECEIPT',
-                            weight: 'bold',
-                            color: '#1DB446',
-                            size: 'sm'
-                        },
-                        {
-                            type: 'text',
-                            text: order.seller.name,
-                            weight: 'bold',
-                            size: 'xxl',
-                            margin: 'md',
-                            maxLines: 0,
-                            wrap: true
-                        },
-                        {
-                            type: 'text',
-                            text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
-                            size: 'xs',
-                            color: '#aaaaaa',
-                            wrap: true
-                        },
-                        {
-                            type: 'separator',
-                            margin: 'xxl'
-                        },
-                        {
-                            type: 'box',
-                            layout: 'vertical',
-                            margin: 'xxl',
-                            spacing: 'sm',
-                            contents: [
-
-                                {
-                                    type: 'text',
-                                    text: event.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Date',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${moment(event.startDate).format('llll')}`,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Place',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${event.location.name.ja}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                ...order.acceptedOffers.map<FlexBox>((orderItem) => {
-                                    const item = <IEventReservation>orderItem.itemOffered;
-                                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                    const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
-
-                                    return {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: str,
-                                                size: 'sm',
-                                                color: '#555555',
-                                                flex: 0
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: `${orderItem.price} ${orderItem.priceCurrency}`,
-                                                size: 'sm',
-                                                color: '#111111',
-                                                align: 'end'
-                                            }
-                                        ]
-                                    };
-                                }),
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'horizontal',
-                                    margin: 'xxl',
-                                    contents: [
-                                        {
-                                            type: 'text',
-                                            text: 'ITEMS',
-                                            size: 'sm',
-                                            color: '#555555'
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: `${order.acceptedOffers.length}`,
-                                            size: 'sm',
-                                            color: '#111111',
-                                            align: 'end'
-                                        }
-                                    ]
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'horizontal',
-                                    contents: [
-                                        {
-                                            type: 'text',
-                                            text: 'TOTAL',
-                                            size: 'sm',
-                                            color: '#555555'
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: `${order.price} ${order.priceCurrency}`,
-                                            size: 'sm',
-                                            color: '#111111',
-                                            align: 'end'
-                                        }
-                                    ]
-                                }
-
-                            ]
-                        },
-                        {
-                            type: 'separator',
-                            margin: 'xxl'
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            margin: 'md',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'PAYMENT ID',
-                                    size: 'xs',
-                                    color: '#aaaaaa',
-                                    flex: 0
-                                },
-                                {
-                                    type: 'text',
-                                    text: order.paymentMethods[0].paymentMethodId,
-                                    color: '#aaaaaa',
-                                    size: 'xs',
-                                    align: 'end'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        }
-    ]);
+    const flex: FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: order2bubble(order)
+    };
+    await LINE.pushMessage(params.user.userId, [flex]);
 }
-
 /**
  * 友達決済を承認確定
- * @param user LINEユーザー
- * @param transactionId 取引ID
  */
 export async function confirmFriendPay(params: {
     replyToken: string;
@@ -2889,327 +2680,7 @@ export async function searchOrders(params: {
             .sort((a, b) => (a.orderDate < b.orderDate) ? 1 : -1)
             // tslint:disable-next-line:no-magic-numbers
             .slice(0, 10);
-        // tslint:disable-next-line:max-func-body-length
-        const contents: FlexBubble[] = orders.map<FlexBubble>((order) => {
-            const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
-
-            return {
-                type: 'bubble',
-                styles: {
-                    footer: {
-                        separator: true
-                    }
-                },
-                body: {
-                    type: 'box',
-                    layout: 'vertical',
-                    contents: [
-                        {
-                            type: 'text',
-                            text: 'RECEIPT',
-                            weight: 'bold',
-                            color: '#1DB446',
-                            size: 'sm'
-                        },
-                        {
-                            type: 'text',
-                            text: order.seller.name,
-                            weight: 'bold',
-                            size: 'xxl',
-                            margin: 'md',
-                            maxLines: 0,
-                            wrap: true
-                        },
-                        {
-                            type: 'text',
-                            text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
-                            size: 'xs',
-                            color: '#aaaaaa',
-                            wrap: true
-                        },
-                        {
-                            type: 'separator',
-                            margin: 'xxl'
-                        },
-                        {
-                            type: 'box',
-                            layout: 'vertical',
-                            margin: 'xxl',
-                            spacing: 'sm',
-                            contents: [
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'OrderDate',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${moment(order.orderDate).format('llll')}`,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Status',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${order.orderStatus}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'OrderNumber',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${order.orderNumber}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Confirmation',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${order.confirmationNumber}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            type: 'separator',
-                            margin: 'xxl'
-                        },
-                        {
-                            type: 'box',
-                            layout: 'vertical',
-                            margin: 'xxl',
-                            spacing: 'sm',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: event.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Date',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${moment(event.startDate).format('llll')}`,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Place',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${event.location.name.ja}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
-                                },
-                                ...order.acceptedOffers.map<FlexBox>((orderItem) => {
-                                    const item = <IEventReservation>orderItem.itemOffered;
-                                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                    const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
-
-                                    return {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: str,
-                                                size: 'sm',
-                                                color: '#555555',
-                                                flex: 0
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: `${orderItem.price} ${orderItem.priceCurrency}`,
-                                                size: 'sm',
-                                                color: '#111111',
-                                                align: 'end'
-                                            }
-                                        ]
-                                    };
-                                }),
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'horizontal',
-                                    margin: 'xxl',
-                                    contents: [
-                                        {
-                                            type: 'text',
-                                            text: 'ITEMS',
-                                            size: 'sm',
-                                            color: '#555555'
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: `${order.acceptedOffers.length}`,
-                                            size: 'sm',
-                                            color: '#111111',
-                                            align: 'end'
-                                        }
-                                    ]
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'horizontal',
-                                    contents: [
-                                        {
-                                            type: 'text',
-                                            text: 'TOTAL',
-                                            size: 'sm',
-                                            color: '#555555'
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: `${order.price} ${order.priceCurrency}`,
-                                            size: 'sm',
-                                            color: '#111111',
-                                            align: 'end'
-                                        }
-                                    ]
-                                }
-
-                            ]
-                        },
-                        {
-                            type: 'separator',
-                            margin: 'xxl'
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            margin: 'md',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'PAYMENT ID',
-                                    size: 'xs',
-                                    color: '#aaaaaa',
-                                    flex: 0
-                                },
-                                {
-                                    type: 'text',
-                                    text: order.paymentMethods[0].paymentMethodId,
-                                    color: '#aaaaaa',
-                                    size: 'xs',
-                                    align: 'end'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            };
-        });
+        const contents: FlexBubble[] = orders.map<FlexBubble>(order2bubble);
         const flex: FlexMessage = {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -3220,4 +2691,256 @@ export async function searchOrders(params: {
         };
         await LINE.pushMessage(params.user.userId, [flex]);
     }
+}
+// tslint:disable-next-line:max-func-body-length
+function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
+    return {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+                {
+                    type: 'text',
+                    text: 'RECEIPT',
+                    weight: 'bold',
+                    color: '#1DB446',
+                    size: 'sm'
+                },
+                {
+                    type: 'text',
+                    text: order.seller.name,
+                    weight: 'bold',
+                    size: 'xxl',
+                    margin: 'md',
+                    maxLines: 0,
+                    wrap: true
+                },
+                {
+                    type: 'text',
+                    text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
+                    size: 'xs',
+                    color: '#aaaaaa',
+                    wrap: true
+                },
+                {
+                    type: 'separator',
+                    margin: 'xxl'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'xxl',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'OrderDate',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${moment(order.orderDate).format('llll')}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Status',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.orderStatus}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'OrderNumber',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.orderNumber}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Confirmation',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.confirmationNumber}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'separator',
+                    margin: 'xxl'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'xxl',
+                    spacing: 'sm',
+                    contents: [
+                        ...order.acceptedOffers.map<FlexBox>((orderItem) => {
+                            const item = <IEventReservation>orderItem.itemOffered;
+                            const event = item.reservationFor;
+                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+
+                            return {
+                                type: 'box',
+                                layout: 'horizontal',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        flex: 2,
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`,
+                                                size: 'xs',
+                                                color: '#555555',
+                                                wrap: true
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: str,
+                                                size: 'xs',
+                                                color: '#aaaaaa'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                        size: 'xs',
+                                        color: '#111111',
+                                        align: 'end',
+                                        flex: 1,
+                                        gravity: 'top'
+                                    }
+                                ]
+                            };
+                        }),
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'xxl',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'ITEMS',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.acceptedOffers.length}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'TOTAL',
+                                    size: 'sm',
+                                    color: '#555555'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.price} ${order.priceCurrency}`,
+                                    size: 'sm',
+                                    color: '#111111',
+                                    align: 'end'
+                                }
+                            ]
+                        }
+
+                    ]
+                },
+                {
+                    type: 'separator',
+                    margin: 'xxl'
+                },
+                {
+                    type: 'box',
+                    layout: 'horizontal',
+                    margin: 'md',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: 'PAYMENT ID',
+                            size: 'xs',
+                            color: '#aaaaaa',
+                            flex: 0
+                        },
+                        {
+                            type: 'text',
+                            text: order.paymentMethods[0].paymentMethodId,
+                            color: '#aaaaaa',
+                            size: 'xs',
+                            align: 'end'
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+
 }
