@@ -18,32 +18,34 @@ const http_status_1 = require("http-status");
 const WebhookController = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
-// import User from '../user';
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
 const config = {
     channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
 };
-const client = new line.Client(config);
+// const client = new line.Client(config);
 webhookRouter.all('/', faceLogin_1.default, authentication_1.default, line.middleware(config), (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));
     yield Promise.all(req.body.events.map((e) => __awaiter(this, void 0, void 0, function* () {
-        yield handleEvent(e);
+        yield handleEvent(e, req.user);
     })));
     // .then((result) => res.json(result));
     res.status(http_status_1.OK).send('ok');
 }));
-function handleEvent(event) {
+function handleEvent(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             switch (event.type) {
                 case 'message':
-                    // await WebhookController.message(event, user);
-                    yield client.replyMessage(event.replyToken, {
-                        type: 'text',
-                        text: 'hello'
-                    });
+                    yield WebhookController.message(event, user);
+                    // await client.replyMessage(
+                    //     event.replyToken,
+                    //     {
+                    //         type: 'text',
+                    //         text: 'hello'
+                    //     }
+                    // );
                     break;
                 case 'postback':
                     yield WebhookController.postback(event, null);
