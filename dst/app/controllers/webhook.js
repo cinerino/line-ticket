@@ -122,10 +122,15 @@ function postback(event, user) {
                     else {
                         date = data.date;
                     }
-                    yield PostbackController.searchEventsByDate(user, date);
+                    yield PostbackController.searchEventsByDate({
+                        replyToken: event.replyToken,
+                        user: user,
+                        date: date
+                    });
                     break;
                 case 'askScreeningEvent':
                     yield PostbackController.askScreeningEvent({
+                        replyToken: event.replyToken,
                         user: user,
                         screeningEventSeriesId: data.screeningEventSeriesId,
                         date: data.date
@@ -134,6 +139,7 @@ function postback(event, user) {
                 // 決済コードをたずねる
                 case 'askPaymentCode':
                     yield PostbackController.askPaymentCode({
+                        replyToken: event.replyToken,
                         user: user,
                         transactionId: data.transactionId
                     });
@@ -141,6 +147,7 @@ function postback(event, user) {
                 // 決済方法選択
                 case 'selectPaymentMethodType':
                     yield PostbackController.selectPaymentMethodType({
+                        replyToken: event.replyToken,
                         user: user,
                         paymentMethodType: data.paymentMethod,
                         transactionId: data.transactionId,
@@ -149,15 +156,28 @@ function postback(event, user) {
                     break;
                 // 注文確定
                 case 'confirmOrder':
-                    yield PostbackController.confirmOrder(user, data.transactionId);
+                    yield PostbackController.confirmOrder({
+                        replyToken: event.replyToken,
+                        user: user,
+                        transactionId: data.transactionId
+                    });
                     break;
                 // 友達決済承認確定
                 case 'confirmFriendPay':
-                    yield PostbackController.confirmFriendPay(user, data.token);
+                    yield PostbackController.confirmFriendPay({
+                        replyToken: event.replyToken,
+                        user: user,
+                        token: data.token
+                    });
                     break;
                 // おこづかい承認確定
                 case 'confirmTransferMoney':
-                    yield PostbackController.confirmTransferMoney(user, data.token, parseInt(data.price, 10));
+                    yield PostbackController.confirmTransferMoney({
+                        replyToken: event.replyToken,
+                        user: user,
+                        token: data.token,
+                        price: parseInt(data.price, 10)
+                    });
                     break;
                 // 友達決済承認確定
                 // case 'continueTransactionAfterFriendPayConfirmation':
@@ -166,19 +186,31 @@ function postback(event, user) {
                 //     break;
                 // クレジットカード検索
                 case 'searchCreditCards':
-                    yield PostbackController.searchCreditCards(user);
+                    yield PostbackController.searchCreditCards({
+                        replyToken: event.replyToken,
+                        user: user
+                    });
                     break;
                 // クレジットカード追加
                 case 'addCreditCard':
-                    yield PostbackController.addCreditCard(user, data.token);
+                    yield PostbackController.addCreditCard({
+                        replyToken: event.replyToken,
+                        user: user,
+                        token: data.token
+                    });
                     break;
                 // クレジットカード削除
                 case 'deleteCreditCard':
-                    yield PostbackController.deleteCreditCard(user, data.cardSeq);
+                    yield PostbackController.deleteCreditCard({
+                        replyToken: event.replyToken,
+                        user: user,
+                        cardSeq: data.cardSeq
+                    });
                     break;
                 // 口座開設
                 case 'openAccount':
                     yield PostbackController.openAccount({
+                        replyToken: event.replyToken,
                         user: user,
                         name: data.name,
                         accountType: data.accountType
@@ -187,6 +219,7 @@ function postback(event, user) {
                 // 口座解約
                 case 'closeAccount':
                     yield PostbackController.closeAccount({
+                        replyToken: event.replyToken,
                         user: user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
@@ -194,10 +227,14 @@ function postback(event, user) {
                     break;
                 // コイン口座検索
                 case 'searchCoinAccounts':
-                    yield PostbackController.searchCoinAccounts(user);
+                    yield PostbackController.searchCoinAccounts({
+                        replyToken: event.replyToken,
+                        user: user
+                    });
                     break;
                 case 'searchAccountMoneyTransferActions':
                     yield PostbackController.searchAccountMoneyTransferActions({
+                        replyToken: event.replyToken,
                         user: user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
@@ -206,6 +243,7 @@ function postback(event, user) {
                 // 口座入金金額選択
                 case 'selectDepositAmount':
                     yield PostbackController.selectDepositAmount({
+                        replyToken: event.replyToken,
                         user: user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
@@ -214,6 +252,7 @@ function postback(event, user) {
                 // 口座入金金額選択
                 case 'depositCoinByCreditCard':
                     yield PostbackController.depositCoinByCreditCard({
+                        replyToken: event.replyToken,
                         user: user,
                         amount: Number(data.amount),
                         accountType: data.accountType,
@@ -224,12 +263,16 @@ function postback(event, user) {
                     yield MessageController.askEventStartDate(event.replyToken);
                     break;
                 case 'searchScreeningEventReservations':
-                    yield PostbackController.searchScreeningEventReservations(user);
+                    yield PostbackController.searchScreeningEventReservations({
+                        replyToken: event.replyToken,
+                        user: user
+                    });
                     break;
                 // 座席選択
                 case 'selectSeatOffers':
                     const seatNumbers = data.seatNumbers.split(',');
                     yield PostbackController.selectSeatOffers({
+                        replyToken: event.replyToken,
                         user: user,
                         eventId: data.eventId,
                         seatNumbers: seatNumbers
@@ -238,6 +281,7 @@ function postback(event, user) {
                 // 所有権コード発行
                 case 'authorizeOwnershipInfo':
                     yield PostbackController.authorizeOwnershipInfo({
+                        replyToken: event.replyToken,
                         user: user,
                         goodType: data.goodType,
                         identifier: data.identifier

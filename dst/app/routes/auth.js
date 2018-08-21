@@ -11,11 +11,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 認証ルーター
  */
+const line = require("@line/bot-sdk");
 const express = require("express");
-// import * as request from 'request-promise-native';
-const LINE = require("../../line");
 const user_1 = require("../user");
 const authRouter = express.Router();
+const client = new line.Client({
+    channelAccessToken: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
+});
 /**
  * サインイン
  * Cognitoからリダイレクトしてくる
@@ -27,13 +30,14 @@ authRouter.get('/signIn', (req, res, next) => __awaiter(this, void 0, void 0, fu
         // stateにはイベントオブジェクトとして受け取ったリクエストボディが入っている
         const body = JSON.parse(req.query.state);
         const event = body.events[0];
+        const userId = event.source.userId;
         const user = new user_1.default({
             host: req.hostname,
-            userId: event.source.userId,
+            userId: userId,
             state: req.query.state
         });
         yield user.signIn(req.query.code);
-        yield LINE.pushMessage(event.source.userId, `Signed in. ${user.payload.username}`);
+        yield client.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
         res.render('auth/signIn', {
             username: user.payload.username
         });
@@ -82,7 +86,7 @@ authRouter.get('/logout', (req, res, next) => __awaiter(this, void 0, void 0, fu
             });
             // アプリケーション側でログアウト
             yield user.logout();
-            yield LINE.pushMessage(user.userId, 'Logged out.');
+            // await LINE.pushMessage(user.userId, 'Logged out.');
             // Cognitoからもログアウト
             res.redirect(user.generateLogoutUrl());
         }

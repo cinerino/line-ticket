@@ -3,13 +3,13 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as cinerino from '@cinerino/domain';
+import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import { google } from 'googleapis';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
 import * as request from 'request-promise-native';
 
-import * as LINE from '../../../line';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:*');
@@ -21,22 +21,29 @@ const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
     scopes: [],
     state: ''
 });
+const client = new line.Client({
+    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
+});
 
 /**
  * 日付でイベント検索
  * @param {string} userId
  * @param {string} date YYYY-MM-DD形式
  */
-export async function searchEventsByDate(user: User, date: string) {
-    await LINE.pushMessage(user.userId, `${date}のイベントを検索しています...`);
-
+export async function searchEventsByDate(params: {
+    replyToken: string;
+    user: User;
+    date: string;
+}) {
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const screeningEvents = await eventService.searchScreeningEvents({
-        startFrom: moment(`${date}T00:00:00+09:00`).toDate(),
-        startThrough: moment(`${date}T00:00:00+09:00`).add(1, 'day').toDate()
+        startFrom: moment(`${params.date}T00:00:00+09:00`).toDate(),
+        startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
     // 上映イベントシリーズをユニークに
@@ -44,8 +51,7 @@ export async function searchEventsByDate(user: User, date: string) {
     superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
     // tslint:disable-next-line:no-magic-numbers
     superEvents = superEvents.slice(0, 10);
-
-    await LINE.pushMessage(user.userId, `${superEvents.length}件の作品がみつかりました。`);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${superEvents.length}件の作品がみつかりました。` });
 
     // googleで画像検索
     const CX = '006320166286449124373:nm_gjsvlgnm';
@@ -82,7 +88,7 @@ export async function searchEventsByDate(user: User, date: string) {
         });
     }));
     debug(thumbnails);
-    // const accessToken = await user.authClient.getAccessToken();
+    // const accessToken = await params.user.authClient.getAccessToken();
 
     await request.post({
         simple: false,
@@ -90,7 +96,7 @@ export async function searchEventsByDate(user: User, date: string) {
         auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
         json: true,
         body: {
-            to: user.userId,
+            to: params.user.userId,
             messages: [
                 {
                     type: 'flex',
@@ -201,7 +207,7 @@ export async function searchEventsByDate(user: User, date: string) {
                                                     data: querystring.stringify({
                                                         action: 'askScreeningEvent',
                                                         screeningEventSeriesId: event.id,
-                                                        date: date
+                                                        date: params.date
                                                     })
                                                 }
                                             }
@@ -221,11 +227,12 @@ export async function searchEventsByDate(user: User, date: string) {
  * 上映イベントスケジュールをたずねる
  */
 export async function askScreeningEvent(params: {
+    replyToken: string;
     user: User;
     screeningEventSeriesId: string;
     date: string;
 }) {
-    await LINE.pushMessage(params.user.userId, `${params.date}のイベントを検索しています...`);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
 
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -237,111 +244,103 @@ export async function askScreeningEvent(params: {
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
     // 上映イベントシリーズをユニークに
-    screeningEvents = screeningEvents.filter((e) => e.superEvent.id === params.screeningEventSeriesId);
-    await LINE.pushMessage(params.user.userId, `${screeningEvents.length}件のスケジュールがみつかりました。`);
+    screeningEvents = screeningEvents
+        .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
+        // tslint:disable-next-line:no-magic-numbers
+        .slice(0, 10);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました。` });
+    const bubbles: line.FlexBubble[] = screeningEvents.map<line.FlexBubble>((event) => {
+        const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
+        const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
 
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'carousel',
+        return {
+            type: 'bubble',
+            body: <any>{
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'md',
+                contents: [
+                    {
+                        type: 'text',
+                        text: event.name.ja,
+                        wrap: true,
+                        weight: 'bold',
+                        gravity: 'center',
+                        size: 'xl'
+                    },
+                    {
+                        type: 'box',
+                        layout: 'vertical',
+                        margin: 'lg',
+                        spacing: 'sm',
                         contents: [
-                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...screeningEvents.slice(0, 10).map((event) => {
-                                const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
-                                const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
-                                const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
-
-                                return {
-                                    type: 'bubble',
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: event.name.ja,
-                                                wrap: true,
-                                                weight: 'bold',
-                                                gravity: 'center',
-                                                size: 'xl'
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Place',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 1
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: event.location.name.ja,
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
+                            {
+                                type: 'box',
+                                layout: 'baseline',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'Place',
+                                        color: '#aaaaaa',
+                                        size: 'sm',
+                                        flex: 1
                                     },
-                                    footer: {
-                                        type: 'box',
-                                        layout: 'horizontal',
-                                        contents: [
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'uri',
-                                                    label: '座席選択',
-                                                    uri: liffUri
-                                                }
-                                            }
-                                        ]
+                                    {
+                                        type: 'text',
+                                        text: event.location.name.ja,
+                                        wrap: true,
+                                        color: '#666666',
+                                        size: 'sm',
+                                        flex: 4
                                     }
-                                };
-                            })
+                                ]
+                            }
                         ]
                     }
-                }
-            ]
+                ]
+            },
+            footer: <any>{
+                type: 'box',
+                layout: 'horizontal',
+                contents: [
+                    {
+                        type: 'button',
+                        action: {
+                            type: 'uri',
+                            label: '座席選択',
+                            uri: liffUri
+                        }
+                    }
+                ]
+            }
+        };
+    });
+    await client.replyMessage(params.replyToken, [
+        {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: bubbles
+            }
         }
-    }).promise();
+    ]);
 }
 
 /**
  * 決済コードをたずねる
  */
 export async function askPaymentCode(params: {
+    replyToken: string;
     user: User;
     transactionId: string;
 }) {
     //     const LINE_ID = process.env.LINE_ID;
     //     const token = await user.signFriendPayInfo({
     //         transactionId: transaction.id,
-    //         userId: user.userId,
+    //         userId: params.user.userId,
     //         price: (<cinerino.factory.action.authorize.offer.seatReservation.IResult>seatReservationAuthorization.result).price
     //     });
     //     const friendMessage = `FriendPayToken.${token}`;
@@ -349,44 +348,33 @@ export async function askPaymentCode(params: {
     // line://oaMessage/${LINE_ID}/?${friendMessage}`);
     const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
-
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
-                {
-                    type: 'template',
-                    altText: '決済コード',
-                    template: {
-                        type: 'buttons',
-                        title: '決済コード',
-                        text: '決済コードを入力してください',
-                        actions: [
-                            {
-                                type: 'uri',
-                                label: 'QRコードを読み取る',
-                                uri: liffUri
-                            }
-                        ]
+    await client.replyMessage(params.replyToken, [
+        {
+            type: 'template',
+            altText: '決済コード',
+            template: {
+                type: 'buttons',
+                title: '決済コード',
+                text: '決済コードを入力してください',
+                actions: [
+                    {
+                        type: 'uri',
+                        label: 'QRコードを読み取る',
+                        uri: liffUri
                     }
-                }
-            ]
+                ]
+            }
         }
-    }).promise();
+    ]);
 }
-
 export type PaymentMethodType =
     cinerinoapi.factory.paymentMethodType.Account | cinerinoapi.factory.paymentMethodType.CreditCard;
-
 /**
  * 決済方法選択
  */
 // tslint:disable-next-line:max-func-body-length
 export async function selectPaymentMethodType(params: {
+    replyToken: string;
     user: User;
     paymentMethodType: PaymentMethodType;
     transactionId: string;
@@ -420,7 +408,7 @@ export async function selectPaymentMethodType(params: {
 
     switch (params.paymentMethodType) {
         case cinerinoapi.factory.paymentMethodType.Account:
-            await LINE.pushMessage(params.user.userId, '残高を確認しています...');
+            await client.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
             let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType.Coin> | string;
             if (params.code === undefined) {
                 // 口座番号取得
@@ -442,11 +430,11 @@ export async function selectPaymentMethodType(params: {
                 fromAccount: account
             });
             debug('残高確認済', accountAuthorization);
-            await LINE.pushMessage(params.user.userId, '残高の確認がとれました。');
+            await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
             break;
 
         case cinerinoapi.factory.paymentMethodType.CreditCard:
-            await LINE.pushMessage(params.user.userId, 'クレジットカードを確認しています...');
+            await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
 
             // 口座番号取得
             const creditCards = await personService.searchCreditCards({ personId: 'me' });
@@ -466,16 +454,15 @@ export async function selectPaymentMethodType(params: {
                     // cardPass?: string;
                 }
             });
-            await LINE.pushMessage(params.user.userId, `${creditCard.cardNo}で決済を受け付けます`);
+            await client.replyMessage(params.replyToken, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
             break;
 
         default:
             throw new Error(`Unknown payment method ${params.paymentMethodType}`);
     }
-    // const loginTicket = user.authClient.verifyIdToken({});
+    // const loginTicket = params.user.authClient.verifyIdToken({});
     let contact = await personService.getContacts({ personId: 'me' });
-    const lineProfile = await LINE.getProfile(params.user.userId);
-    await LINE.pushMessage(params.user.userId, `Your display name is ${lineProfile.displayName}`);
+    const lineProfile = await client.getProfile(params.user.userId);
     contact = {
         givenName: lineProfile.displayName,
         familyName: 'LINE',
@@ -488,494 +475,182 @@ export async function selectPaymentMethodType(params: {
     });
     debug('customer contact set.');
     // 注文内容確認
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'bubble',
-                        styles: {
-                            footer: {
-                                separator: true
-                            }
+    await client.replyMessage(params.replyToken, [
+        {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'bubble',
+                styles: {
+                    footer: {
+                        separator: true
+                    }
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: '注文をご確認ください',
+                            weight: 'bold',
+                            color: '#1DB446',
+                            size: 'sm'
                         },
-                        body: {
+                        {
+                            type: 'text',
+                            text: transaction.seller.name.ja,
+                            weight: 'bold',
+                            size: 'xxl',
+                            margin: 'md',
+                            maxLines: 0,
+                            wrap: true
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
                             type: 'box',
                             layout: 'vertical',
+                            margin: 'xxl',
+                            spacing: 'sm',
                             contents: [
                                 {
                                     type: 'text',
-                                    text: '注文をご確認ください',
+                                    text: `${contact.givenName} ${contact.familyName}`,
+                                    wrap: true,
                                     weight: 'bold',
-                                    color: '#1DB446',
-                                    size: 'sm'
-                                },
-                                {
-                                    type: 'text',
-                                    text: transaction.seller.name.ja,
-                                    weight: 'bold',
-                                    size: 'xxl',
-                                    margin: 'md',
-                                    maxLines: 0,
-                                    wrap: true
-                                },
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
+                                    gravity: 'center',
+                                    size: 'xl'
                                 },
                                 {
                                     type: 'box',
                                     layout: 'vertical',
-                                    margin: 'xxl',
+                                    margin: 'lg',
                                     spacing: 'sm',
                                     contents: [
-
-                                        {
-                                            type: 'text',
-                                            text: `${contact.givenName} ${contact.familyName}`,
-                                            wrap: true,
-                                            weight: 'bold',
-                                            gravity: 'center',
-                                            size: 'xl'
-                                        },
                                         {
                                             type: 'box',
-                                            layout: 'vertical',
-                                            margin: 'lg',
+                                            layout: 'baseline',
                                             spacing: 'sm',
                                             contents: [
                                                 {
-                                                    type: 'box',
-                                                    layout: 'baseline',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Email',
-                                                            color: '#aaaaaa',
-                                                            size: 'sm',
-                                                            flex: 1
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: contact.email,
-                                                            wrap: true,
-                                                            size: 'sm',
-                                                            color: '#666666',
-                                                            flex: 4
-                                                        }
-                                                    ]
+                                                    type: 'text',
+                                                    text: 'Email',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: contact.email,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'xxl',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: tmpReservations[0].reservationFor.name.ja,
+                                    wrap: true,
+                                    weight: 'bold',
+                                    gravity: 'center',
+                                    size: 'xl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Date',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${moment(tmpReservations[0].reservationFor.startDate).format('llll')}`,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Place',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${tmpReservations[0].reservationFor.location.name.ja}`,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
                                                 }
                                             ]
                                         }
                                     ]
                                 },
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'xxl',
-                                    spacing: 'sm',
-                                    contents: [
+                                ...tmpReservations.map<line.FlexBox>((r) => {
+                                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                    const str = `${r.reservedTicket.ticketedSeat.seatNumber} ${r.reservedTicket.ticketType.name.ja}`;
 
-                                        {
-                                            type: 'text',
-                                            text: tmpReservations[0].reservationFor.name.ja,
-                                            wrap: true,
-                                            weight: 'bold',
-                                            gravity: 'center',
-                                            size: 'xl'
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'vertical',
-                                            margin: 'lg',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'box',
-                                                    layout: 'baseline',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Date',
-                                                            color: '#aaaaaa',
-                                                            size: 'sm',
-                                                            flex: 1
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: `${moment(tmpReservations[0].reservationFor.startDate).format('llll')}`,
-                                                            wrap: true,
-                                                            size: 'sm',
-                                                            color: '#666666',
-                                                            flex: 4
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'baseline',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Place',
-                                                            color: '#aaaaaa',
-                                                            size: 'sm',
-                                                            flex: 1
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: `${tmpReservations[0].reservationFor.location.name.ja}`,
-                                                            wrap: true,
-                                                            color: '#666666',
-                                                            size: 'sm',
-                                                            flex: 4
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        ...tmpReservations.map((r) => {
-                                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                            const str = `${r.reservedTicket.ticketedSeat.seatNumber} ${r.reservedTicket.ticketType.name.ja}`;
-
-                                            return {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: str,
-                                                        size: 'sm',
-                                                        color: '#555555',
-                                                        flex: 0
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${r.price} ${r.priceCurrency}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            };
-                                        }),
-                                        ...[
+                                    return {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
                                             {
-                                                type: 'separator',
-                                                margin: 'xxl'
+                                                type: 'text',
+                                                text: str,
+                                                size: 'sm',
+                                                color: '#555555',
+                                                flex: 0
                                             },
                                             {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                margin: 'xxl',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: 'ITEMS',
-                                                        size: 'sm',
-                                                        color: '#555555'
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${tmpReservations.length}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: 'TOTAL',
-                                                        size: 'sm',
-                                                        color: '#555555'
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${price} ${cinerinoapi.factory.priceCurrency.JPY}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '決済方法',
-                                                        size: 'sm',
-                                                        color: '#555555'
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: params.paymentMethodType,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
+                                                type: 'text',
+                                                text: `${r.price} ${r.priceCurrency}`,
+                                                size: 'sm',
+                                                color: '#111111',
+                                                align: 'end'
                                             }
                                         ]
-                                    ]
-                                }
-                            ]
-                        },
-                        footer: {
-                            type: 'box',
-                            layout: 'vertical',
-                            spacing: 'sm',
-                            contents: [
-                                {
-                                    type: 'button',
-                                    // flex: 2,
-                                    style: 'primary',
-                                    action: {
-                                        type: 'postback',
-                                        label: '注文確定',
-                                        data: `action=confirmOrder&transactionId=${params.transactionId}`
-                                    }
-                                },
-                                {
-                                    type: 'button',
-                                    action: {
-                                        type: 'postback',
-                                        label: 'キャンセル',
-                                        data: `action=cancelOrder&transactionId=${params.transactionId}`
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            ]
-        }
-    }).promise();
-}
-
-export type IEventReservation =
-    cinerinoapi.factory.chevre.reservation.event.IReservation<cinerinoapi.factory.chevre.event.screeningEvent.IEvent>;
-// tslint:disable-next-line:max-func-body-length
-export async function confirmOrder(user: User, transactionId: string) {
-    await LINE.pushMessage(user.userId, '注文を確定しています...');
-
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
-    });
-    const { order } = await placeOrderService.confirm({
-        transactionId: transactionId
-    });
-    const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'bubble',
-                        styles: {
-                            footer: {
-                                separator: true
-                            }
-                        },
-                        body: {
-                            type: 'box',
-                            layout: 'vertical',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'RECEIPT',
-                                    weight: 'bold',
-                                    color: '#1DB446',
-                                    size: 'sm'
-                                },
-                                {
-                                    type: 'text',
-                                    text: order.seller.name,
-                                    weight: 'bold',
-                                    size: 'xxl',
-                                    margin: 'md',
-                                    maxLines: 0,
-                                    wrap: true
-                                },
-                                {
-                                    type: 'text',
-                                    text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
-                                    size: 'xs',
-                                    color: '#aaaaaa',
-                                    wrap: true
-                                },
-                                {
-                                    type: 'separator',
-                                    margin: 'xxl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'xxl',
-                                    spacing: 'sm',
-                                    contents: [
-
-                                        {
-                                            type: 'text',
-                                            text: event.name.ja,
-                                            wrap: true,
-                                            weight: 'bold',
-                                            gravity: 'center',
-                                            size: 'xl'
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'vertical',
-                                            margin: 'lg',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'box',
-                                                    layout: 'baseline',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Date',
-                                                            color: '#aaaaaa',
-                                                            size: 'sm',
-                                                            flex: 1
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: `${moment(event.startDate).format('llll')}`,
-                                                            wrap: true,
-                                                            size: 'sm',
-                                                            color: '#666666',
-                                                            flex: 4
-                                                        }
-                                                    ]
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'baseline',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'text',
-                                                            text: 'Place',
-                                                            color: '#aaaaaa',
-                                                            size: 'sm',
-                                                            flex: 1
-                                                        },
-                                                        {
-                                                            type: 'text',
-                                                            text: `${event.location.name.ja}`,
-                                                            wrap: true,
-                                                            color: '#666666',
-                                                            size: 'sm',
-                                                            flex: 4
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        ...order.acceptedOffers.map((orderItem) => {
-                                            const item = <IEventReservation>orderItem.itemOffered;
-                                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
-
-                                            return {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: str,
-                                                        size: 'sm',
-                                                        color: '#555555',
-                                                        flex: 0
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            };
-                                        }),
-                                        ...[
-                                            {
-                                                type: 'separator',
-                                                margin: 'xxl'
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                margin: 'xxl',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: 'ITEMS',
-                                                        size: 'sm',
-                                                        color: '#555555'
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${order.acceptedOffers.length}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: 'TOTAL',
-                                                        size: 'sm',
-                                                        color: '#555555'
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: `${order.price} ${order.priceCurrency}`,
-                                                        size: 'sm',
-                                                        color: '#111111',
-                                                        align: 'end'
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    ]
-                                },
+                                    };
+                                }),
                                 {
                                     type: 'separator',
                                     margin: 'xxl'
@@ -983,60 +658,323 @@ export async function confirmOrder(user: User, transactionId: string) {
                                 {
                                     type: 'box',
                                     layout: 'horizontal',
-                                    margin: 'md',
+                                    margin: 'xxl',
                                     contents: [
                                         {
                                             type: 'text',
-                                            text: 'PAYMENT ID',
-                                            size: 'xs',
-                                            color: '#aaaaaa',
-                                            flex: 0
+                                            text: 'ITEMS',
+                                            size: 'sm',
+                                            color: '#555555'
                                         },
                                         {
                                             type: 'text',
-                                            text: order.paymentMethods[0].paymentMethodId,
-                                            color: '#aaaaaa',
-                                            size: 'xs',
+                                            text: `${tmpReservations.length}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'TOTAL',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${price} ${cinerinoapi.factory.priceCurrency.JPY}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '決済方法',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: params.paymentMethodType,
+                                            size: 'sm',
+                                            color: '#111111',
                                             align: 'end'
                                         }
                                     ]
                                 }
                             ]
                         }
-                    }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'button',
+                            // flex: 2,
+                            style: 'primary',
+                            action: {
+                                type: 'postback',
+                                label: '注文確定',
+                                data: `action=confirmOrder&transactionId=${params.transactionId}`
+                            }
+                        },
+                        {
+                            type: 'button',
+                            action: {
+                                type: 'postback',
+                                label: 'キャンセル',
+                                data: `action=cancelOrder&transactionId=${params.transactionId}`
+                            }
+                        }
+                    ]
                 }
-                // {
-                //     type: 'template',
-                //     altText: 'this is a carousel template',
-                //     template: {
-                //         type: 'carousel',
-                //         columns: order.acceptedOffers.map((offer) => {
-                //             const itemOffered = <IEventReservation>offer.itemOffered;
-                // tslint:disable-next-line:max-line-length
-                //             const qr = `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${itemOffered.reservedTicket.ticketToken}`;
-
-                //             return {
-                //                 thumbnailImageUrl: qr,
-                //                 // imageBackgroundColor: '#000000',
-                //                 title: itemOffered.reservationFor.name.ja,
-                // tslint:disable-next-line:max-line-length
-                //                 text: `${itemOffered.reservedTicket.ticketedSeat.seatNumber} ${itemOffered.reservedTicket.ticketType.name.ja} ￥${itemOffered.reservedTicket.ticketType.charge}`,
-                //                 actions: [
-                //                     {
-                //                         type: 'postback',
-                //                         label: '???',
-                //                         data: `action=selectTicket&ticketToken=${itemOffered.reservedTicket.ticketToken}`
-                //                     }
-                //                 ]
-                //             };
-                //         }),
-                //         imageAspectRatio: 'square'
-                //         // imageSize: 'cover'
-                //     }
-                // }
-            ]
+            }
         }
-    }).promise();
+    ]);
+}
+export type IEventReservation =
+    cinerinoapi.factory.chevre.reservation.event.IReservation<cinerinoapi.factory.chevre.event.screeningEvent.IEvent>;
+// tslint:disable-next-line:max-func-body-length
+export async function confirmOrder(params: {
+    replyToken: string;
+    user: User;
+    transactionId: string;
+}) {
+    await client.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
+    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const { order } = await placeOrderService.confirm({
+        transactionId: params.transactionId
+    });
+    const event = (<IEventReservation>order.acceptedOffers[0].itemOffered).reservationFor;
+    await client.replyMessage(params.replyToken, [
+
+        {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'bubble',
+                styles: {
+                    footer: {
+                        separator: true
+                    }
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: 'RECEIPT',
+                            weight: 'bold',
+                            color: '#1DB446',
+                            size: 'sm'
+                        },
+                        {
+                            type: 'text',
+                            text: order.seller.name,
+                            weight: 'bold',
+                            size: 'xxl',
+                            margin: 'md',
+                            maxLines: 0,
+                            wrap: true
+                        },
+                        {
+                            type: 'text',
+                            text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
+                            size: 'xs',
+                            color: '#aaaaaa',
+                            wrap: true
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'xxl',
+                            spacing: 'sm',
+                            contents: [
+
+                                {
+                                    type: 'text',
+                                    text: event.name.ja,
+                                    wrap: true,
+                                    weight: 'bold',
+                                    gravity: 'center',
+                                    size: 'xl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Date',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${moment(event.startDate).format('llll')}`,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Place',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${event.location.name.ja}`,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                ...order.acceptedOffers.map<line.FlexBox>((orderItem) => {
+                                    const item = <IEventReservation>orderItem.itemOffered;
+                                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                    const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+
+                                    return {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: str,
+                                                size: 'sm',
+                                                color: '#555555',
+                                                flex: 0
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                                size: 'sm',
+                                                color: '#111111',
+                                                align: 'end'
+                                            }
+                                        ]
+                                    };
+                                }),
+                                {
+                                    type: 'separator',
+                                    margin: 'xxl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    margin: 'xxl',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'ITEMS',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${order.acceptedOffers.length}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'TOTAL',
+                                            size: 'sm',
+                                            color: '#555555'
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${order.price} ${order.priceCurrency}`,
+                                            size: 'sm',
+                                            color: '#111111',
+                                            align: 'end'
+                                        }
+                                    ]
+                                }
+
+                            ]
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'PAYMENT ID',
+                                    size: 'xs',
+                                    color: '#aaaaaa',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: order.paymentMethods[0].paymentMethodId,
+                                    color: '#aaaaaa',
+                                    size: 'xs',
+                                    align: 'end'
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]);
 }
 
 /**
@@ -1044,19 +982,22 @@ export async function confirmOrder(user: User, transactionId: string) {
  * @param user LINEユーザー
  * @param transactionId 取引ID
  */
-export async function confirmFriendPay(user: User, token: string) {
-    const friendPayInfo = await user.verifyFriendPayToken(token);
-
-    await LINE.pushMessage(user.userId, `${friendPayInfo.price}円の友達決済を受け付けます。`);
-    await LINE.pushMessage(user.userId, '残高を確認しています...');
+export async function confirmFriendPay(params: {
+    replyToken: string;
+    user: User;
+    token: string;
+}) {
+    const friendPayInfo = await params.user.verifyFriendPayToken(params.token);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます。` });
+    await client.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
 
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
 
     const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
@@ -1084,55 +1025,46 @@ export async function confirmFriendPay(user: User, token: string) {
         }
     });
     debug('残高確認済', pecorinoAuthorization);
-    await LINE.pushMessage(user.userId, '残高の確認がとれました。');
-    await LINE.pushMessage(user.userId, '友達決済を承認しました。');
-
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: friendPayInfo.userId,
-            messages: [
+    await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
+    await client.replyMessage(params.replyToken, { type: 'text', text: '友達決済を承認しました' });
+    const template: line.TemplateMessage = {
+        type: 'template',
+        altText: 'This is a buttons template',
+        template: {
+            type: 'confirm',
+            text: '友達決済の承認が確認できました。取引を続行しますか?',
+            actions: [
                 {
-                    type: 'template',
-                    altText: 'This is a buttons template',
-                    template: {
-                        type: 'confirm',
-                        text: '友達決済の承認が確認できました。取引を続行しますか?',
-                        actions: [
-                            {
-                                type: 'postback',
-                                label: 'Yes',
-                                // tslint:disable-next-line:max-line-length
-                                data: `action=continueTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
-                            },
-                            {
-                                type: 'postback',
-                                label: 'No',
-                                // tslint:disable-next-line:max-line-length
-                                data: `action=cancelTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
-                            }
-                        ]
-                    }
+                    type: 'postback',
+                    label: 'Yes',
+                    // tslint:disable-next-line:max-line-length
+                    data: `action=continueTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
+                },
+                {
+                    type: 'postback',
+                    label: 'No',
+                    // tslint:disable-next-line:max-line-length
+                    data: `action=cancelTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
                 }
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [template]);
 }
-
 /**
  * おこづかい承認確定
- * @param user LINEユーザー
- * @param token 金額転送情報トークン
  */
-export async function confirmTransferMoney(user: User, token: string, price: number) {
-    const transferMoneyInfo = await user.verifyTransferMoneyToken(token);
-    await LINE.pushMessage(user.userId, `${transferMoneyInfo.name}に${price}円の振込を実行します...`);
+export async function confirmTransferMoney(params: {
+    replyToken: string;
+    user: User;
+    token: string;
+    price: number;
+}) {
+    const transferMoneyInfo = await params.user.verifyTransferMoneyToken(params.token);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${transferMoneyInfo.name}に${params.price}円の振込を実行します...` });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
         .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
@@ -1152,7 +1084,7 @@ export async function confirmTransferMoney(user: User, token: string, price: num
         expires: moment().add(10, 'minutes').toDate(),
         agent: {
             typeOf: cinerinoapi.factory.personType.Person,
-            name: user.userId
+            name: params.user.userId
         },
         recipient: {
             typeOf: 'Person',
@@ -1160,107 +1092,101 @@ export async function confirmTransferMoney(user: User, token: string, price: num
             name: transferMoneyInfo.name,
             url: ''
         },
-        amount: price,
+        amount: params.price,
         notes: 'LINEチケットおこづかい',
         fromAccountNumber: account.accountNumber,
         toAccountNumber: transferMoneyInfo.accountNumber
     });
     debug('transaction started.', transaction.id);
-    await LINE.pushMessage(user.userId, '残高の確認がとれました。');
+    await client.replyMessage(params.replyToken, { type: 'text', text: '残高の確認がとれました' });
 
     // バックエンドで確定
     await transferService.confirm({
         transactionId: transaction.id
     });
     debug('transaction confirmed.');
-    await LINE.pushMessage(user.userId, '転送が完了しました。');
+    await client.replyMessage(params.replyToken, { type: 'text', text: '転送が完了しました' });
 
     const contact = await personService.getContacts({ personId: 'me' });
 
     // 振込先に通知
-    await LINE.pushMessage(transferMoneyInfo.userId, `${contact.familyName} ${contact.givenName}から${price}円おこづかいが振り込まれました。`);
+    await client.replyMessage(params.replyToken, {
+        type: 'text',
+        text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました。`
+    });
 }
-
 /**
  * クレジットから口座へ入金する
  */
 export async function selectDepositAmount(params: {
+    replyToken: string;
     user: User;
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
 }) {
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
+    const message: line.TextMessage = {
+        type: 'text',
+        text: 'いくら入金しますか?',
+        quickReply: {
+            items: [
                 {
-                    type: 'text',
-                    text: 'いくら入金しますか?',
-                    quickReply: {
-                        items: [
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: '100',
-                                    data: querystring.stringify({
-                                        action: 'depositCoinByCreditCard',
-                                        amount: 100,
-                                        accountType: params.accountType,
-                                        toAccountNumber: params.accountNumber
-                                    })
-                                }
-                            },
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: '1000',
-                                    data: querystring.stringify({
-                                        action: 'depositCoinByCreditCard',
-                                        amount: 1000,
-                                        accountType: params.accountType,
-                                        toAccountNumber: params.accountNumber
-                                    })
-                                }
-                            },
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: '10000',
-                                    data: querystring.stringify({
-                                        action: 'depositCoinByCreditCard',
-                                        amount: 10000,
-                                        accountType: params.accountType,
-                                        toAccountNumber: params.accountNumber
-                                    })
-                                }
-                            }
-                        ]
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '100',
+                        data: querystring.stringify({
+                            action: 'depositCoinByCreditCard',
+                            amount: 100,
+                            accountType: params.accountType,
+                            toAccountNumber: params.accountNumber
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '1000',
+                        data: querystring.stringify({
+                            action: 'depositCoinByCreditCard',
+                            amount: 1000,
+                            accountType: params.accountType,
+                            toAccountNumber: params.accountNumber
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '10000',
+                        data: querystring.stringify({
+                            action: 'depositCoinByCreditCard',
+                            amount: 10000,
+                            accountType: params.accountType,
+                            toAccountNumber: params.accountNumber
+                        })
                     }
                 }
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [message]);
 }
 /**
  * クレジットから口座へ入金する
  */
 export async function depositCoinByCreditCard(params: {
+    replyToken: string;
     user: User;
     amount: number;
     accountType: cinerinoapi.factory.accountType;
     toAccountNumber: string;
 }) {
-    await LINE.pushMessage(params.user.userId, `${params.amount}円の入金処理を実行します...`);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1269,7 +1195,7 @@ export async function depositCoinByCreditCard(params: {
     if (creditCards.length === 0) {
         throw new Error('クレジットカード未登録です');
     }
-    const lineProfile = await LINE.getProfile(params.user.userId);
+    const lineProfile = await client.getProfile(params.user.userId);
     // 入金取引開始
     const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
         endpoint: <string>process.env.PECORINO_ENDPOINT,
@@ -1298,196 +1224,196 @@ export async function depositCoinByCreditCard(params: {
     await depositTransaction.confirm({
         transactionId: transaction.id
     });
-    await LINE.pushMessage(params.user.userId, '入金処理が完了しました。');
+    await client.replyMessage(params.replyToken, { type: 'text', text: '入金処理が完了しました' });
 }
 /**
  * クレジットカード検索
  */
-export async function searchCreditCards(user: User) {
-    await LINE.pushMessage(user.userId, `クレジットカードを検索しています...`);
-
+export async function searchCreditCards(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを検索しています...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const creditCards = await personService.searchCreditCards({ personId: 'me' });
-    await LINE.pushMessage(user.userId, `${creditCards.length}件のクレジットカードがみつかりました。`);
-
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'carousel',
-                        contents: [
-                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...creditCards.map((creditCard) => {
-                                return {
-                                    type: 'bubble',
-                                    styles: {
-                                        footer: {
-                                            separator: true
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
+    const flex: line.FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: [
+                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                ...creditCards.map<line.FlexBubble>((creditCard) => {
+                    return {
+                        type: 'bubble',
+                        styles: {
+                            footer: {
+                                separator: true
+                            }
+                        },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'md',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    contents: [
+                                        {
+                                            type: 'icon',
+                                            url: `https://${params.user.host}/img/labels/credit-card-64.png`
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
+                                            wrap: true,
+                                            weight: 'bold',
+                                            margin: 'sm',
+                                            gravity: 'center',
+                                            size: 'xl'
                                         }
-                                    },
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                contents: [
-                                                    {
-                                                        type: 'icon',
-                                                        url: `https://${user.host}/img/labels/credit-card-64.png`
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
-                                                        wrap: true,
-                                                        weight: 'bold',
-                                                        margin: 'sm',
-                                                        gravity: 'center',
-                                                        size: 'xl'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'HolderName',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: creditCard.holderName,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'CarNo',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: creditCard.cardNo,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Expire',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: creditCard.expire,
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    footer: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: '削除',
-                                                    data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'HolderName',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: creditCard.holderName,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            },
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: 'コード発行',
-                                                    data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'CarNo',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: creditCard.cardNo,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            }
-                                        ]
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Expire',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: creditCard.expire,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        footer: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: '削除',
+                                        data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
                                     }
-                                };
-                            })
-                        ]
-                    }
-                }
+                                },
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: 'コード発行',
+                                        data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
+                                    }
+                                }
+                            ]
+                        }
+                    };
+                })
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [flex]);
 }
-export async function addCreditCard(user: User, token: string) {
+export async function addCreditCard(params: {
+    replyToken: string;
+    user: User;
+    token: string;
+}) {
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
-    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: token } });
-    await LINE.pushMessage(user.userId, `クレジットカード ${creditCard.cardNo} が追加されました`);
+    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: params.token } });
+    await client.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
 }
-export async function deleteCreditCard(user: User, cardSeq: string) {
+export async function deleteCreditCard(params: {
+    replyToken: string;
+    user: User;
+    cardSeq: string;
+}) {
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
-    await personService.deleteCreditCard({ personId: 'me', cardSeq: cardSeq });
-    await LINE.pushMessage(user.userId, `クレジットカードが削除されました`);
+    await personService.deleteCreditCard({ personId: 'me', cardSeq: params.cardSeq });
+    await client.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
 }
 /**
  * 口座開設
  */
 export async function openAccount(params: {
+    replyToken: string;
     user: User;
     name: string;
     accountType: cinerinoapi.factory.accountType;
@@ -1501,12 +1427,16 @@ export async function openAccount(params: {
         name: params.name,
         accountType: params.accountType
     });
-    await LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`);
+    await client.replyMessage(params.replyToken, {
+        type: 'text',
+        text: `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`
+    });
 }
 /**
  * 口座解約
  */
 export async function closeAccount(params: {
+    replyToken: string;
     user: User;
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
@@ -1516,12 +1446,15 @@ export async function closeAccount(params: {
         auth: params.user.authClient
     });
     await personService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
-    await LINE.pushMessage(params.user.userId, `${params.accountType}口座 ${params.accountNumber} が解約されました`);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
 }
-export async function searchCoinAccounts(user: User) {
+export async function searchCoinAccounts(params: {
+    replyToken: string;
+    user: User;
+}) {
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     let accountOwnershipInfos = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin });
     accountOwnershipInfos = accountOwnershipInfos
@@ -1530,273 +1463,264 @@ export async function searchCoinAccounts(user: User) {
     if (accountOwnershipInfos.length === 0) {
         throw new Error('口座未開設です');
     }
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'carousel',
-                        contents: [
-                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...accountOwnershipInfos.map((ownershipInfo) => {
-                                const account = ownershipInfo.typeOfGood;
+    const flex: line.FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: [
+                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                ...accountOwnershipInfos.map<line.FlexBubble>((ownershipInfo) => {
+                    const account = ownershipInfo.typeOfGood;
 
-                                return {
-                                    type: 'bubble',
-                                    styles: {
-                                        footer: {
-                                            separator: true
+                    return {
+                        type: 'bubble',
+                        styles: {
+                            footer: {
+                                separator: true
+                            }
+                        },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'md',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    contents: [
+                                        {
+                                            type: 'icon',
+                                            url: `https://${params.user.host}/img/labels/coin-64.png`
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: account.accountNumber,
+                                            wrap: true,
+                                            weight: 'bold',
+                                            margin: 'sm',
+                                            gravity: 'center',
+                                            size: 'xl'
                                         }
-                                    },
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                contents: [
-                                                    {
-                                                        type: 'icon',
-                                                        url: `https://${user.host}/img/labels/coin-64.png`
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: account.accountNumber,
-                                                        wrap: true,
-                                                        weight: 'bold',
-                                                        margin: 'sm',
-                                                        gravity: 'center',
-                                                        size: 'xl'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Name',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: account.name,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Type',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: account.accountType,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Balance',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: `${account.balance}`,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Available',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: `${account.availableBalance}`,
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Status',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: account.status,
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'OpenDate',
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: moment(account.openDate).format('lll'),
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 4
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    footer: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: '取引履歴確認',
-                                                    data: querystring.stringify({
-                                                        action: 'searchAccountMoneyTransferActions',
-                                                        accountType: cinerinoapi.factory.accountType.Coin,
-                                                        accountNumber: account.accountNumber
-                                                    })
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Name',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: account.name,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            },
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: 'クレジットカードで入金',
-                                                    data: querystring.stringify({
-                                                        action: 'selectDepositAmount',
-                                                        accountType: cinerinoapi.factory.accountType.Coin,
-                                                        accountNumber: account.accountNumber
-                                                    })
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Type',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: account.accountType,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            },
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: 'コード発行',
-                                                    data: querystring.stringify({
-                                                        action: 'authorizeOwnershipInfo',
-                                                        goodType: ownershipInfo.typeOfGood.typeOf,
-                                                        identifier: ownershipInfo.identifier
-                                                    })
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Balance',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${account.balance}`,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
                                                 }
-                                            },
-                                            // {
-                                            //     type: 'button',
-                                            //     action: {
-                                            //         type: 'message',
-                                            //         label: 'おこづかいをもらう',
-                                            //         text: 'おこづかい'
-                                            //     }
-                                            // },
-                                            {
-                                                type: 'button',
-                                                action: {
-                                                    type: 'postback',
-                                                    label: '解約',
-                                                    data: querystring.stringify({
-                                                        action: 'closeAccount',
-                                                        accountType: account.accountType,
-                                                        accountNumber: account.accountNumber
-                                                    })
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Available',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${account.availableBalance}`,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
                                                 }
-                                            }
-                                        ]
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Status',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: account.status,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'OpenDate',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: moment(account.openDate).format('lll'),
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        footer: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: '取引履歴確認',
+                                        data: querystring.stringify({
+                                            action: 'searchAccountMoneyTransferActions',
+                                            accountType: cinerinoapi.factory.accountType.Coin,
+                                            accountNumber: account.accountNumber
+                                        })
                                     }
-                                };
-                            })
-                        ]
-                    }
-                }
+                                },
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: 'クレジットカードで入金',
+                                        data: querystring.stringify({
+                                            action: 'selectDepositAmount',
+                                            accountType: cinerinoapi.factory.accountType.Coin,
+                                            accountNumber: account.accountNumber
+                                        })
+                                    }
+                                },
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: 'コード発行',
+                                        data: querystring.stringify({
+                                            action: 'authorizeOwnershipInfo',
+                                            goodType: ownershipInfo.typeOfGood.typeOf,
+                                            identifier: ownershipInfo.identifier
+                                        })
+                                    }
+                                },
+                                // {
+                                //     type: 'button',
+                                //     action: {
+                                //         type: 'message',
+                                //         label: 'おこづかいをもらう',
+                                //         text: 'おこづかい'
+                                //     }
+                                // },
+                                {
+                                    type: 'button',
+                                    action: {
+                                        type: 'postback',
+                                        label: '解約',
+                                        data: querystring.stringify({
+                                            action: 'closeAccount',
+                                            accountType: account.accountType,
+                                            accountNumber: account.accountNumber
+                                        })
+                                    }
+                                }
+                            ]
+                        }
+                    };
+                })
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [flex]);
 }
 /**
  * 口座取引履歴検索
  */
 export async function searchAccountMoneyTransferActions(params: {
+    replyToken: string;
     user: User;
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
@@ -1814,275 +1738,267 @@ export async function searchAccountMoneyTransferActions(params: {
     if (accountOwnershipInfo === undefined) {
         throw new Error('口座が見つかりません');
     }
-    await LINE.pushMessage(params.user.userId, '取引履歴を検索しています...');
+    await client.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
     let transferActions = await personService.searchAccountMoneyTransferActions({
         personId: 'me',
         accountType: params.accountType,
         accountNumber: params.accountNumber
     });
     if (transferActions.length === 0) {
-        await LINE.pushMessage(params.user.userId, 'まだ取引履歴はありません');
+        await client.replyMessage(params.replyToken, { type: 'text', text: 'まだ取引履歴はありません' });
 
         return;
     }
     // tslint:disable-next-line:no-magic-numbers
     transferActions = transferActions.slice(0, 10);
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
-                {
-                    type: 'flex',
-                    altText: 'This is a Flex Message',
-                    contents: {
-                        type: 'carousel',
-                        contents: [
-                            // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                            ...transferActions.map((a) => {
-                                let actionName = '';
-                                switch (a.purpose.typeOf) {
-                                    case cinerinoapi.factory.pecorino.transactionType.Withdraw:
-                                        actionName = '支払';
-                                        break;
-                                    case cinerinoapi.factory.pecorino.transactionType.Transfer:
-                                        actionName = '転送';
-                                        break;
-                                    case cinerinoapi.factory.pecorino.transactionType.Deposit:
-                                        actionName = '入金';
-                                        break;
+    const flex: line.FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: [
+                // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                ...transferActions.map<line.FlexBubble>((a) => {
+                    let actionName = '';
+                    switch (a.purpose.typeOf) {
+                        case cinerinoapi.factory.pecorino.transactionType.Withdraw:
+                            actionName = '支払';
+                            break;
+                        case cinerinoapi.factory.pecorino.transactionType.Transfer:
+                            actionName = '転送';
+                            break;
+                        case cinerinoapi.factory.pecorino.transactionType.Deposit:
+                            actionName = '入金';
+                            break;
 
-                                    default:
-                                }
-
-                                return {
-                                    type: 'bubble',
-                                    // styles: {
-                                    //     footer: {
-                                    //         separator: true
-                                    //     }
-                                    // },
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        spacing: 'md',
-                                        contents: [
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                contents: [
-                                                    {
-                                                        type: 'icon',
-                                                        url: `https://${params.user.host}/img/labels/coin-64.png`
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: actionName,
-                                                        wrap: true,
-                                                        weight: 'bold',
-                                                        margin: 'sm',
-                                                        gravity: 'center',
-                                                        size: 'xl'
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                margin: 'lg',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Date',
-                                                                wrap: true,
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: moment(a.endDate).format('YY.MM.DD HH:mm'),
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 5
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Amount',
-                                                                wrap: true,
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: `${a.amount}`,
-                                                                wrap: true,
-                                                                size: 'sm',
-                                                                color: '#666666',
-                                                                flex: 5
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'horizontal',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'vertical',
-                                                                margin: 'sm',
-                                                                spacing: 'sm',
-                                                                flex: 2,
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'From',
-                                                                        wrap: true,
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm'
-                                                                    }
-                                                                ]
-                                                            },
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'vertical',
-                                                                margin: 'sm',
-                                                                spacing: 'sm',
-                                                                flex: 5,
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        // tslint:disable-next-line:max-line-length
-                                                                        text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
-                                                                        wrap: true,
-                                                                        size: 'sm',
-                                                                        color: '#666666'
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        // tslint:disable-next-line:max-line-length
-                                                                        text: `${((<any>a.fromLocation).accountNumber !== undefined) ? (<any>a.fromLocation).accountNumber : '---'}`,
-                                                                        wrap: true,
-                                                                        size: 'sm',
-                                                                        color: '#666666'
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'horizontal',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'vertical',
-                                                                margin: 'sm',
-                                                                spacing: 'sm',
-                                                                flex: 2,
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'To',
-                                                                        wrap: true,
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm'
-                                                                    }
-                                                                ]
-                                                            },
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'vertical',
-                                                                margin: 'sm',
-                                                                spacing: 'sm',
-                                                                flex: 5,
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        // tslint:disable-next-line:max-line-length
-                                                                        text: `${(a.toLocation.name !== undefined) ? a.toLocation.name : '---'}`,
-                                                                        wrap: true,
-                                                                        size: 'sm',
-                                                                        color: '#666666'
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        // tslint:disable-next-line:max-line-length
-                                                                        text: `${((<any>a.toLocation).accountNumber !== undefined) ? (<any>a.toLocation).accountNumber : '---'}`,
-                                                                        wrap: true,
-                                                                        size: 'sm',
-                                                                        color: '#666666'
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'baseline',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'text',
-                                                                text: 'Description',
-                                                                wrap: true,
-                                                                color: '#aaaaaa',
-                                                                size: 'sm',
-                                                                flex: 2
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                text: (a.description !== undefined) ? a.description : '---',
-                                                                wrap: true,
-                                                                color: '#666666',
-                                                                size: 'sm',
-                                                                flex: 5
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                };
-                            })
-                        ]
+                        default:
                     }
-                }
+
+                    return {
+                        type: 'bubble',
+                        // styles: {
+                        //     footer: {
+                        //         separator: true
+                        //     }
+                        // },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'md',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    contents: [
+                                        {
+                                            type: 'icon',
+                                            url: `https://${params.user.host}/img/labels/coin-64.png`
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: actionName,
+                                            wrap: true,
+                                            weight: 'bold',
+                                            margin: 'sm',
+                                            gravity: 'center',
+                                            size: 'xl'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Date',
+                                                    wrap: true,
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: moment(a.endDate).format('YY.MM.DD HH:mm'),
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 5
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Amount',
+                                                    wrap: true,
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${a.amount}`,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 5
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'sm',
+                                                    spacing: 'sm',
+                                                    flex: 2,
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'From',
+                                                            wrap: true,
+                                                            color: '#aaaaaa',
+                                                            size: 'sm'
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'sm',
+                                                    spacing: 'sm',
+                                                    flex: 5,
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            // tslint:disable-next-line:max-line-length
+                                                            text: `${(a.fromLocation.name !== undefined) ? a.fromLocation.name : '---'}`,
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666'
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            // tslint:disable-next-line:max-line-length
+                                                            text: `${((<any>a.fromLocation).accountNumber !== undefined) ? (<any>a.fromLocation).accountNumber : '---'}`,
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666'
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'sm',
+                                                    spacing: 'sm',
+                                                    flex: 2,
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'To',
+                                                            wrap: true,
+                                                            color: '#aaaaaa',
+                                                            size: 'sm'
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'vertical',
+                                                    margin: 'sm',
+                                                    spacing: 'sm',
+                                                    flex: 5,
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            // tslint:disable-next-line:max-line-length
+                                                            text: `${(a.toLocation.name !== undefined) ? a.toLocation.name : '---'}`,
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666'
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            // tslint:disable-next-line:max-line-length
+                                                            text: `${((<any>a.toLocation).accountNumber !== undefined) ? (<any>a.toLocation).accountNumber : '---'}`,
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666'
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Description',
+                                                    wrap: true,
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 2
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: (a.description !== undefined) ? a.description : '---',
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 5
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    };
+                })
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [flex]);
 }
 /**
  * ユーザーのチケット(座席予約)を検索する
  */
 // tslint:disable-next-line:max-func-body-length
-export async function searchScreeningEventReservations(user: User) {
-    await LINE.pushMessage(user.userId, '座席予約を検索しています...');
-
+export async function searchScreeningEventReservations(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await client.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const ownershipInfos = await personService.searchScreeningEventReservations({
         // goodType: cinerinoapi.factory.reservationType.EventReservation,
@@ -2091,7 +2007,7 @@ export async function searchScreeningEventReservations(user: User) {
     debug(ownershipInfos.length, 'ownershipInfos found.');
 
     if (ownershipInfos.length === 0) {
-        await LINE.pushMessage(user.userId, '座席予約が見つかりませんでした。');
+        await client.replyMessage(params.replyToken, { type: 'text', text: '座席予約が見つかりませんでした' });
     } else {
         // googleで画像検索
         const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
@@ -2129,195 +2045,185 @@ export async function searchScreeningEventReservations(user: User) {
             });
         }));
         debug(thumbnails);
+        const flex: line.FlexMessage = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: [
+                    // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                    ...ownershipInfos
+                        .sort((a, b) => (a.ownedFrom < b.ownedFrom) ? 1 : -1)
+                        // tslint:disable-next-line:no-magic-numbers
+                        .slice(0, 10)
+                        // tslint:disable-next-line:max-func-body-length
+                        .map<line.FlexBubble>((ownershipInfo) => {
+                            const itemOffered = ownershipInfo.typeOfGood;
+                            const event = itemOffered.reservationFor;
+                            const thumbnail = thumbnails.find((t) => t.eventId === event.id);
+                            const thumbnailImageUrl = (thumbnail !== undefined)
+                                ? thumbnail.thumbnailLink
+                                // tslint:disable-next-line:max-line-length
+                                : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
 
-        await request.post({
-            simple: false,
-            url: 'https://api.line.me/v2/bot/message/push',
-            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-            json: true,
-            body: {
-                to: user.userId,
-                messages: [
-                    {
-                        type: 'flex',
-                        altText: 'This is a Flex Message',
-                        contents: {
-                            type: 'carousel',
-                            contents: [
-                                // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                                ...ownershipInfos
-                                    .sort((a, b) => (a.ownedFrom < b.ownedFrom) ? 1 : -1)
-                                    // tslint:disable-next-line:no-magic-numbers
-                                    .slice(0, 10)
-                                    // tslint:disable-next-line:max-func-body-length
-                                    .map((ownershipInfo) => {
-                                        const itemOffered = ownershipInfo.typeOfGood;
-                                        const event = itemOffered.reservationFor;
-                                        const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                                        const thumbnailImageUrl = (thumbnail !== undefined)
-                                            ? thumbnail.thumbnailLink
-                                            // tslint:disable-next-line:max-line-length
-                                            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-
-                                        return {
-                                            type: 'bubble',
-                                            hero: {
-                                                type: 'image',
-                                                url: thumbnailImageUrl,
-                                                size: 'full',
-                                                aspectRatio: '20:13',
-                                                aspectMode: 'cover',
-                                                action: {
-                                                    type: 'uri',
-                                                    // tslint:disable-next-line:no-http-string
-                                                    uri: 'http://linecorp.com/'
-                                                }
-                                            },
-                                            body: {
-                                                type: 'box',
-                                                layout: 'vertical',
-                                                spacing: 'md',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: event.name.ja,
-                                                        wrap: true,
-                                                        weight: 'bold',
-                                                        gravity: 'center',
-                                                        size: 'xl'
-                                                    },
-                                                    {
-                                                        type: 'box',
-                                                        layout: 'vertical',
-                                                        margin: 'lg',
-                                                        spacing: 'sm',
-                                                        contents: [
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'baseline',
-                                                                spacing: 'sm',
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'Date',
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm',
-                                                                        flex: 1
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: moment(event.startDate).format('llll'),
-                                                                        wrap: true,
-                                                                        size: 'sm',
-                                                                        color: '#666666',
-                                                                        flex: 4
-                                                                    }
-                                                                ]
-                                                            },
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'baseline',
-                                                                spacing: 'sm',
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'Place',
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm',
-                                                                        flex: 1
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: event.location.name.ja,
-                                                                        wrap: true,
-                                                                        color: '#666666',
-                                                                        size: 'sm',
-                                                                        flex: 4
-                                                                    }
-                                                                ]
-                                                            },
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'baseline',
-                                                                spacing: 'sm',
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'Seats',
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm',
-                                                                        flex: 1
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
-                                                                        wrap: true,
-                                                                        color: '#666666',
-                                                                        size: 'sm',
-                                                                        flex: 4
-                                                                    }
-                                                                ]
-                                                            },
-                                                            {
-                                                                type: 'box',
-                                                                layout: 'baseline',
-                                                                spacing: 'sm',
-                                                                contents: [
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: 'Ticket Type',
-                                                                        color: '#aaaaaa',
-                                                                        size: 'sm',
-                                                                        flex: 1
-                                                                    },
-                                                                    {
-                                                                        type: 'text',
-                                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
-                                                                        wrap: true,
-                                                                        color: '#666666',
-                                                                        size: 'sm',
-                                                                        flex: 4
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            },
-                                            footer: {
-                                                type: 'box',
-                                                layout: 'horizontal',
-                                                contents: [
-                                                    {
-                                                        type: 'button',
-                                                        action: {
-                                                            type: 'postback',
-                                                            label: 'コード発行',
-                                                            data: querystring.stringify({
-                                                                action: 'authorizeOwnershipInfo',
-                                                                goodType: ownershipInfo.typeOfGood.typeOf,
-                                                                identifier: ownershipInfo.identifier
-                                                            })
+                            return {
+                                type: 'bubble',
+                                hero: {
+                                    type: 'image',
+                                    url: thumbnailImageUrl,
+                                    size: 'full',
+                                    aspectRatio: '20:13',
+                                    aspectMode: 'cover',
+                                    action: {
+                                        type: 'uri',
+                                        label: 'event',
+                                        // tslint:disable-next-line:no-http-string
+                                        uri: 'http://linecorp.com/'
+                                    }
+                                },
+                                body: {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    spacing: 'md',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: event.name.ja,
+                                            wrap: true,
+                                            weight: 'bold',
+                                            gravity: 'center',
+                                            size: 'xl'
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'vertical',
+                                            margin: 'lg',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Date',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: moment(event.startDate).format('llll'),
+                                                            wrap: true,
+                                                            size: 'sm',
+                                                            color: '#666666',
+                                                            flex: 4
                                                         }
-                                                    }
-                                                ]
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Place',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: event.location.name.ja,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Seats',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Ticket Type',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                footer: {
+                                    type: 'box',
+                                    layout: 'horizontal',
+                                    contents: [
+                                        {
+                                            type: 'button',
+                                            action: {
+                                                type: 'postback',
+                                                label: 'コード発行',
+                                                data: querystring.stringify({
+                                                    action: 'authorizeOwnershipInfo',
+                                                    goodType: ownershipInfo.typeOfGood.typeOf,
+                                                    identifier: ownershipInfo.identifier
+                                                })
                                             }
-                                        };
-                                    })
-                            ]
-                        }
-                    }
+                                        }
+                                    ]
+                                }
+                            };
+                        })
                 ]
             }
-        }).promise();
+        };
+        await client.replyMessage(params.replyToken, [flex]);
     }
 }
-
 /**
  * 座席仮予約
  */
 // tslint:disable-next-line:max-func-body-length
 export async function selectSeatOffers(params: {
+    replyToken: string;
     user: User;
     eventId: string;
     seatNumbers: string[];
@@ -2337,7 +2243,7 @@ export async function selectSeatOffers(params: {
     });
 
     const event = await eventService.findScreeningEventById({ eventId: params.eventId });
-    await LINE.pushMessage(params.user.userId, `${event.name.ja}の座席を確保します...`);
+    await client.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
 
     // 販売者情報取得
     const sellers = await organizationService.searchMovieTheaters({});
@@ -2409,75 +2315,66 @@ export async function selectSeatOffers(params: {
         notes: 'test from samples'
     });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
-    await LINE.pushMessage(params.user.userId, `座席 ${params.seatNumbers.join(' ')} を確保しました。`);
-    await request.post({
-        simple: false,
-        url: 'https://api.line.me/v2/bot/message/push',
-        auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-        json: true,
-        body: {
-            to: params.user.userId,
-            messages: [
+    await client.replyMessage(params.replyToken, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました。` });
+    const message: line.TextMessage = {
+        type: 'text',
+        text: '決済方法を選択してください',
+        quickReply: {
+            items: [
                 {
-                    type: 'text',
-                    text: '決済方法を選択してください',
-                    quickReply: {
-                        items: [
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: 'クレジットカード',
-                                    data: querystring.stringify({
-                                        action: 'selectPaymentMethodType',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
-                                        transactionId: transaction.id
-                                    })
-                                }
-                            },
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: 'コイン',
-                                    data: querystring.stringify({
-                                        action: 'selectPaymentMethodType',
-                                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                        transactionId: transaction.id
-                                    })
-                                }
-                            },
-                            {
-                                type: 'action',
-                                imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
-                                action: {
-                                    type: 'postback',
-                                    label: 'Friend Pay',
-                                    data: querystring.stringify({
-                                        action: 'askPaymentCode',
-                                        transactionId: transaction.id
-                                    })
-                                }
-                            }
-                        ]
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'クレジットカード',
+                        data: querystring.stringify({
+                            action: 'selectPaymentMethodType',
+                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                            transactionId: transaction.id
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'コイン',
+                        data: querystring.stringify({
+                            action: 'selectPaymentMethodType',
+                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                            transactionId: transaction.id
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'Friend Pay',
+                        data: querystring.stringify({
+                            action: 'askPaymentCode',
+                            transactionId: transaction.id
+                        })
                     }
                 }
             ]
         }
-    }).promise();
+    };
+    await client.replyMessage(params.replyToken, [message]);
 }
 /**
  * 所有権コード発行
  */
 // tslint:disable-next-line:max-func-body-length
 export async function authorizeOwnershipInfo(params: {
+    replyToken: string;
     user: User;
     goodType: cinerinoapi.factory.ownershipInfo.IGoodType;
     identifier: string;
 }) {
-    await LINE.pushMessage(params.user.userId, 'コード発行中...');
+    await client.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -2487,8 +2384,8 @@ export async function authorizeOwnershipInfo(params: {
         goodType: params.goodType,
         identifier: params.identifier
     });
-    await LINE.pushMessage(params.user.userId, 'コードが発行されました');
-
+    await client.replyMessage(params.replyToken, { type: 'text', text: 'コードが発行されました' });
+    let flex: line.FlexMessage;
     switch (params.goodType) {
         case cinerinoapi.factory.chevre.reservationType.EventReservation:
             const ownershipInfos = await personService.searchScreeningEventReservations({
@@ -2543,179 +2440,170 @@ export async function authorizeOwnershipInfo(params: {
                 ? thumbnail.thumbnailLink
                 // tslint:disable-next-line:max-line-length
                 : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-
-            await request.post({
-                simple: false,
-                url: 'https://api.line.me/v2/bot/message/push',
-                auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-                json: true,
-                body: {
-                    to: params.user.userId,
-                    messages: [
+            flex = {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'carousel',
+                    contents: [
                         {
-                            type: 'flex',
-                            altText: 'This is a Flex Message',
-                            contents: {
-                                type: 'carousel',
+                            type: 'bubble',
+                            hero: {
+                                type: 'image',
+                                url: thumbnailImageUrl,
+                                size: 'full',
+                                aspectRatio: '20:13',
+                                aspectMode: 'cover',
+                                action: {
+                                    type: 'uri',
+                                    label: 'event',
+                                    // tslint:disable-next-line:no-http-string
+                                    uri: 'http://linecorp.com/'
+                                }
+                            },
+                            body: {
+                                type: 'box',
+                                layout: 'vertical',
+                                spacing: 'md',
                                 contents: [
                                     {
-                                        type: 'bubble',
-                                        hero: {
-                                            type: 'image',
-                                            url: thumbnailImageUrl,
-                                            size: 'full',
-                                            aspectRatio: '20:13',
-                                            aspectMode: 'cover',
-                                            action: {
-                                                type: 'uri',
-                                                // tslint:disable-next-line:no-http-string
-                                                uri: 'http://linecorp.com/'
+                                        type: 'text',
+                                        text: event.name.ja,
+                                        wrap: true,
+                                        weight: 'bold',
+                                        gravity: 'center',
+                                        size: 'xl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Date',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: moment(event.startDate).format('llll'),
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Place',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: event.location.name.ja,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Seats',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Ticket Type',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'xxl',
+                                                contents: [
+                                                    {
+                                                        type: 'spacer',
+                                                        size: 'md'
+                                                    },
+                                                    {
+                                                        type: 'image',
+                                                        // tslint:disable-next-line:max-line-length
+                                                        url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
+                                                        aspectMode: 'cover',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        // tslint:disable-next-line:max-line-length
+                                                        text: 'You can enter the theater by using this code instead of a ticket',
+                                                        color: '#aaaaaa',
+                                                        wrap: true,
+                                                        margin: 'xxl',
+                                                        size: 'xs'
+                                                    }
+                                                ]
                                             }
-                                        },
-                                        body: {
-                                            type: 'box',
-                                            layout: 'vertical',
-                                            spacing: 'md',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: event.name.ja,
-                                                    wrap: true,
-                                                    weight: 'bold',
-                                                    gravity: 'center',
-                                                    size: 'xl'
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'vertical',
-                                                    margin: 'lg',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Date',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: moment(event.startDate).format('llll'),
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Place',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: event.location.name.ja,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Seats',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Ticket Type',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 1
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: itemOffered.reservedTicket.ticketType.name.ja,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'vertical',
-                                                            margin: 'xxl',
-                                                            contents: [
-                                                                {
-                                                                    type: 'spacer'
-                                                                },
-                                                                {
-                                                                    type: 'image',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
-                                                                    aspectMode: 'cover',
-                                                                    size: 'xl'
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    text: 'You can enter the theater by using this code instead of a ticket',
-                                                                    color: '#aaaaaa',
-                                                                    wrap: true,
-                                                                    margin: 'xxl',
-                                                                    size: 'xs'
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
+                                        ]
                                     }
                                 ]
                             }
                         }
                     ]
                 }
-            }).promise();
+            };
+            await client.replyMessage(params.replyToken, [flex]);
             break;
 
         case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
@@ -2729,215 +2617,206 @@ export async function authorizeOwnershipInfo(params: {
             }
 
             const account = accountOwnershipInfo.typeOfGood;
-            await request.post({
-                simple: false,
-                url: 'https://api.line.me/v2/bot/message/push',
-                auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN },
-                json: true,
-                body: {
-                    to: params.user.userId,
-                    messages: [
+            flex = {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'carousel',
+                    contents: [
                         {
-                            type: 'flex',
-                            altText: 'This is a Flex Message',
-                            contents: {
-                                type: 'carousel',
+                            type: 'bubble',
+                            styles: {
+                                footer: {
+                                    separator: true
+                                }
+                            },
+                            body: {
+                                type: 'box',
+                                layout: 'vertical',
+                                spacing: 'md',
                                 contents: [
                                     {
-                                        type: 'bubble',
-                                        styles: {
-                                            footer: {
-                                                separator: true
+                                        type: 'text',
+                                        text: account.accountNumber,
+                                        wrap: true,
+                                        weight: 'bold',
+                                        gravity: 'center',
+                                        size: 'xl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Name',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: account.name,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Type',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: account.accountType,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Balance',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${account.balance}`,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Available',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${account.availableBalance}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Status',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: account.status,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'OpenDate',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: moment(account.openDate).format('lll'),
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                margin: 'xxl',
+                                                contents: [
+                                                    {
+                                                        type: 'spacer',
+                                                        size: 'md'
+                                                    },
+                                                    {
+                                                        type: 'image',
+                                                        // tslint:disable-next-line:max-line-length
+                                                        url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
+                                                        aspectMode: 'cover',
+                                                        size: 'xl'
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        // tslint:disable-next-line:max-line-length
+                                                        text: 'You can enter the theater by using this code instead of a ticket',
+                                                        color: '#aaaaaa',
+                                                        wrap: true,
+                                                        margin: 'xxl',
+                                                        size: 'xs'
+                                                    }
+                                                ]
                                             }
-                                        },
-                                        body: {
-                                            type: 'box',
-                                            layout: 'vertical',
-                                            spacing: 'md',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: account.accountNumber,
-                                                    wrap: true,
-                                                    weight: 'bold',
-                                                    gravity: 'center',
-                                                    size: 'xl'
-                                                },
-                                                {
-                                                    type: 'box',
-                                                    layout: 'vertical',
-                                                    margin: 'lg',
-                                                    spacing: 'sm',
-                                                    contents: [
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Name',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: account.name,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Type',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: account.accountType,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Balance',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: `${account.balance}`,
-                                                                    wrap: true,
-                                                                    size: 'sm',
-                                                                    color: '#666666',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Available',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: `${account.availableBalance}`,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'Status',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: account.status,
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'baseline',
-                                                            spacing: 'sm',
-                                                            contents: [
-                                                                {
-                                                                    type: 'text',
-                                                                    text: 'OpenDate',
-                                                                    color: '#aaaaaa',
-                                                                    size: 'sm',
-                                                                    flex: 2
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    text: moment(account.openDate).format('lll'),
-                                                                    wrap: true,
-                                                                    color: '#666666',
-                                                                    size: 'sm',
-                                                                    flex: 4
-                                                                }
-                                                            ]
-                                                        },
-                                                        {
-                                                            type: 'box',
-                                                            layout: 'vertical',
-                                                            margin: 'xxl',
-                                                            contents: [
-                                                                {
-                                                                    type: 'spacer'
-                                                                },
-                                                                {
-                                                                    type: 'image',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${code}`,
-                                                                    aspectMode: 'cover',
-                                                                    size: 'xl'
-                                                                },
-                                                                {
-                                                                    type: 'text',
-                                                                    // tslint:disable-next-line:max-line-length
-                                                                    text: 'You can enter the theater by using this code instead of a ticket',
-                                                                    color: '#aaaaaa',
-                                                                    wrap: true,
-                                                                    margin: 'xxl',
-                                                                    size: 'xs'
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
+                                        ]
                                     }
                                 ]
                             }
                         }
                     ]
                 }
-            }).promise();
+            };
+            await client.replyMessage(params.replyToken, [flex]);
             break;
 
         default:

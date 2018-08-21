@@ -116,10 +116,15 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 } else {
                     date = <string>data.date;
                 }
-                await PostbackController.searchEventsByDate(user, date);
+                await PostbackController.searchEventsByDate({
+                    replyToken: event.replyToken,
+                    user: user,
+                    date: date
+                });
                 break;
             case 'askScreeningEvent':
                 await PostbackController.askScreeningEvent({
+                    replyToken: event.replyToken,
                     user: user,
                     screeningEventSeriesId: <string>data.screeningEventSeriesId,
                     date: <string>data.date
@@ -128,6 +133,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 決済コードをたずねる
             case 'askPaymentCode':
                 await PostbackController.askPaymentCode({
+                    replyToken: event.replyToken,
                     user: user,
                     transactionId: <string>data.transactionId
                 });
@@ -135,6 +141,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 決済方法選択
             case 'selectPaymentMethodType':
                 await PostbackController.selectPaymentMethodType({
+                    replyToken: event.replyToken,
                     user: user,
                     paymentMethodType: <PostbackController.PaymentMethodType>data.paymentMethod,
                     transactionId: <string>data.transactionId,
@@ -143,16 +150,28 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 break;
             // 注文確定
             case 'confirmOrder':
-                await PostbackController.confirmOrder(user, <string>data.transactionId);
+                await PostbackController.confirmOrder({
+                    replyToken: event.replyToken,
+                    user: user,
+                    transactionId: <string>data.transactionId
+                });
                 break;
             // 友達決済承認確定
             case 'confirmFriendPay':
-                await PostbackController.confirmFriendPay(user, <string>data.token);
+                await PostbackController.confirmFriendPay({
+                    replyToken: event.replyToken,
+                    user: user,
+                    token: <string>data.token
+                });
                 break;
             // おこづかい承認確定
             case 'confirmTransferMoney':
-                await PostbackController.confirmTransferMoney(
-                    user, <string>data.token, parseInt(<string>data.price, 10));
+                await PostbackController.confirmTransferMoney({
+                    replyToken: event.replyToken,
+                    user: user,
+                    token: <string>data.token,
+                    price: parseInt(<string>data.price, 10)
+                });
                 break;
             // 友達決済承認確定
             // case 'continueTransactionAfterFriendPayConfirmation':
@@ -161,19 +180,31 @@ export async function postback(event: line.PostbackEvent, user: User) {
             //     break;
             // クレジットカード検索
             case 'searchCreditCards':
-                await PostbackController.searchCreditCards(user);
+                await PostbackController.searchCreditCards({
+                    replyToken: event.replyToken,
+                    user: user
+                });
                 break;
             // クレジットカード追加
             case 'addCreditCard':
-                await PostbackController.addCreditCard(user, <string>data.token);
+                await PostbackController.addCreditCard({
+                    replyToken: event.replyToken,
+                    user: user,
+                    token: <string>data.token
+                });
                 break;
             // クレジットカード削除
             case 'deleteCreditCard':
-                await PostbackController.deleteCreditCard(user, <string>data.cardSeq);
+                await PostbackController.deleteCreditCard({
+                    replyToken: event.replyToken,
+                    user: user,
+                    cardSeq: <string>data.cardSeq
+                });
                 break;
             // 口座開設
             case 'openAccount':
                 await PostbackController.openAccount({
+                    replyToken: event.replyToken,
                     user: user,
                     name: <string>data.name,
                     accountType: <any>data.accountType
@@ -182,6 +213,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 口座解約
             case 'closeAccount':
                 await PostbackController.closeAccount({
+                    replyToken: event.replyToken,
                     user: user,
                     accountType: <any>data.accountType,
                     accountNumber: <string>data.accountNumber
@@ -189,10 +221,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 break;
             // コイン口座検索
             case 'searchCoinAccounts':
-                await PostbackController.searchCoinAccounts(user);
+                await PostbackController.searchCoinAccounts({
+                    replyToken: event.replyToken,
+                    user: user
+                });
                 break;
             case 'searchAccountMoneyTransferActions':
                 await PostbackController.searchAccountMoneyTransferActions({
+                    replyToken: event.replyToken,
                     user: user,
                     accountType: <any>data.accountType,
                     accountNumber: <string>data.accountNumber
@@ -201,6 +237,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 口座入金金額選択
             case 'selectDepositAmount':
                 await PostbackController.selectDepositAmount({
+                    replyToken: event.replyToken,
                     user: user,
                     accountType: <any>data.accountType,
                     accountNumber: <string>data.accountNumber
@@ -209,6 +246,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 口座入金金額選択
             case 'depositCoinByCreditCard':
                 await PostbackController.depositCoinByCreditCard({
+                    replyToken: event.replyToken,
                     user: user,
                     amount: Number(<string>data.amount),
                     accountType: <any>data.accountType,
@@ -219,12 +257,16 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await MessageController.askEventStartDate(event.replyToken);
                 break;
             case 'searchScreeningEventReservations':
-                await PostbackController.searchScreeningEventReservations(user);
+                await PostbackController.searchScreeningEventReservations({
+                    replyToken: event.replyToken,
+                    user: user
+                });
                 break;
             // 座席選択
             case 'selectSeatOffers':
                 const seatNumbers = (<string>data.seatNumbers).split(',');
                 await PostbackController.selectSeatOffers({
+                    replyToken: event.replyToken,
                     user: user,
                     eventId: <string>data.eventId,
                     seatNumbers: seatNumbers
@@ -233,6 +275,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 所有権コード発行
             case 'authorizeOwnershipInfo':
                 await PostbackController.authorizeOwnershipInfo({
+                    replyToken: event.replyToken,
                     user: user,
                     goodType: <any>data.goodType,
                     identifier: <string>data.identifier

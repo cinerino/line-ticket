@@ -1,7 +1,4 @@
 "use strict";
-/**
- * LINEモジュール
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -21,18 +18,21 @@ var MessageType;
     MessageType["location"] = "location";
     MessageType["sticker"] = "sticker";
 })(MessageType = exports.MessageType || (exports.MessageType = {}));
-const createDebug = require("debug");
+// export interface IProfile {
+//     displayName: string;
+//     userId: string;
+//     pictureUrl: string;
+//     statusMessage: string;
+// }
+// import * as createDebug from 'debug';
 const request = require("request-promise-native");
-const debug = createDebug('cinerino-line-ticket:*');
+// const debug = createDebug('cinerino-line-ticket:*');
 exports.URL_PUSH_MESSAGE = 'https://api.line.me/v2/bot/message/push';
 /**
  * メッセージ送信
- * @param {string} userId LINEユーザーID
- * @param {string} text メッセージ
  */
 function pushMessage(userId, text) {
     return __awaiter(this, void 0, void 0, function* () {
-        debug('pushing a message...', text);
         // push message
         yield request.post({
             simple: false,
@@ -67,14 +67,11 @@ function getContent(messageId) {
     });
 }
 exports.getContent = getContent;
-function getProfile(userId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return request.get({
-            simple: true,
-            json: true,
-            url: `https://api.line.me/v2/bot/profile/${userId}`,
-            auth: { bearer: process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN }
-        }).promise();
-    });
-}
-exports.getProfile = getProfile;
+// export async function getProfile(userId: string): Promise<IProfile> {
+//     return request.get({
+//         simple: true,
+//         json: true,
+//         url: `https://api.line.me/v2/bot/profile/${userId}`,
+//         auth: { bearer: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN }
+//     }).promise();
+// }
