@@ -13,34 +13,11 @@ import User from '../user';
 
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
-const config = {
-    channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
-    channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
-};
-const client = new line.Client(config);
-// webhookRouter.post(
-//     '/webhook',
-//     (req, res) => {
-//         Promise
-//             .all(req.body.events.map(handleEvent))
-//             .then((result) => res.json(result))
-//             .catch((err) => {
-//                 console.error(err);
-//                 res.status(500).end();
-//             });
-//     });
-
+// const config = {
+//     channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
+//     channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
+// };
 // const client = new line.Client(config);
-// function handleEvent(event: line.WebhookEvent) {
-//     if (event.type !== 'message' || event.message.type !== 'text') {
-//         return Promise.resolve(null);
-//     }
-
-//     return client.replyMessage(event.replyToken, {
-//         type: 'text',
-//         text: event.message.text
-//     });
-// }
 
 webhookRouter.all(
     '/webhook',
@@ -59,14 +36,7 @@ async function handleEvent(event: line.WebhookEvent, user: User) {
     try {
         switch (event.type) {
             case 'message':
-                // await WebhookController.message(event, user);
-                await client.replyMessage(
-                    event.replyToken,
-                    {
-                        type: 'text',
-                        text: 'hello'
-                    }
-                );
+                await WebhookController.message(event, user);
                 break;
 
             case 'postback':
