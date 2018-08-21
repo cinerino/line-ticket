@@ -2804,6 +2804,7 @@ function searchOrders(params) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
         }
         else {
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${orders.length}件の注文が見つかりました` });
             // tslint:disable-next-line:max-func-body-length
             const contents = orders.map((order) => {
                 const event = order.acceptedOffers[0].itemOffered.reservationFor;
