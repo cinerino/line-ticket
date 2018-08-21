@@ -220,7 +220,10 @@ function askScreeningEvent(params) {
         });
         const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
-        yield lineClient_1.default.pushMessage(params.replyToken, { type: 'text', text: `${startFrom}-${startThrough}のイベントを検索しています...` });
+        yield lineClient_1.default.pushMessage(params.replyToken, {
+            type: 'text',
+            text: `${startFrom.toISOString()}-${startThrough.toISOString()}のイベントを検索しています...`
+        });
         let screeningEvents = yield eventService.searchScreeningEvents({
             startFrom: startFrom,
             startThrough: startThrough
