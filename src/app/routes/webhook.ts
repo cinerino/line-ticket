@@ -17,58 +17,56 @@ const config = {
     channelAccessToken: <string>process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN,
     channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
 };
-// const client = new line.Client(config);
-webhookRouter.post(
-    '/webhook',
-    // line.middleware(config),
-    (req, res) => {
-        Promise
-            .all(req.body.events.map(handleEvent))
-            .then((result) => res.json(result))
-            .catch((err) => {
-                console.error(err);
-                // tslint:disable-next-line:no-magic-numbers
-                res.status(500).end();
-            });
-    });
-
 const client = new line.Client(config);
-function handleEvent(event: line.WebhookEvent) {
-    if (event.type !== 'message' || event.message.type !== 'text') {
-        return Promise.resolve(null);
-    }
-
-    return client.replyMessage(event.replyToken, {
-        type: 'text',
-        text: event.message.text
-    });
-}
-
-// webhookRouter.all(
-//     '/',
-//     faceLogin,
-//     authentication,
-//     line.middleware(config),
-//     async (req, res) => {
-//         debug('body:', JSON.stringify(req.body));
-//         await Promise.all(req.body.events.map(async (e: line.WebhookEvent) => {
-//             await handleEvent(e, req.user);
-//         }));
-//         res.status(OK).send('ok');
+// webhookRouter.post(
+//     '/webhook',
+//     (req, res) => {
+//         Promise
+//             .all(req.body.events.map(handleEvent))
+//             .then((result) => res.json(result))
+//             .catch((err) => {
+//                 console.error(err);
+//                 res.status(500).end();
+//             });
 //     });
 
-async function handleEvent2(event: line.WebhookEvent, user: User) {
+// const client = new line.Client(config);
+// function handleEvent(event: line.WebhookEvent) {
+//     if (event.type !== 'message' || event.message.type !== 'text') {
+//         return Promise.resolve(null);
+//     }
+
+//     return client.replyMessage(event.replyToken, {
+//         type: 'text',
+//         text: event.message.text
+//     });
+// }
+
+webhookRouter.all(
+    '/webhook',
+    faceLogin,
+    authentication,
+    // line.middleware(config),
+    async (req, res) => {
+        debug('body:', JSON.stringify(req.body));
+        await Promise.all(req.body.events.map(async (e: line.WebhookEvent) => {
+            await handleEvent(e, req.user);
+        }));
+        res.status(OK).send('ok');
+    });
+
+async function handleEvent(event: line.WebhookEvent, user: User) {
     try {
         switch (event.type) {
             case 'message':
-                await WebhookController.message(event, user);
-                // await client.replyMessage(
-                //     event.replyToken,
-                //     {
-                //         type: 'text',
-                //         text: 'hello'
-                //     }
-                // );
+                // await WebhookController.message(event, user);
+                await client.replyMessage(
+                    event.replyToken,
+                    {
+                        type: 'text',
+                        text: 'hello'
+                    }
+                );
                 break;
 
             case 'postback':
