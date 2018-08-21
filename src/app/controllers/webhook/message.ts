@@ -2,6 +2,7 @@
  * LINE Webhook messageコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import { TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
@@ -14,45 +15,64 @@ const debug = createDebug('cinerino-line-ticket:*');
 /**
  * 使い方を送信する
  */
-export async function pushHowToUse(replyToken: string) {
-    await LINE.replyMessage(replyToken, [
-        {
-            type: 'template',
-            altText: 'How to use',
-            template: {
-                type: 'buttons',
-                title: '何をしますか？',
-                text: '画面下部メニューから操作することもできます',
-                actions: [
-                    {
+export async function pushHowToUse(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const message: TextMessage = {
+        type: 'text',
+        text: 'ご用件はなんでしょう？',
+        quickReply: {
+            items: [
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    action: {
                         type: 'message',
                         label: '座席予約管理',
                         text: '座席予約'
-                    },
-                    {
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'message',
+                        label: '注文管理',
+                        text: '注文'
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    action: {
                         type: 'message',
                         label: 'クレジットカード管理',
                         text: 'クレジットカード'
-                    },
-                    {
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                    action: {
                         type: 'message',
                         label: 'コイン口座管理',
                         text: 'コイン'
-                    },
-                    {
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                    action: {
                         type: 'message',
                         label: 'おこづかいをもらう',
                         text: 'おこづかい'
                     }
-                    // {
-                    //     type: 'message',
-                    //     label: '顔を登録する',
-                    //     text: '顔写真登録'
-                    // }
-                ]
-            }
+                }
+            ]
         }
-    ]);
+    };
+    await LINE.replyMessage(params.replyToken, [message]);
 }
 /**
  * 座席予約メニューを表示する
@@ -76,6 +96,29 @@ export async function showSeatReservationMenu(replyToken: string) {
                         type: 'postback',
                         label: '予約を確認する',
                         data: `action=searchScreeningEventReservations`
+                    }
+                ]
+            }
+        }
+    ]);
+}
+/**
+ * 注文メニューを表示する
+ */
+export async function showOrderMenu(replyToken: string) {
+    await LINE.replyMessage(replyToken, [
+        {
+            type: 'template',
+            altText: '注文メニュー',
+            template: {
+                type: 'buttons',
+                title: '注文',
+                text: 'ご用件はなんでしょう？',
+                actions: [
+                    {
+                        type: 'postback',
+                        label: '注文を確認する',
+                        data: `action=searchOrders`
                     }
                 ]
             }

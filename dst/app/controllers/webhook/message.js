@@ -20,46 +20,62 @@ const debug = createDebug('cinerino-line-ticket:*');
 /**
  * 使い方を送信する
  */
-function pushHowToUse(replyToken) {
+function pushHowToUse(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
-            {
-                type: 'template',
-                altText: 'How to use',
-                template: {
-                    type: 'buttons',
-                    title: '何をしますか？',
-                    text: '画面下部メニューから操作することもできます',
-                    actions: [
-                        {
+        const message = {
+            type: 'text',
+            text: 'ご用件はなんでしょう？',
+            quickReply: {
+                items: [
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                        action: {
                             type: 'message',
                             label: '座席予約管理',
                             text: '座席予約'
-                        },
-                        {
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                        action: {
+                            type: 'message',
+                            label: '注文管理',
+                            text: '注文'
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                        action: {
                             type: 'message',
                             label: 'クレジットカード管理',
                             text: 'クレジットカード'
-                        },
-                        {
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                        action: {
                             type: 'message',
                             label: 'コイン口座管理',
                             text: 'コイン'
-                        },
-                        {
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                        action: {
                             type: 'message',
                             label: 'おこづかいをもらう',
                             text: 'おこづかい'
                         }
-                        // {
-                        //     type: 'message',
-                        //     label: '顔を登録する',
-                        //     text: '顔写真登録'
-                        // }
-                    ]
-                }
+                    }
+                ]
             }
-        ]);
+        };
+        yield lineClient_1.default.replyMessage(params.replyToken, [message]);
     });
 }
 exports.pushHowToUse = pushHowToUse;
@@ -94,6 +110,32 @@ function showSeatReservationMenu(replyToken) {
     });
 }
 exports.showSeatReservationMenu = showSeatReservationMenu;
+/**
+ * 注文メニューを表示する
+ */
+function showOrderMenu(replyToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield lineClient_1.default.replyMessage(replyToken, [
+            {
+                type: 'template',
+                altText: '注文メニュー',
+                template: {
+                    type: 'buttons',
+                    title: '注文',
+                    text: 'ご用件はなんでしょう？',
+                    actions: [
+                        {
+                            type: 'postback',
+                            label: '注文を確認する',
+                            data: `action=searchOrders`
+                        }
+                    ]
+                }
+            }
+        ]);
+    });
+}
+exports.showOrderMenu = showOrderMenu;
 function showCreditCardMenu(replyToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';

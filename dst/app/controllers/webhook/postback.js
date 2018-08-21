@@ -1509,7 +1509,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Name',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1517,7 +1517,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             },
@@ -1531,7 +1531,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Type',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1539,7 +1539,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             },
@@ -1553,7 +1553,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Balance',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1561,7 +1561,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             },
@@ -1575,7 +1575,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Available',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1583,7 +1583,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             },
@@ -1597,7 +1597,7 @@ function searchCoinAccounts(params) {
                                                         text: 'Status',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1605,7 +1605,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             },
@@ -1619,7 +1619,7 @@ function searchCoinAccounts(params) {
                                                         text: 'OpenDate',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
-                                                        flex: 1
+                                                        flex: 2
                                                     },
                                                     {
                                                         type: 'text',
@@ -1627,7 +1627,7 @@ function searchCoinAccounts(params) {
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
-                                                        flex: 4
+                                                        flex: 5
                                                     }
                                                 ]
                                             }
@@ -2785,3 +2785,353 @@ function authorizeOwnershipInfo(params) {
     });
 }
 exports.authorizeOwnershipInfo = authorizeOwnershipInfo;
+/**
+ * 注文を検索する
+ */
+// tslint:disable-next-line:max-func-body-length
+function searchOrders(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const now = new Date();
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文を検索しています...' });
+        const orderRepo = new cinerino.repository.Order(cinerino.mongoose.connection);
+        const username = params.user.authClient.verifyIdToken({}).getUsername();
+        const orders = yield orderRepo.search({
+            customerMembershipNumbers: [username],
+            orderDateFrom: moment(now).add(-1, 'month').toDate(),
+            orderDateThrough: now
+        });
+        if (orders.length === 0) {
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
+        }
+        else {
+            // tslint:disable-next-line:max-func-body-length
+            const contents = orders.map((order) => {
+                const event = order.acceptedOffers[0].itemOffered.reservationFor;
+                return {
+                    type: 'bubble',
+                    styles: {
+                        footer: {
+                            separator: true
+                        }
+                    },
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'RECEIPT',
+                                weight: 'bold',
+                                color: '#1DB446',
+                                size: 'sm'
+                            },
+                            {
+                                type: 'text',
+                                text: order.seller.name,
+                                weight: 'bold',
+                                size: 'xxl',
+                                margin: 'md',
+                                maxLines: 0,
+                                wrap: true
+                            },
+                            {
+                                type: 'text',
+                                text: (order.seller.telephone !== undefined) ? order.seller.telephone : 'Unknown telephone',
+                                size: 'xs',
+                                color: '#aaaaaa',
+                                wrap: true
+                            },
+                            {
+                                type: 'separator',
+                                margin: 'xxl'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'xxl',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'OrderDate',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${moment(order.orderDate).format('llll')}`,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Status',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${order.orderStatus}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'OrderNumber',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${order.orderNumber}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Confirmation',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${order.confirmationNumber}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'separator',
+                                margin: 'xxl'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'xxl',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: event.name.ja,
+                                        wrap: true,
+                                        weight: 'bold',
+                                        gravity: 'center',
+                                        size: 'xl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Date',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${moment(event.startDate).format('llll')}`,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Place',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: `${event.location.name.ja}`,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'separator',
+                                        margin: 'xxl'
+                                    },
+                                    ...order.acceptedOffers.map((orderItem) => {
+                                        const item = orderItem.itemOffered;
+                                        // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                        const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+                                        return {
+                                            type: 'box',
+                                            layout: 'horizontal',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: str,
+                                                    size: 'sm',
+                                                    color: '#555555',
+                                                    flex: 0
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                                    size: 'sm',
+                                                    color: '#111111',
+                                                    align: 'end'
+                                                }
+                                            ]
+                                        };
+                                    }),
+                                    {
+                                        type: 'separator',
+                                        margin: 'xxl'
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        margin: 'xxl',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'ITEMS',
+                                                size: 'sm',
+                                                color: '#555555'
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${order.acceptedOffers.length}`,
+                                                size: 'sm',
+                                                color: '#111111',
+                                                align: 'end'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'horizontal',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'TOTAL',
+                                                size: 'sm',
+                                                color: '#555555'
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `${order.price} ${order.priceCurrency}`,
+                                                size: 'sm',
+                                                color: '#111111',
+                                                align: 'end'
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'separator',
+                                margin: 'xxl'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'horizontal',
+                                margin: 'md',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'PAYMENT ID',
+                                        size: 'xs',
+                                        color: '#aaaaaa',
+                                        flex: 0
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: order.paymentMethods[0].paymentMethodId,
+                                        color: '#aaaaaa',
+                                        size: 'xs',
+                                        align: 'end'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                };
+            });
+            const flex = {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'carousel',
+                    contents: contents
+                }
+            };
+            yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
+        }
+    });
+}
+exports.searchOrders = searchOrders;

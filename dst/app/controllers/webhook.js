@@ -38,6 +38,9 @@ function message(event, user) {
                         case /^座席予約$/.test(messageText):
                             yield MessageController.showSeatReservationMenu(event.replyToken);
                             break;
+                        case /^注文$/.test(messageText):
+                            yield MessageController.showOrderMenu(event.replyToken);
+                            break;
                         case /^クレジットカード$/.test(messageText):
                             yield MessageController.showCreditCardMenu(event.replyToken);
                             break;
@@ -76,7 +79,10 @@ function message(event, user) {
                             break;
                         default:
                             // 予約照会方法をアドバイス
-                            yield MessageController.pushHowToUse(event.replyToken);
+                            yield MessageController.pushHowToUse({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                     }
                     break;
                 case 'image':
@@ -278,6 +284,13 @@ function postback(event, user) {
                         user: user,
                         goodType: data.goodType,
                         identifier: data.identifier
+                    });
+                    break;
+                // 注文検索
+                case 'searchOrders':
+                    yield PostbackController.searchOrders({
+                        replyToken: event.replyToken,
+                        user: user
                     });
                     break;
                 default:

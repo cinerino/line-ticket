@@ -35,6 +35,9 @@ export async function message(event: line.MessageEvent, user: User) {
                     case /^座席予約$/.test(messageText):
                         await MessageController.showSeatReservationMenu(event.replyToken);
                         break;
+                    case /^注文$/.test(messageText):
+                        await MessageController.showOrderMenu(event.replyToken);
+                        break;
                     case /^クレジットカード$/.test(messageText):
                         await MessageController.showCreditCardMenu(event.replyToken);
                         break;
@@ -73,7 +76,10 @@ export async function message(event: line.MessageEvent, user: User) {
                         break;
                     default:
                         // 予約照会方法をアドバイス
-                        await MessageController.pushHowToUse(event.replyToken);
+                        await MessageController.pushHowToUse({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                 }
                 break;
 
@@ -276,6 +282,13 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     user: user,
                     goodType: <any>data.goodType,
                     identifier: <string>data.identifier
+                });
+                break;
+            // 注文検索
+            case 'searchOrders':
+                await PostbackController.searchOrders({
+                    replyToken: event.replyToken,
+                    user: user
                 });
                 break;
             default:
