@@ -28,7 +28,9 @@ const config = {
 const client = new line.Client(config);
 webhookRouter.all('/', faceLogin_1.default, authentication_1.default, line.middleware(config), (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));
-    yield Promise.all(req.body.events.map(handleEvent));
+    yield Promise.all(req.body.events.map((e) => __awaiter(this, void 0, void 0, function* () {
+        yield handleEvent(e);
+    })));
     // .then((result) => res.json(result));
     res.status(http_status_1.OK).send('ok');
 }));

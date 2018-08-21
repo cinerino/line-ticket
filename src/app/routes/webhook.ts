@@ -26,7 +26,9 @@ webhookRouter.all(
     line.middleware(config),
     async (req, res) => {
         debug('body:', JSON.stringify(req.body));
-        await Promise.all(req.body.events.map(handleEvent));
+        await Promise.all(req.body.events.map(async (e: line.WebhookEvent) => {
+            await handleEvent(e);
+        }));
         // .then((result) => res.json(result));
         res.status(OK).send('ok');
     });
