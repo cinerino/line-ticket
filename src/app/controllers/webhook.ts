@@ -106,10 +106,6 @@ export async function message(event: line.MessageEvent, user: User) {
 export async function postback(event: line.PostbackEvent, user: User) {
     const data = querystring.parse(event.postback.data);
     debug('data:', data);
-    await client.pushMessage(user.userId, {
-        type: 'text',
-        text: (event.replyToken !== undefined) ? event.replyToken : 'No reply token'
-    });
     try {
         switch (data.action) {
             // イベント検索

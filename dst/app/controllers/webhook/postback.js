@@ -44,8 +44,9 @@ function searchEventsByDate(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
+        const startFrom = moment(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const screeningEvents = yield eventService.searchScreeningEvents({
-            startFrom: moment(`${params.date}T00:00:00+09:00`).toDate(),
+            startFrom: startFrom,
             startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
@@ -223,6 +224,7 @@ exports.searchEventsByDate = searchEventsByDate;
 /**
  * 上映イベントスケジュールをたずねる
  */
+// tslint:disable-next-line:max-func-body-length
 function askScreeningEvent(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield client.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
@@ -242,6 +244,7 @@ function askScreeningEvent(params) {
             // tslint:disable-next-line:no-magic-numbers
             .slice(0, 10);
         yield client.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
+        // tslint:disable-next-line:max-func-body-length
         const bubbles = screeningEvents.map((event) => {
             const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
             const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
@@ -267,6 +270,50 @@ function askScreeningEvent(params) {
                             margin: 'lg',
                             spacing: 'sm',
                             contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'Start',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: moment(event.startDate).format('MM.DD HH:mm'),
+                                            wrap: true,
+                                            size: 'sm',
+                                            color: '#666666',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'End',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: moment(event.endDate).format('MM.DD HH:mm'),
+                                            wrap: true,
+                                            size: 'sm',
+                                            color: '#666666',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
                                 {
                                     type: 'box',
                                     layout: 'baseline',

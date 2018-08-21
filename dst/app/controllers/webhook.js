@@ -111,10 +111,6 @@ function postback(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = querystring.parse(event.postback.data);
         debug('data:', data);
-        yield client.pushMessage(user.userId, {
-            type: 'text',
-            text: (event.replyToken !== undefined) ? event.replyToken : 'No reply token'
-        });
         try {
             switch (data.action) {
                 // イベント検索
