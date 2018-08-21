@@ -18,16 +18,19 @@ const config = {
     channelSecret: <string>process.env.LINE_BOT_CHANNEL_SECRET
 };
 // const client = new line.Client(config);
-webhookRouter.post('/webhook', line.middleware(config), (req, res) => {
-    Promise
-        .all(req.body.events.map(handleEvent))
-        .then((result) => res.json(result))
-        .catch((err) => {
-            console.error(err);
-            // tslint:disable-next-line:no-magic-numbers
-            res.status(500).end();
-        });
-});
+webhookRouter.post(
+    '/webhook',
+    // line.middleware(config),
+    (req, res) => {
+        Promise
+            .all(req.body.events.map(handleEvent))
+            .then((result) => res.json(result))
+            .catch((err) => {
+                console.error(err);
+                // tslint:disable-next-line:no-magic-numbers
+                res.status(500).end();
+            });
+    });
 
 const client = new line.Client(config);
 function handleEvent(event: line.WebhookEvent) {

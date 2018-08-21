@@ -22,7 +22,9 @@ const config = {
     channelSecret: process.env.LINE_BOT_CHANNEL_SECRET
 };
 // const client = new line.Client(config);
-webhookRouter.post('/webhook', line.middleware(config), (req, res) => {
+webhookRouter.post('/webhook', 
+// line.middleware(config),
+(req, res) => {
     Promise
         .all(req.body.events.map(handleEvent))
         .then((result) => res.json(result))
