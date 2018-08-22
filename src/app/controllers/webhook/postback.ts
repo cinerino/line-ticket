@@ -52,7 +52,6 @@ export async function searchEventsByDate(params: {
 
     // googleで画像検索
     const CX = '006320166286449124373:nm_gjsvlgnm';
-    const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
     const thumbnails: any[] = [];
     await Promise.all(superEvents.map(async (event) => {
         return new Promise((resolve) => {
@@ -60,7 +59,7 @@ export async function searchEventsByDate(params: {
                 {
                     cx: CX,
                     q: event.workPerformed.name,
-                    auth: API_KEY,
+                    auth: <string>process.env.GOOGLE_API_KEY,
                     num: 1,
                     rights: 'cc_publicdomain cc_sharealike',
                     // start: 0,
@@ -1900,7 +1899,6 @@ export async function searchScreeningEventReservations(params: {
         // googleで画像検索
         const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
         const CX = '006320166286449124373:nm_gjsvlgnm';
-        const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
         const thumbnails: any[] = [];
         await Promise.all(events.map(async (event) => {
             return new Promise((resolve) => {
@@ -1908,7 +1906,7 @@ export async function searchScreeningEventReservations(params: {
                     {
                         cx: CX,
                         q: event.workPerformed.name,
-                        auth: API_KEY,
+                        auth: <string>process.env.GOOGLE_API_KEY,
                         num: 1,
                         rights: 'cc_publicdomain cc_sharealike',
                         // start: 0,
@@ -2287,7 +2285,6 @@ export async function authorizeOwnershipInfo(params: {
             // googleで画像検索
             const events = [reservation.typeOfGood.reservationFor];
             const CX = '006320166286449124373:nm_gjsvlgnm';
-            const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
             const thumbnails: any[] = [];
             await Promise.all(events.map(async (e) => {
                 return new Promise((resolve) => {
@@ -2295,7 +2292,7 @@ export async function authorizeOwnershipInfo(params: {
                         {
                             cx: CX,
                             q: e.workPerformed.name,
-                            auth: API_KEY,
+                            auth: <string>process.env.GOOGLE_API_KEY,
                             num: 1,
                             rights: 'cc_publicdomain cc_sharealike',
                             // start: 0,

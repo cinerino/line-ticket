@@ -9,13 +9,12 @@ const customsearch = google.customsearch('v1');
 // You can get a custom search engine id at
 // https://www.google.com/cse/create/new
 const CX = '006320166286449124373:nm_gjsvlgnm';
-const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
 const SEARCH = '美女と野獣';
 
 customsearch.cse.list({
     cx: CX,
     q: SEARCH,
-    auth: API_KEY,
+    auth: process.env.GOOGLE_API_KEY,
     num: 3,
     // start: 0,
     imgSize: 'medium',

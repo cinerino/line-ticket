@@ -53,14 +53,13 @@ function searchEventsByDate(params) {
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
         // googleで画像検索
         const CX = '006320166286449124373:nm_gjsvlgnm';
-        const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
         const thumbnails = [];
         yield Promise.all(superEvents.map((event) => __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
                 customsearch.cse.list({
                     cx: CX,
                     q: event.workPerformed.name,
-                    auth: API_KEY,
+                    auth: process.env.GOOGLE_API_KEY,
                     num: 1,
                     rights: 'cc_publicdomain cc_sharealike',
                     // start: 0,
@@ -1851,14 +1850,13 @@ function searchScreeningEventReservations(params) {
             // googleで画像検索
             const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
             const CX = '006320166286449124373:nm_gjsvlgnm';
-            const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
             const thumbnails = [];
             yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
                 return new Promise((resolve) => {
                     customsearch.cse.list({
                         cx: CX,
                         q: event.workPerformed.name,
-                        auth: API_KEY,
+                        auth: process.env.GOOGLE_API_KEY,
                         num: 1,
                         rights: 'cc_publicdomain cc_sharealike',
                         // start: 0,
@@ -2219,14 +2217,13 @@ function authorizeOwnershipInfo(params) {
                 // googleで画像検索
                 const events = [reservation.typeOfGood.reservationFor];
                 const CX = '006320166286449124373:nm_gjsvlgnm';
-                const API_KEY = 'AIzaSyBP1n1HhsS4_KFADZMcBCFOqqSmIgOHAYI';
                 const thumbnails = [];
                 yield Promise.all(events.map((e) => __awaiter(this, void 0, void 0, function* () {
                     return new Promise((resolve) => {
                         customsearch.cse.list({
                             cx: CX,
                             q: e.workPerformed.name,
-                            auth: API_KEY,
+                            auth: process.env.GOOGLE_API_KEY,
                             num: 1,
                             rights: 'cc_publicdomain cc_sharealike',
                             // start: 0,
