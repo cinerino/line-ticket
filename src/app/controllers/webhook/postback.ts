@@ -272,27 +272,27 @@ export async function askScreeningEvent(params: {
                             {
                                 type: 'icon',
                                 size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
                             },
                             {
                                 type: 'icon',
                                 size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
                             },
                             {
                                 type: 'icon',
                                 size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
                             },
                             {
                                 type: 'icon',
                                 size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
                             },
                             {
                                 type: 'icon',
                                 size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                                url: `https://${params.user.host}/img/labels/theatre-seat-grey-80.png`
                             },
                             {
                                 type: 'text',
