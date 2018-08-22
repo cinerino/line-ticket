@@ -47,6 +47,9 @@ function message(event, user) {
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu(event.replyToken, user);
                             break;
+                        case /^コード$/.test(messageText):
+                            yield MessageController.showCodeMenu(event.replyToken, user);
+                            break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
                             yield MessageController.startIndexingFace(event.replyToken);
@@ -294,6 +297,14 @@ function postback(event, user) {
                     yield PostbackController.searchOrders({
                         replyToken: event.replyToken,
                         user: user
+                    });
+                    break;
+                // 座席予約コード読み込み
+                case 'findScreeningEventReservationById':
+                    yield PostbackController.findScreeningEventReservationById({
+                        replyToken: event.replyToken,
+                        user: user,
+                        code: data.code
                     });
                     break;
                 default:

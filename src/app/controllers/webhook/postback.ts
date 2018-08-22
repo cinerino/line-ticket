@@ -2999,5 +2999,24 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
             ]
         }
     };
-
+}
+/**
+ * 座席予約コード読み込み
+ */
+export async function findScreeningEventReservationById(params: {
+    replyToken: string;
+    user: User;
+    code: string;
+}) {
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
+    const reservationService = new cinerinoapi.service.Reservation({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: params.code });
+    const message: TextMessage = {
+        type: 'text',
+        text: `resevationId:${ownershipInfo.typeOfGood.id}`
+    };
+    await LINE.pushMessage(params.user.userId, [message]);
 }

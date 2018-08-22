@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
+    <title>Cinerino LIFF App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
+    <script type="text/javascript" src="/js/llqrcode.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <input type="hidden" name="transactionId" value="<%= transactionId %>">
+        <div class="form-group">
+            <!-- <canvas id="out-canvas" width="120" height="120"></canvas> -->
+            <input class="form-control" type="file" onchange="handleFiles(this.files)" name="upfile" id="upfile" accept="image/*" capture="environment"
+            />
+            <!-- <input class="form-control" type="file"> -->
+        </div>
+        <div id="result"></div>
+    </div>
+    </div>
+    <script>
+        liff.init(
+            data => {
+                // Now you can call LIFF API
+                const userId = data.context.userId;
+                liff.getProfile()
+                    .then(profile => {
+                        const name = profile.displayName
+                    })
+                    .catch((err) => {
+                        console.log('error', err);
+                    });
+            },
+            err => {
+                // LIFF initialization failed
+            }
+        );
+
+        // QRCODE reader Copyright 2011 Lazar Laszlo
+        // http://www.webqr.com
+        function handleFiles(f) {
+            for (var i = 0; i < f.length; i++) {
+                var reader = new FileReader();
+                reader.onload = (function (theFile) {
+                    return function (e) {
+                        qrcode.decode(e.target.result);
+                    };
+                })(f[i]);
+                reader.readAsDataURL(f[i]);
+            }
+        }
+        function htmlEntities(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function read(a) {
+            console.log('result is', a);
+            var html = htmlEntities(a);
+            $('#result').html(html);
+
+            if (!/^error /i.test(a)) {
+                // LINE送信
+                var message = 'postback:'
+                    + 'action=findScreeningEventReservationById'
+                    + '&code=' + a;
+                console.log('sending message...', message);
+                liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: message
+                    }
+                ])
+                    .then(() => {
+                        console.log('message sent');
+                        liff.closeWindow();
+                    })
+                    .catch((err) => {
+                        console.log('error', err);
+                    });
+            }
+        }
+        function isCanvasSupported() {
+            var elem = document.createElement('canvas');
+            return !!(elem.getContext && elem.getContext('2d'));
+        }
+        function load() {
+            if (isCanvasSupported() && window.File && window.FileReader) {
+                qrcode.callback = read;
+                $('#upfile').click();
+            } else {
+                var html = '<p id="mp1">QR code scanner for HTML5 capable browsers</p><br>' +
+                    '<br><p id="mp2">sorry your browser is not supported</p><br><br>' +
+                    '<p id="mp1">try <a href="http://www.mozilla.com/firefox"><img src="firefox.png"/></a> or <a href="http://chrome.google.com"><img src="chrome_logo.gif"/></a> or <a href="http://www.opera.com"><img src="Opera-logo.png"/></a></p>';
+                $('.container').html(html);
+            }
+        }
+
+        load();
+    </script>
+
+</html>

@@ -29,7 +29,7 @@ function pushHowToUse(params) {
                 items: [
                     {
                         type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                        imageUrl: `https://${params.user.host}/img/labels/movie-ticket-80.png`,
                         action: {
                             type: 'message',
                             label: '座席予約管理',
@@ -38,7 +38,7 @@ function pushHowToUse(params) {
                     },
                     {
                         type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                        imageUrl: `https://${params.user.host}/img/labels/order-80.png`,
                         action: {
                             type: 'message',
                             label: '注文管理',
@@ -61,6 +61,15 @@ function pushHowToUse(params) {
                             type: 'message',
                             label: 'コイン口座管理',
                             text: 'コイン'
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                        action: {
+                            type: 'message',
+                            label: 'コード管理',
+                            text: 'コード'
                         }
                     },
                     {
@@ -195,6 +204,31 @@ function showCoinAccountMenu(replyToken, user) {
     });
 }
 exports.showCoinAccountMenu = showCoinAccountMenu;
+function showCodeMenu(replyToken, _) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const scanQRUri = '/reservations/scanScreeningEventReservationCode';
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+        yield lineClient_1.default.replyMessage(replyToken, [
+            {
+                type: 'template',
+                altText: 'コード管理',
+                template: {
+                    type: 'buttons',
+                    title: 'コード管理',
+                    text: 'ご用件はなんでしょう？',
+                    actions: [
+                        {
+                            type: 'uri',
+                            label: '座席予約チケット読み込み',
+                            uri: liffUri
+                        }
+                    ]
+                }
+            }
+        ]);
+    });
+}
+exports.showCodeMenu = showCodeMenu;
 /**
  * 顔写真登録を開始する
  */

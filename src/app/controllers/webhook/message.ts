@@ -26,7 +26,7 @@ export async function pushHowToUse(params: {
             items: [
                 {
                     type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    imageUrl: `https://${params.user.host}/img/labels/movie-ticket-80.png`,
                     action: {
                         type: 'message',
                         label: '座席予約管理',
@@ -35,7 +35,7 @@ export async function pushHowToUse(params: {
                 },
                 {
                     type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                    imageUrl: `https://${params.user.host}/img/labels/order-80.png`,
                     action: {
                         type: 'message',
                         label: '注文管理',
@@ -58,6 +58,15 @@ export async function pushHowToUse(params: {
                         type: 'message',
                         label: 'コイン口座管理',
                         text: 'コイン'
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                    action: {
+                        type: 'message',
+                        label: 'コード管理',
+                        text: 'コード'
                     }
                 },
                 {
@@ -172,6 +181,28 @@ export async function showCoinAccountMenu(replyToken: string, user: User) {
                         type: 'postback',
                         label: '口座検索',
                         data: 'action=searchCoinAccounts'
+                    }
+                ]
+            }
+        }
+    ]);
+}
+export async function showCodeMenu(replyToken: string, _: User) {
+    const scanQRUri = '/reservations/scanScreeningEventReservationCode';
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+    await LINE.replyMessage(replyToken, [
+        {
+            type: 'template',
+            altText: 'コード管理',
+            template: {
+                type: 'buttons',
+                title: 'コード管理',
+                text: 'ご用件はなんでしょう？',
+                actions: [
+                    {
+                        type: 'uri',
+                        label: '座席予約チケット読み込み',
+                        uri: liffUri
                     }
                 ]
             }

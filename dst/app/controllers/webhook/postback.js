@@ -2924,3 +2924,19 @@ function order2bubble(order) {
         }
     };
 }
+function findScreeningEventReservationById(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
+        const reservationService = new cinerinoapi.service.Reservation({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const ownershipInfo = yield reservationService.findScreeningEventReservationByToken({ token: params.code });
+        const message = {
+            type: 'text',
+            text: `resevationId:${ownershipInfo.typeOfGood.id}`
+        };
+        yield lineClient_1.default.pushMessage(params.user.userId, [message]);
+    });
+}
+exports.findScreeningEventReservationById = findScreeningEventReservationById;

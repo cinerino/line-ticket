@@ -44,6 +44,9 @@ export async function message(event: line.MessageEvent, user: User) {
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu(event.replyToken, user);
                         break;
+                    case /^コード$/.test(messageText):
+                        await MessageController.showCodeMenu(event.replyToken, user);
+                        break;
                     // 顔写真登録
                     case /^顔写真登録$/.test(messageText):
                         await MessageController.startIndexingFace(event.replyToken);
@@ -292,6 +295,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.searchOrders({
                     replyToken: event.replyToken,
                     user: user
+                });
+                break;
+            // 座席予約コード読み込み
+            case 'findScreeningEventReservationById':
+                await PostbackController.findScreeningEventReservationById({
+                    replyToken: event.replyToken,
+                    user: user,
+                    code: <string>data.code
                 });
                 break;
             default:
