@@ -275,7 +275,7 @@ export async function askScreeningEvent(params: {
                                 return {
                                     type: 'icon',
                                     size: 'sm',
-                                    url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
+                                    url: `https://${params.user.host}/img/labels/theater-seat-blue-80.png`
                                 };
                             }),
                             // tslint:disable-next-line:no-magic-numbers
@@ -283,7 +283,7 @@ export async function askScreeningEvent(params: {
                                 return {
                                     type: 'icon',
                                     size: 'sm',
-                                    url: `https://${params.user.host}/img/labels/theatre-seat-grey-80.png`
+                                    url: `https://${params.user.host}/img/labels/theater-seat-grey-80.png`
                                 };
                             }),
                             {
