@@ -361,51 +361,70 @@ export async function askReservationEventDate(replyToken: string, paymentNo: str
 /**
  * 日付選択を求める
  */
-export async function askEventStartDate(replyToken: string) {
-    await LINE.replyMessage(replyToken, [
-        {
-            type: 'text', // ①
-            text: '上映日を選択してください',
-            quickReply: { // ②
-                items: [
-                    {
-                        type: 'action', // ③
-                        // imageUrl: `https://${user.host}/img/labels/coin-64.png`,
-                        action: {
-                            type: 'postback',
-                            label: '今日',
-                            data: querystring.stringify({
-                                action: 'searchEventsByDate',
-                                date: moment().add(0, 'days').format('YYYY-MM-DD')
-                            })
-                        }
-                    },
-                    {
-                        type: 'action', // ③
-                        // imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
-                        action: {
-                            type: 'postback',
-                            label: '明日',
-                            data: querystring.stringify({
-                                action: 'searchEventsByDate',
-                                date: moment().add(1, 'days').format('YYYY-MM-DD')
-                            })
-                        }
+export async function askEventStartDate(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const message: TextMessage = {
+        type: 'text', // ①
+        text: 'いつ見ますか？',
+        quickReply: { // ②
+            items: [
+                {
+                    type: 'action',
+                    // imageUrl: `https://${user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '今日',
+                        data: querystring.stringify({
+                            action: 'searchEventsByDate',
+                            date: moment().add(0, 'days').format('YYYY-MM-DD')
+                        })
                     }
-                    // {
-                    //     type: 'datetimepicker',
-                    //     label: '日付選択',
-                    //     mode: 'date',
-                    //     data: 'action=searchEventsByDate',
-                    //     initial: moment().add(1, 'days').format('YYYY-MM-DD'),
-                    //     // tslint:disable-next-line:no-magic-numbers
-                    //     max: moment().add(2, 'days').format('YYYY-MM-DD'),
-                    //     min: moment().add(1, 'days').format('YYYY-MM-DD')
-                    // }
-                ]
-            }
+                },
+                {
+                    type: 'action',
+                    // imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '明日',
+                        data: querystring.stringify({
+                            action: 'searchEventsByDate',
+                            date: moment().add(1, 'days').format('YYYY-MM-DD')
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    // imageUrl: `https://${user.host}/img/labels/friend-pay-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '明後日',
+                        data: querystring.stringify({
+                            action: 'searchEventsByDate',
+                            // tslint:disable-next-line:no-magic-numbers
+                            date: moment().add(2, 'days').format('YYYY-MM-DD')
+                        })
+                    }
+                },
+                {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/calender-48.png`,
+                    action: {
+                        type: 'datetimepicker',
+                        label: '選ぶ',
+                        mode: 'date',
+                        data: 'action=searchEventsByDate',
+                        initial: moment().add(1, 'days').format('YYYY-MM-DD'),
+                        // tslint:disable-next-line:no-magic-numbers
+                        max: moment().add(7, 'days').format('YYYY-MM-DD'),
+                        min: moment().add(1, 'days').format('YYYY-MM-DD')
+                    }
+                }
+            ]
         }
-    ]);
+    };
+    await LINE.replyMessage(params.replyToken, [message]);
 }
 /**
  * 日付選択を求める

@@ -259,7 +259,10 @@ function postback(event, user) {
                     });
                     break;
                 case 'askEventStartDate':
-                    yield MessageController.askEventStartDate(event.replyToken);
+                    yield MessageController.askEventStartDate({
+                        replyToken: event.replyToken,
+                        user: user
+                    });
                     break;
                 case 'searchScreeningEventReservations':
                     yield PostbackController.searchScreeningEventReservations({

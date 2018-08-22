@@ -257,7 +257,10 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 });
                 break;
             case 'askEventStartDate':
-                await MessageController.askEventStartDate(event.replyToken);
+                await MessageController.askEventStartDate({
+                    replyToken: event.replyToken,
+                    user: user
+                });
                 break;
             case 'searchScreeningEventReservations':
                 await PostbackController.searchScreeningEventReservations({
