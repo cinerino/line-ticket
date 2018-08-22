@@ -2924,6 +2924,9 @@ function order2bubble(order) {
         }
     };
 }
+/**
+ * 座席予約コード読み込み
+ */
 function findScreeningEventReservationById(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
