@@ -10,8 +10,8 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/api-nodejs-client": "^1.0.0-alpha.4",
-    "@cinerino/domain": "^1.0.0-alpha.5",
+    "@cinerino/api-nodejs-client": "^1.0.0-alpha.5",
+    "@cinerino/domain": "^1.0.0-alpha.6",
     "@line/bot-sdk": "^6.2.1",
     "@motionpicture/express-middleware": "^0.1.0",
     "aws-sdk": "^2.297.0",
@@ -19,7 +19,6 @@
     "debug": "^3.1.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
-    "googleapis": "^26.0.1",
     "http-status": "^1.1.2",
     "ioredis": "^3.2.2",
     "jsonwebtoken": "^8.2.2",

@@ -14,12 +14,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const cinerino = require("@cinerino/domain");
 const createDebug = require("debug");
-const googleapis_1 = require("googleapis");
 const moment = require("moment");
 const querystring = require("querystring");
 const lineClient_1 = require("../../../lineClient");
 const debug = createDebug('cinerino-line-ticket:*');
-const customsearch = googleapis_1.google.customsearch('v1');
 const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
     domain: process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.PECORINO_CLIENT_ID,
@@ -51,36 +49,6 @@ function searchEventsByDate(params) {
         // tslint:disable-next-line:no-magic-numbers
         superEvents = superEvents.slice(0, 10);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
-        // googleで画像検索
-        const CX = '006320166286449124373:nm_gjsvlgnm';
-        const thumbnails = [];
-        yield Promise.all(superEvents.map((event) => __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => {
-                customsearch.cse.list({
-                    cx: CX,
-                    q: event.workPerformed.name,
-                    auth: process.env.GOOGLE_API_KEY,
-                    num: 1,
-                    rights: 'cc_publicdomain cc_sharealike',
-                    // start: 0,
-                    // imgSize: 'small',
-                    searchType: 'image'
-                }, (err, res) => {
-                    if (!(err instanceof Error)) {
-                        if (Array.isArray(res.data.items) && res.data.items.length > 0) {
-                            debug(res.data.items[0]);
-                            thumbnails.push({
-                                eventId: event.id,
-                                link: res.data.items[0].link,
-                                thumbnailLink: res.data.items[0].image.thumbnailLink
-                            });
-                        }
-                    }
-                    resolve();
-                });
-            });
-        })));
-        debug(thumbnails);
         // const accessToken = await params.user.authClient.getAccessToken();
         const flex = {
             type: 'flex',
@@ -90,11 +58,8 @@ function searchEventsByDate(params) {
                 contents: [
                     // tslint:disable-next-line:max-func-body-length no-magic-numbers
                     ...superEvents.slice(0, 10).map((event) => {
-                        // const itemOffered = ownershipInfo.typeOfGood;
-                        // const event = itemOffered.reservationFor;
-                        const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                        const thumbnailImageUrl = (thumbnail !== undefined)
-                            ? thumbnail.thumbnailLink
+                        const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+                            ? event.workPerformed.thumbnailUrl
                             // tslint:disable-next-line:max-line-length
                             : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
                         return {
@@ -1847,37 +1812,6 @@ function searchScreeningEventReservations(params) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
         }
         else {
-            // googleで画像検索
-            const events = ownershipInfos.map((o) => o.typeOfGood.reservationFor);
-            const CX = '006320166286449124373:nm_gjsvlgnm';
-            const thumbnails = [];
-            yield Promise.all(events.map((event) => __awaiter(this, void 0, void 0, function* () {
-                return new Promise((resolve) => {
-                    customsearch.cse.list({
-                        cx: CX,
-                        q: event.workPerformed.name,
-                        auth: process.env.GOOGLE_API_KEY,
-                        num: 1,
-                        rights: 'cc_publicdomain cc_sharealike',
-                        // start: 0,
-                        // imgSize: 'small',
-                        searchType: 'image'
-                    }, (err, res) => {
-                        if (!(err instanceof Error)) {
-                            if (Array.isArray(res.data.items) && res.data.items.length > 0) {
-                                debug(res.data.items[0]);
-                                thumbnails.push({
-                                    eventId: event.id,
-                                    link: res.data.items[0].link,
-                                    thumbnailLink: res.data.items[0].image.thumbnailLink
-                                });
-                            }
-                        }
-                        resolve();
-                    });
-                });
-            })));
-            debug(thumbnails);
             const flex = {
                 type: 'flex',
                 altText: 'This is a Flex Message',
@@ -1893,9 +1827,8 @@ function searchScreeningEventReservations(params) {
                             .map((ownershipInfo) => {
                             const itemOffered = ownershipInfo.typeOfGood;
                             const event = itemOffered.reservationFor;
-                            const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                            const thumbnailImageUrl = (thumbnail !== undefined)
-                                ? thumbnail.thumbnailLink
+                            const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+                                ? event.workPerformed.thumbnailUrl
                                 // tslint:disable-next-line:max-line-length
                                 : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
                             return {
@@ -2214,42 +2147,10 @@ function authorizeOwnershipInfo(params) {
                 if (reservation === undefined) {
                     throw new Error('Reservation not found');
                 }
-                // googleで画像検索
-                const events = [reservation.typeOfGood.reservationFor];
-                const CX = '006320166286449124373:nm_gjsvlgnm';
-                const thumbnails = [];
-                yield Promise.all(events.map((e) => __awaiter(this, void 0, void 0, function* () {
-                    return new Promise((resolve) => {
-                        customsearch.cse.list({
-                            cx: CX,
-                            q: e.workPerformed.name,
-                            auth: process.env.GOOGLE_API_KEY,
-                            num: 1,
-                            rights: 'cc_publicdomain cc_sharealike',
-                            // start: 0,
-                            // imgSize: 'small',
-                            searchType: 'image'
-                        }, (err, res) => {
-                            if (!(err instanceof Error)) {
-                                if (Array.isArray(res.data.items) && res.data.items.length > 0) {
-                                    debug(res.data.items[0]);
-                                    thumbnails.push({
-                                        eventId: e.id,
-                                        link: res.data.items[0].link,
-                                        thumbnailLink: res.data.items[0].image.thumbnailLink
-                                    });
-                                }
-                            }
-                            resolve();
-                        });
-                    });
-                })));
-                debug(thumbnails);
                 const itemOffered = reservation.typeOfGood;
                 const event = itemOffered.reservationFor;
-                const thumbnail = thumbnails.find((t) => t.eventId === event.id);
-                const thumbnailImageUrl = (thumbnail !== undefined)
-                    ? thumbnail.thumbnailLink
+                const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+                    ? event.workPerformed.thumbnailUrl
                     // tslint:disable-next-line:max-line-length
                     : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
                 flex = {

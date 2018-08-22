@@ -39,7 +39,6 @@
 | `LINE_BOT_CHANNEL_ACCESS_TOKEN`    | true     |                        |                                 |
 | `LINE_BOT_CHANNEL_SECRET`          | true     |                        |                                 |
 | `LIFF_ID`                          | true     |                        |                                 |
-| `GOOGLE_API_KEY`                   | true     |                        |                                 |
 
 ## Code Samples
 
