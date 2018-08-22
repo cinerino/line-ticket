@@ -139,14 +139,36 @@ function searchEventsByDate(params) {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Date',
+                                                        text: 'Place',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: moment(event.startDate).format('lll'),
+                                                        text: event.location.name.ja,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'VideoFormat',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: (event.videoFormat !== undefined) ? event.videoFormat : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -161,17 +183,19 @@ function searchEventsByDate(params) {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Place',
+                                                        text: 'Duration',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: event.location.name.ja,
+                                                        text: (event.duration !== undefined)
+                                                            ? moment.duration(event.duration).toIsoString()
+                                                            : '---',
                                                         wrap: true,
-                                                        color: '#666666',
                                                         size: 'sm',
+                                                        color: '#666666',
                                                         flex: 4
                                                     }
                                                 ]
