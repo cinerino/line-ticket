@@ -248,6 +248,8 @@ export async function askScreeningEvent(params: {
             // tslint:disable-next-line:no-magic-numbers
             availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
         }
+        // tslint:disable-next-line:no-magic-numbers
+        const availabilityScore = Math.floor(availability / 20);
 
         return {
             type: 'bubble',
@@ -269,31 +271,21 @@ export async function askScreeningEvent(params: {
                         layout: 'baseline',
                         margin: 'md',
                         contents: [
-                            {
-                                type: 'icon',
-                                size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
-                            },
-                            {
-                                type: 'icon',
-                                size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
-                            },
-                            {
-                                type: 'icon',
-                                size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
-                            },
-                            {
-                                type: 'icon',
-                                size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
-                            },
-                            {
-                                type: 'icon',
-                                size: 'sm',
-                                url: `https://${params.user.host}/img/labels/theatre-seat-grey-80.png`
-                            },
+                            ...[...Array(availabilityScore)].map(() => {
+                                return {
+                                    type: 'icon',
+                                    size: 'sm',
+                                    url: `https://${params.user.host}/img/labels/theatre-seat-blue-80.png`
+                                };
+                            }),
+                            // tslint:disable-next-line:no-magic-numbers
+                            ...[...Array(5 - availabilityScore)].map(() => {
+                                return {
+                                    type: 'icon',
+                                    size: 'sm',
+                                    url: `https://${params.user.host}/img/labels/theatre-seat-grey-80.png`
+                                };
+                            }),
                             {
                                 type: 'text',
                                 text: `${availability}%`,
