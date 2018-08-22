@@ -243,6 +243,11 @@ export async function askScreeningEvent(params: {
         const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
         const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
+        let availability = 100;
+        if (event.maximumAttendeeCapacity !== undefined && event.remainingAttendeeCapacity !== undefined) {
+            // tslint:disable-next-line:no-magic-numbers
+            availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
+        }
 
         return {
             type: 'bubble',
@@ -261,54 +266,50 @@ export async function askScreeningEvent(params: {
                     },
                     {
                         type: 'box',
+                        layout: 'baseline',
+                        margin: 'md',
+                        contents: [
+                            {
+                                type: 'icon',
+                                size: 'sm',
+                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                            },
+                            {
+                                type: 'icon',
+                                size: 'sm',
+                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                            },
+                            {
+                                type: 'icon',
+                                size: 'sm',
+                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                            },
+                            {
+                                type: 'icon',
+                                size: 'sm',
+                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                            },
+                            {
+                                type: 'icon',
+                                size: 'sm',
+                                url: `https://${params.user.host}/img/labels/theatre-seat-80.png`
+                            },
+                            {
+                                type: 'text',
+                                text: `${availability}%`,
+                                size: 'sm',
+                                color: '#999999',
+                                margin: 'md',
+                                flex: 0
+                            }
+                        ]
+                    },
+                    {
+                        type: 'box',
                         layout: 'vertical',
                         margin: 'lg',
                         spacing: 'sm',
                         contents: [
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: 'Start',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: moment(event.startDate).format('MM.DD HH:mm'),
-                                        wrap: true,
-                                        size: 'sm',
-                                        color: '#666666',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: 'End',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: moment(event.endDate).format('MM.DD HH:mm'),
-                                        wrap: true,
-                                        size: 'sm',
-                                        color: '#666666',
-                                        flex: 4
-                                    }
-                                ]
-                            },
                             {
                                 type: 'box',
                                 layout: 'baseline',
@@ -330,12 +331,56 @@ export async function askScreeningEvent(params: {
                                         flex: 4
                                     }
                                 ]
+                            },
+                            {
+                                type: 'box',
+                                layout: 'baseline',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'Date',
+                                        color: '#aaaaaa',
+                                        size: 'sm',
+                                        flex: 1
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: moment(event.startDate).format('YYYY-MM-DD'),
+                                        wrap: true,
+                                        size: 'sm',
+                                        color: '#666666',
+                                        flex: 4
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'box',
+                                layout: 'baseline',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: 'Time',
+                                        color: '#aaaaaa',
+                                        size: 'sm',
+                                        flex: 1
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: `${moment(event.startDate).format('HH:mm')} - ${moment(event.endDate).format('HH:mm')}`,
+                                        wrap: true,
+                                        size: 'sm',
+                                        color: '#666666',
+                                        flex: 4
+                                    }
+                                ]
                             }
                         ]
                     }
                 ]
             },
-            footer: <any>{
+            footer: {
                 type: 'box',
                 layout: 'horizontal',
                 contents: [
@@ -343,7 +388,7 @@ export async function askScreeningEvent(params: {
                         type: 'button',
                         action: {
                             type: 'uri',
-                            label: '座席選択',
+                            label: '座席を選ぶ',
                             uri: liffUri
                         }
                     }
