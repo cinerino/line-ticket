@@ -3009,14 +3009,23 @@ export async function findScreeningEventReservationById(params: {
     code: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
+    const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
     const reservationService = new cinerinoapi.service.Reservation({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: params.code });
-    const message: TextMessage = {
-        type: 'text',
-        text: `resevationId:${ownershipInfo.typeOfGood.id}`
-    };
-    await LINE.pushMessage(params.user.userId, [message]);
+    try {
+        const { token } = await ownershipInfoService.getToken({ code: params.code });
+        const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
+        const message: TextMessage = {
+            type: 'text',
+            text: `resevationId:${ownershipInfo.typeOfGood.id}`
+        };
+        await LINE.pushMessage(params.user.userId, [message]);
+    } catch (error) {
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `Invalid code ${error.message}` });
+    }
 }
