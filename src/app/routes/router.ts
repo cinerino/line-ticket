@@ -8,6 +8,7 @@ import authRouter from './auth';
 import liffRouter from './liff';
 import reservationsRouter from './reservations';
 import transactionsRouter from './transactions';
+import webhookRouter from './webhook';
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use('/accounts', accountsRouter);
 router.use('/liff', liffRouter);
 router.use('/reservations', reservationsRouter);
 router.use('/transactions', transactionsRouter);
+router.use('/webhook', webhookRouter);
 
 export default router;

@@ -12,30 +12,5 @@ declare global {
         export interface Request {
             user: User;
         }
-
-        interface ITransactionInProgress {
-            /**
-             * 取引ID
-             */
-            id: string;
-        }
-
-        interface ITransactionGMO {
-            orderId: string;
-            amount: number;
-            count: number;
-        }
-
-        // tslint:disable-next-line:interface-name
-        export interface Session {
-            /**
-             * 進行中の取引
-             */
-            transactionInProgress?: ITransactionInProgress;
-            /**
-             * 成立した取引結果
-             */
-            transactionResult?: cinerinoapi.factory.transaction.placeOrder.IResult;
-        }
     }
 }

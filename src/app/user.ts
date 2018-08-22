@@ -242,16 +242,29 @@ export default class User {
         await redisClient.del(`line-ticket.credentials.${this.userId}`);
     }
 
-    public async findTransaction() {
-        return redisClient.get(`transaction.${this.userId}`).then((value) => {
+    public async findTransaction(): Promise<cinerinoapi.factory.transaction.placeOrder.ITransaction> {
+        return redisClient.get(`line-ticket:transaction:${this.userId}`).then((value) => {
             return (value !== null) ? JSON.parse(value) : null;
         });
     }
-
     public async saveTransaction(transaction: cinerinoapi.factory.transaction.placeOrder.ITransaction) {
         await redisClient.multi()
-            .set(`transaction.${this.userId}`, JSON.stringify(transaction))
-            .expire(`transaction.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:transaction:${this.userId}`, JSON.stringify(transaction))
+            .expire(`line-ticket:transaction:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .exec();
+    }
+    public async findSeatReservationAuthorization(
+    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction> {
+        return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`).then((value) => {
+            return (value !== null) ? JSON.parse(value) : null;
+        });
+    }
+    public async saveSeatReservationAuthorization(
+        authorization: cinerinoapi.factory.action.authorize.offer.seatReservation.IAction
+    ) {
+        await redisClient.multi()
+            .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
+            .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
 

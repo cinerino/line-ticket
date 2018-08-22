@@ -1,17 +1,12 @@
 /**
  * Expressアプリケーション
  */
-import * as cinerino from '@cinerino/domain';
 import * as bodyParser from 'body-parser';
-import * as createDebug from 'debug';
 import * as express from 'express';
 
 import errorHandler from './middlewares/errorHandler';
 import notFoundHandler from './middlewares/notFoundHandler';
 
-import mongooseConnectionOptions from '../mongooseConnectionOptions';
-
-const debug = createDebug('cinerino-line-ticket:*');
 const app = express();
 
 // view engine setup
@@ -26,16 +21,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // 静的ファイル
 app.use(express.static(`${__dirname}/../../public`));
 
-// MongoDB接続
-cinerino.mongoose.connect(<string>process.env.MONGOLAB_URI, mongooseConnectionOptions)
-    .then(() => { debug('MongoDB connected!'); })
-    .catch(console.error);
-
 // routers
 import router from './routes/router';
-import webhookRouter from './routes/webhook';
 app.use(router);
-app.use(webhookRouter);
 
 // 404
 app.use(notFoundHandler);

@@ -16,7 +16,7 @@ const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
 
 webhookRouter.post(
-    '/webhook',
+    '',
     faceLogin,
     authentication,
     // line.middleware(config),

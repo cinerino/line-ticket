@@ -17,7 +17,7 @@ const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:*');
-webhookRouter.post('/webhook', faceLogin_1.default, authentication_1.default, 
+webhookRouter.post('', faceLogin_1.default, authentication_1.default, 
 // line.middleware(config),
 (req, res) => __awaiter(this, void 0, void 0, function* () {
     debug('body:', JSON.stringify(req.body));

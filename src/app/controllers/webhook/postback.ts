@@ -2,8 +2,8 @@
  * LINE webhook postbackコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import * as cinerino from '@cinerino/domain';
-import { FlexBox, FlexBubble, FlexMessage, TemplateMessage, TextMessage } from '@line/bot-sdk';
+import { FlexBox, FlexBubble, FlexMessage, TextMessage } from '@line/bot-sdk';
+import * as pecorino from '@pecorino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as querystring from 'querystring';
@@ -12,7 +12,7 @@ import LINE from '../../../lineClient';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:*');
-const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
+const pecorinoAuthClient = new pecorino.auth.ClientCredentials({
     domain: <string>process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.PECORINO_CLIENT_ID,
     clientSecret: <string>process.env.PECORINO_CLIENT_SECRET,
@@ -22,8 +22,7 @@ const pecorinoAuthClient = new cinerino.pecorinoapi.auth.ClientCredentials({
 
 /**
  * 日付でイベント検索
- * @param {string} userId
- * @param {string} date YYYY-MM-DD形式
+ * @params.date {string} date YYYY-MM-DD形式
  */
 export async function searchEventsByDate(params: {
     replyToken: string;
@@ -446,19 +445,13 @@ export async function selectPaymentMethodType(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-
-    let price: number = 0;
-    const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
-    const transactionRepo = new cinerino.repository.Transaction(cinerino.mongoose.connection);
-    const authorizeActions = await actionRepo.findAuthorizeByTransactionId(params.transactionId);
-    const transaction = await transactionRepo.findById(cinerinoapi.factory.transactionType.PlaceOrder, params.transactionId);
-    const seatReservations = <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction[]>authorizeActions
-        .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
-        .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
-    const authorizeSeatReservationResult = <cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result;
-    price = authorizeSeatReservationResult.price;
-    const tmpReservations = authorizeSeatReservationResult.responseBody.object.reservations;
-    // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
+    const transaction = await params.user.findTransaction();
+    const seatReservationAuthorization = await params.user.findSeatReservationAuthorization();
+    if (seatReservationAuthorization.result === undefined) {
+        throw new Error('Invalid seat reservation authorization');
+    }
+    const price = seatReservationAuthorization.result.price;
+    const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
 
     switch (params.paymentMethodType) {
         case cinerinoapi.factory.paymentMethodType.Account:
@@ -831,69 +824,75 @@ export async function confirmFriendPay(params: {
     user: User;
     token: string;
 }) {
-    const friendPayInfo = await params.user.verifyFriendPayToken(params.token);
-    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます` });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'implementing...' });
+    // const friendPayInfo = await params.user.verifyFriendPayToken(params.token);
+    // await LINE.replyMessage(params.replyToken, { type: 'text', text: `${friendPayInfo.price}円の友達決済を受け付けます` });
+    // await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高を確認しています...' });
 
-    const personService = new cinerinoapi.service.Person({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
+    // const personService = new cinerinoapi.service.Person({
+    //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+    //     auth: params.user.authClient
+    // });
+    // const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+    //     auth: params.user.authClient
+    // });
 
-    const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
-    const authorizeActions = await actionRepo.findAuthorizeByTransactionId(friendPayInfo.transactionId);
-    const seatReservations = <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction[]>authorizeActions
-        .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
-        .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
-    const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
+    // const actionRepo = new cinerino.repository.Action(cinerino.mongoose.connection);
+    // const authorizeActions = await actionRepo.findAuthorizeByTransactionId(friendPayInfo.transactionId);
+    // const seatReservations = <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction[]>authorizeActions
+    //     .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
+    //     .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
+    // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
 
-    // 口座番号取得
-    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-        .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
-    accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-    debug('accounts:', accounts);
-    if (accounts.length === 0) {
-        throw new Error('口座未開設です');
-    }
-    const account = accounts[0];
-    const pecorinoAuthorization = await placeOrderService.authorizeAccountPayment({
-        transactionId: friendPayInfo.transactionId,
-        amount: requiredPoint,
-        fromAccount: {
-            accountType: cinerinoapi.factory.accountType.Coin,
-            accountNumber: account.accountNumber
-        }
-    });
-    debug('残高確認済', pecorinoAuthorization);
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
-    const template: TemplateMessage = {
-        type: 'template',
-        altText: 'This is a buttons template',
-        template: {
-            type: 'confirm',
-            text: '取引を続行しますか?',
-            actions: [
-                {
-                    type: 'postback',
-                    label: 'Yes',
-                    // tslint:disable-next-line:max-line-length
-                    data: `action=continueTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
-                },
-                {
-                    type: 'postback',
-                    label: 'No',
-                    // tslint:disable-next-line:max-line-length
-                    data: `action=cancelTransactionAfterFriendPayConfirmation&transactionId=${friendPayInfo.transactionId}&price=${friendPayInfo.price}`
-                }
-            ]
-        }
-    };
-    await LINE.pushMessage(params.user.userId, [template]);
+    // let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+    //     .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
+    // accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+    // debug('accounts:', accounts);
+    // if (accounts.length === 0) {
+    //     throw new Error('口座未開設です');
+    // }
+    // const account = accounts[0];
+    // const pecorinoAuthorization = await placeOrderService.authorizeAccountPayment({
+    //     transactionId: friendPayInfo.transactionId,
+    //     amount: requiredPoint,
+    //     fromAccount: {
+    //         accountType: cinerinoapi.factory.accountType.Coin,
+    //         accountNumber: account.accountNumber
+    //     }
+    // });
+    // debug('残高確認済', pecorinoAuthorization);
+    // await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+    // await LINE.pushMessage(params.user.userId, { type: 'text', text: '友達決済を承認しました' });
+    // const template: TemplateMessage = {
+    //     type: 'template',
+    //     altText: 'This is a buttons template',
+    //     template: {
+    //         type: 'confirm',
+    //         text: '取引を続行しますか?',
+    //         actions: [
+    //             {
+    //                 type: 'postback',
+    //                 label: 'Yes',
+    //                 data: querystring.stringify({
+    //                     action: 'continueTransactionAfterFriendPayConfirmation',
+    //                     transactionId: friendPayInfo.transactionId,
+    //                     price: friendPayInfo.price
+    //                 })
+    //             },
+    //             {
+    //                 type: 'postback',
+    //                 label: 'No',
+    //                 data: querystring.stringify({
+    //                     action: 'cancelTransactionAfterFriendPayConfirmation',
+    //                     transactionId: friendPayInfo.transactionId,
+    //                     price: friendPayInfo.price
+    //                 })
+    //             }
+    //         ]
+    //     }
+    // };
+    // await LINE.pushMessage(params.user.userId, [template]);
 }
 /**
  * おこづかい承認確定
@@ -918,7 +917,7 @@ export async function confirmTransferMoney(params: {
         throw new Error('口座未開設です');
     }
     const account = accounts[0];
-    const transferService = new cinerino.pecorinoapi.service.transaction.Transfer({
+    const transferService = new pecorino.service.transaction.Transfer({
         endpoint: <string>process.env.PECORINO_ENDPOINT,
         auth: pecorinoAuthClient
     });
@@ -1041,7 +1040,7 @@ export async function depositCoinByCreditCard(params: {
     }
     const lineProfile = await LINE.getProfile(params.user.userId);
     // 入金取引開始
-    const depositTransaction = new cinerino.pecorinoapi.service.transaction.Deposit({
+    const depositTransaction = new pecorino.service.transaction.Deposit({
         endpoint: <string>process.env.PECORINO_ENDPOINT,
         auth: pecorinoAuthClient
     });
@@ -2081,28 +2080,12 @@ export async function selectSeatOffers(params: {
         // passportToken: passportToken
     });
     debug('transaction started.', transaction.id);
-
-    // 座席選択
-
-    // 無料鑑賞券取得
-    const ticketTypes = await eventService.searchScreeningEventTicketTypes({ eventId: params.eventId });
-    // 空席検索
-    const offers = await eventService.searchScreeningEventOffers({ eventId: params.eventId });
-    const seatOffers = offers[0].containsPlace;
-    const availableSeatOffers = seatOffers.filter(
-        (o) => o.offers !== undefined && o.offers[0].availability === cinerinoapi.factory.chevre.itemAvailability.InStock
-    );
-    if (availableSeatOffers.length <= 0) {
-        throw new Error('No available seats');
-    }
+    await params.user.saveTransaction(transaction);
 
     // 券種をランダムに選択
+    const ticketTypes = await eventService.searchScreeningEventTicketTypes({ eventId: params.eventId });
     // tslint:disable-next-line:insecure-random
     const selectedTicketType = ticketTypes[Math.floor(ticketTypes.length * Math.random())];
-    // 座席をランダムに選択
-    const selectedScreeningRoomSection = offers[0].branchCode;
-    // tslint:disable-next-line:insecure-random
-    // const selectedSeatOffer = availableSeatOffers[Math.floor(availableSeatOffers.length * Math.random())];
 
     debug('creating a seat reservation authorization...');
     const seatReservationAuthorization = await placeOrderService.authorizeSeatReservation({
@@ -2116,7 +2099,7 @@ export async function selectSeatOffers(params: {
                 ticketedSeat: {
                     typeOf: cinerinoapi.factory.chevre.placeType.Seat,
                     seatNumber: seatNumber,
-                    seatSection: selectedScreeningRoomSection,
+                    seatSection: 'Default',
                     seatRow: '',
                     seatingType: ''
                 }
@@ -2125,6 +2108,8 @@ export async function selectSeatOffers(params: {
         notes: 'test from samples'
     });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
+    await params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
+
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
     const message: TextMessage = {
         type: 'text',
@@ -2605,10 +2590,12 @@ export async function searchOrders(params: {
 }) {
     const now = new Date();
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を検索しています...' });
-    const orderRepo = new cinerino.repository.Order(cinerino.mongoose.connection);
-    const username = <string>params.user.authClient.verifyIdToken({}).getUsername();
-    let orders = await orderRepo.search({
-        customerMembershipNumbers: [username],
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    let orders = await personService.searchOrders({
+        personId: 'me',
         orderDateFrom: moment(now).add(-1, 'month').toDate(),
         orderDateThrough: now
     });

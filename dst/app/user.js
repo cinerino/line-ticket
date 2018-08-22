@@ -154,7 +154,7 @@ class User {
     }
     findTransaction() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`transaction.${this.userId}`).then((value) => {
+            return redisClient.get(`line-ticket:transaction:${this.userId}`).then((value) => {
                 return (value !== null) ? JSON.parse(value) : null;
             });
         });
@@ -162,8 +162,23 @@ class User {
     saveTransaction(transaction) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()
-                .set(`transaction.${this.userId}`, JSON.stringify(transaction))
-                .expire(`transaction.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:transaction:${this.userId}`, JSON.stringify(transaction))
+                .expire(`line-ticket:transaction:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .exec();
+        });
+    }
+    findSeatReservationAuthorization() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`).then((value) => {
+                return (value !== null) ? JSON.parse(value) : null;
+            });
+        });
+    }
+    saveSeatReservationAuthorization(authorization) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield redisClient.multi()
+                .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
+                .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
         });
     }
