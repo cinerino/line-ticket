@@ -564,19 +564,33 @@ export async function selectPaymentMethodType(params: {
                             spacing: 'sm',
                             contents: [
                                 {
-                                    type: 'text',
-                                    text: `${contact.givenName} ${contact.familyName}`,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
                                     type: 'box',
                                     layout: 'vertical',
                                     margin: 'lg',
                                     spacing: 'sm',
                                     contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Name',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: `${contact.givenName} ${contact.familyName}`,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
                                         {
                                             type: 'box',
                                             layout: 'baseline',
@@ -598,6 +612,28 @@ export async function selectPaymentMethodType(params: {
                                                     flex: 4
                                                 }
                                             ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Tel',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: contact.telephone,
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
@@ -613,87 +649,44 @@ export async function selectPaymentMethodType(params: {
                             margin: 'xxl',
                             spacing: 'sm',
                             contents: [
-                                {
-                                    type: 'text',
-                                    text: tmpReservations[0].reservationFor.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Date',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${moment(tmpReservations[0].reservationFor.startDate).format('llll')}`,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Place',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${tmpReservations[0].reservationFor.location.name.ja}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                ...tmpReservations.map<FlexBox>((r) => {
+                                ...tmpReservations.map<FlexBox>((tmpReservation) => {
+                                    const item = tmpReservation;
+                                    const event = item.reservationFor;
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                    const str = `${r.reservedTicket.ticketedSeat.seatNumber} ${r.reservedTicket.ticketType.name.ja}`;
+                                    const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
 
                                     return {
                                         type: 'box',
                                         layout: 'horizontal',
                                         contents: [
                                             {
-                                                type: 'text',
-                                                text: str,
-                                                size: 'sm',
-                                                color: '#555555',
-                                                flex: 0
+                                                type: 'box',
+                                                layout: 'vertical',
+                                                flex: 2,
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`,
+                                                        size: 'xs',
+                                                        color: '#555555',
+                                                        wrap: true
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: str,
+                                                        size: 'xs',
+                                                        color: '#aaaaaa'
+                                                    }
+                                                ]
                                             },
                                             {
                                                 type: 'text',
-                                                text: `${r.price} ${r.priceCurrency}`,
-                                                size: 'sm',
+                                                text: `${item.price} ${item.priceCurrency}`,
+                                                size: 'xs',
                                                 color: '#111111',
-                                                align: 'end'
+                                                align: 'end',
+                                                flex: 1,
+                                                gravity: 'top'
                                             }
                                         ]
                                     };
@@ -760,6 +753,7 @@ export async function selectPaymentMethodType(params: {
                                         }
                                     ]
                                 }
+
                             ]
                         }
                     ]
