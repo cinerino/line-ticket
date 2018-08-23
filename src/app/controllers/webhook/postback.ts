@@ -1939,7 +1939,7 @@ export async function searchScreeningEventReservations(params: {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: event.location.name.ja,
+                                                            text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2292,7 +2292,7 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: event.location.name.ja,
+                                                        text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -3024,7 +3024,7 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: event.location.name.ja,
+                                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
