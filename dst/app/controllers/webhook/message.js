@@ -29,7 +29,7 @@ function pushHowToUse(params) {
                 items: [
                     {
                         type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/movie-ticket-80.png`,
+                        imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
                         action: {
                             type: 'message',
                             label: '座席予約管理',
@@ -38,7 +38,7 @@ function pushHowToUse(params) {
                     },
                     {
                         type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/order-80.png`,
+                        imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
                         action: {
                             type: 'message',
                             label: '注文管理',

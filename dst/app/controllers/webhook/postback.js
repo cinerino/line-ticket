@@ -2616,9 +2616,10 @@ function order2bubble(order) {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'OrderDate',
+                                    text: '注文日時',
                                     size: 'sm',
-                                    color: '#555555'
+                                    color: '#555555',
+                                    flex: 0
                                 },
                                 {
                                     type: 'text',
@@ -2635,9 +2636,10 @@ function order2bubble(order) {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'Status',
+                                    text: '注文状況',
                                     size: 'sm',
-                                    color: '#555555'
+                                    color: '#555555',
+                                    flex: 0
                                 },
                                 {
                                     type: 'text',
@@ -2654,9 +2656,10 @@ function order2bubble(order) {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'OrderNumber',
+                                    text: '注文番号',
                                     size: 'sm',
-                                    color: '#555555'
+                                    color: '#555555',
+                                    flex: 0
                                 },
                                 {
                                     type: 'text',
@@ -2673,9 +2676,10 @@ function order2bubble(order) {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'Confirmation',
+                                    text: '確認番号',
                                     size: 'sm',
-                                    color: '#555555'
+                                    color: '#555555',
+                                    flex: 0
                                 },
                                 {
                                     type: 'text',
