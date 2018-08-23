@@ -2190,6 +2190,10 @@ export async function authorizeOwnershipInfo(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
+    const eventService = new cinerinoapi.service.Event({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
     const { code } = await personService.authorizeOwnershipInfo({
         personId: 'me',
         goodType: params.goodType,
@@ -2207,7 +2211,7 @@ export async function authorizeOwnershipInfo(params: {
                 throw new Error('Reservation not found');
             }
             const itemOffered = reservation.typeOfGood;
-            const event = itemOffered.reservationFor;
+            const event = await eventService.findScreeningEventById({ eventId: itemOffered.reservationFor.id });
             const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
                 ? event.workPerformed.thumbnailUrl
                 // tslint:disable-next-line:max-line-length
@@ -2930,12 +2934,20 @@ export async function findScreeningEventReservationById(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
+    const eventService = new cinerinoapi.service.Event({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
     try {
         const { token } = await ownershipInfoService.getToken({ code: params.code });
         const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
         const reservation = ownershipInfo.typeOfGood;
-        const event = reservation.reservationFor;
+        const event = await eventService.findScreeningEventById({ eventId: reservation.reservationFor.id });
+        const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+            ? event.workPerformed.thumbnailUrl
+            // tslint:disable-next-line:max-line-length
+            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
         const flex: FlexMessage = {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -2944,19 +2956,19 @@ export async function findScreeningEventReservationById(params: {
                 contents: [
                     {
                         type: 'bubble',
-                        // hero: {
-                        //     type: 'image',
-                        //     url: thumbnailImageUrl,
-                        //     size: 'full',
-                        //     aspectRatio: '20:13',
-                        //     aspectMode: 'cover',
-                        //     action: {
-                        //         type: 'uri',
-                        //         label: 'event',
-                        //         // tslint:disable-next-line:no-http-string
-                        //         uri: 'http://linecorp.com/'
-                        //     }
-                        // },
+                        hero: {
+                            type: 'image',
+                            url: thumbnailImageUrl,
+                            size: 'full',
+                            aspectRatio: '20:13',
+                            aspectMode: 'cover',
+                            action: {
+                                type: 'uri',
+                                label: 'event',
+                                // tslint:disable-next-line:no-http-string
+                                uri: 'http://linecorp.com/'
+                            }
+                        },
                         body: {
                             type: 'box',
                             layout: 'vertical',
