@@ -38,15 +38,6 @@ function pushHowToUse(params) {
                     },
                     {
                         type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
-                        action: {
-                            type: 'message',
-                            label: '注文管理',
-                            text: '注文'
-                        }
-                    },
-                    {
-                        type: 'action',
                         imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
                         action: {
                             type: 'message',
@@ -61,6 +52,15 @@ function pushHowToUse(params) {
                             type: 'message',
                             label: 'コイン口座管理',
                             text: 'コイン'
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
+                        action: {
+                            type: 'message',
+                            label: '注文管理',
+                            text: '注文'
                         }
                     },
                     {
