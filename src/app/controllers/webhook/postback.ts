@@ -2665,57 +2665,37 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: '注文日時',
-                                    size: 'sm',
-                                    color: '#555555',
-                                    flex: 0
-                                },
-                                {
-                                    type: 'text',
-                                    text: `${moment(order.orderDate).format('llll')}`,
-                                    size: 'sm',
-                                    color: '#111111',
-                                    align: 'end'
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: '注文状況',
-                                    size: 'sm',
-                                    color: '#555555',
-                                    flex: 0
-                                },
-                                {
-                                    type: 'text',
-                                    text: `${order.orderStatus}`,
-                                    size: 'sm',
-                                    color: '#111111',
-                                    align: 'end'
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
                                     text: '注文番号',
                                     size: 'sm',
-                                    color: '#555555',
-                                    flex: 0
+                                    color: '#aaaaaa',
+                                    flex: 1
                                 },
                                 {
                                     type: 'text',
                                     text: `${order.orderNumber}`,
                                     size: 'sm',
-                                    color: '#111111',
-                                    align: 'end'
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '注文日時',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${moment(order.orderDate).format('llll')}`,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
                                 }
                             ]
                         },
@@ -2727,15 +2707,35 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                                     type: 'text',
                                     text: '確認番号',
                                     size: 'sm',
-                                    color: '#555555',
-                                    flex: 0
+                                    color: '#aaaaaa',
+                                    flex: 1
                                 },
                                 {
                                     type: 'text',
                                     text: `${order.confirmationNumber}`,
                                     size: 'sm',
-                                    color: '#111111',
-                                    align: 'end'
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'ステータス',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${order.orderStatus}`,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
                                 }
                             ]
                         }
