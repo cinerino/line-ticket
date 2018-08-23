@@ -1910,7 +1910,7 @@ export async function searchScreeningEventReservations(params: {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'Date',
+                                                            text: '日時',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -1932,7 +1932,7 @@ export async function searchScreeningEventReservations(params: {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'Place',
+                                                            text: '場所',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -1954,7 +1954,7 @@ export async function searchScreeningEventReservations(params: {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'Seats',
+                                                            text: '座席',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -1976,7 +1976,7 @@ export async function searchScreeningEventReservations(params: {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'Ticket Type',
+                                                            text: '券種',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -1984,6 +1984,28 @@ export async function searchScreeningEventReservations(params: {
                                                         {
                                                             type: 'text',
                                                             text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'お名前',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservedTicket.underName.name,
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2237,7 +2259,7 @@ export async function authorizeOwnershipInfo(params: {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Date',
+                                                        text: '日時',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
@@ -2259,7 +2281,7 @@ export async function authorizeOwnershipInfo(params: {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Place',
+                                                        text: '場所',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
@@ -2281,7 +2303,7 @@ export async function authorizeOwnershipInfo(params: {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Seats',
+                                                        text: '座席',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
@@ -2303,7 +2325,7 @@ export async function authorizeOwnershipInfo(params: {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'Ticket Type',
+                                                        text: '券種',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
@@ -2311,6 +2333,28 @@ export async function authorizeOwnershipInfo(params: {
                                                     {
                                                         type: 'text',
                                                         text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'お名前',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: itemOffered.reservedTicket.underName.name,
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2871,6 +2915,7 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
 /**
  * 座席予約コード読み込み
  */
+// tslint:disable-next-line:max-func-body-length
 export async function findScreeningEventReservationById(params: {
     replyToken: string;
     user: User;
@@ -2888,11 +2933,168 @@ export async function findScreeningEventReservationById(params: {
     try {
         const { token } = await ownershipInfoService.getToken({ code: params.code });
         const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
-        const message: TextMessage = {
-            type: 'text',
-            text: `resevationId:${ownershipInfo.typeOfGood.id}`
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
+        const reservation = ownershipInfo.typeOfGood;
+        const event = reservation.reservationFor;
+        const flex: FlexMessage = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: [
+                    {
+                        type: 'bubble',
+                        // hero: {
+                        //     type: 'image',
+                        //     url: thumbnailImageUrl,
+                        //     size: 'full',
+                        //     aspectRatio: '20:13',
+                        //     aspectMode: 'cover',
+                        //     action: {
+                        //         type: 'uri',
+                        //         label: 'event',
+                        //         // tslint:disable-next-line:no-http-string
+                        //         uri: 'http://linecorp.com/'
+                        //     }
+                        // },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'md',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: event.name.ja,
+                                    wrap: true,
+                                    weight: 'bold',
+                                    gravity: 'center',
+                                    size: 'xl'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: '日時',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: moment(event.startDate).format('llll'),
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: '場所',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: event.location.name.ja,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: '座席',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: reservation.reservedTicket.ticketedSeat.seatNumber,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: '券種',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: reservation.reservedTicket.ticketType.name.ja,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'お名前',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: reservation.reservedTicket.underName.name,
+                                                    wrap: true,
+                                                    color: '#666666',
+                                                    size: 'sm',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
         };
-        await LINE.pushMessage(params.user.userId, [message]);
+        await LINE.pushMessage(params.user.userId, [flex]);
     } catch (error) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `Invalid code ${error.message}` });
     }
