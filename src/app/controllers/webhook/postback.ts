@@ -34,10 +34,9 @@ export async function searchEventsByDate(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
     const screeningEvents = await eventService.searchScreeningEvents({
-        startFrom: startFrom,
-        startThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
+        inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
+        inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
     // 上映イベントシリーズをユニークに
@@ -210,8 +209,8 @@ export async function askScreeningEvent(params: {
     const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
     const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
     let screeningEvents = await eventService.searchScreeningEvents({
-        startFrom: startFrom,
-        startThrough: startThrough
+        inSessionFrom: startFrom,
+        inSessionThrough: startThrough
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
     // 上映イベントシリーズをユニークに
