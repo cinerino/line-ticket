@@ -34,11 +34,12 @@ export async function searchEventsByDate(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const screeningEvents = await eventService.searchScreeningEvents({
+    const searchScreeningEventsResult = await eventService.searchScreeningEvents({
         inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
         inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
+    const screeningEvents = searchScreeningEventsResult.data;
     // 上映イベントシリーズをユニークに
     let superEvents = screeningEvents.map((e) => e.superEvent);
     superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
@@ -208,11 +209,12 @@ export async function askScreeningEvent(params: {
     });
     const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
     const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
-    let screeningEvents = await eventService.searchScreeningEvents({
+    const searchScreeningEventsResult = await eventService.searchScreeningEvents({
         inSessionFrom: startFrom,
         inSessionThrough: startThrough
         // superEventLocationIdentifiers: ['MovieTheater-118']
     });
+    let screeningEvents = searchScreeningEventsResult.data;
     // 上映イベントシリーズをユニークに
     screeningEvents = screeningEvents
         .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
@@ -1575,11 +1577,12 @@ export async function searchAccountMoneyTransferActions(params: {
         throw new Error('口座が見つかりません');
     }
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
-    let transferActions = await personService.searchAccountMoneyTransferActions({
+    const searchAccountMoneyTransferActionsResult = await personService.searchAccountMoneyTransferActions({
         personId: 'me',
         accountType: params.accountType,
         accountNumber: params.accountNumber
     });
+    let transferActions = searchAccountMoneyTransferActionsResult.data;
     if (transferActions.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
 
@@ -1837,10 +1840,11 @@ export async function searchScreeningEventReservations(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    let ownershipInfos = await personService.searchScreeningEventReservations({
+    const searchScreeningEventReservationsResult = await personService.searchScreeningEventReservations({
         // goodType: cinerinoapi.factory.reservationType.EventReservation,
         personId: 'me'
     });
+    let ownershipInfos = searchScreeningEventReservationsResult.data;
     debug(ownershipInfos.length, 'ownershipInfos found.');
     // 未来の予約
     ownershipInfos = ownershipInfos.filter((o) => moment(o.typeOfGood.reservationFor.startDate).toDate() >= now);
@@ -2066,12 +2070,12 @@ export async function selectSeatOffers(params: {
         auth: params.user.authClient
     });
 
-    const event = await eventService.findScreeningEventById({ eventId: params.eventId });
+    const event = await eventService.findScreeningEventById({ id: params.eventId });
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
 
     // 販売者情報取得
-    const sellers = await organizationService.searchMovieTheaters({});
-    const seller = sellers.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
+    const searchMovieTheatersResult = await organizationService.searchMovieTheaters({});
+    const seller = searchMovieTheatersResult.data.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
     if (seller === undefined) {
         throw new Error('Seller not found');
     }
@@ -2202,15 +2206,16 @@ export async function authorizeOwnershipInfo(params: {
     let flex: FlexMessage;
     switch (params.goodType) {
         case cinerinoapi.factory.chevre.reservationType.EventReservation:
-            const ownershipInfos = await personService.searchScreeningEventReservations({
+            const searchScreeningEventReservationsResult = await personService.searchScreeningEventReservations({
                 personId: 'me'
             });
+            const ownershipInfos = searchScreeningEventReservationsResult.data;
             const reservation = ownershipInfos.find((o) => o.identifier === params.identifier);
             if (reservation === undefined) {
                 throw new Error('Reservation not found');
             }
             const itemOffered = reservation.typeOfGood;
-            const event = await eventService.findScreeningEventById({ eventId: itemOffered.reservationFor.id });
+            const event = await eventService.findScreeningEventById({ id: itemOffered.reservationFor.id });
             const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
                 ? event.workPerformed.thumbnailUrl
                 // tslint:disable-next-line:max-line-length
@@ -2635,11 +2640,12 @@ export async function searchOrders(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    let orders = await personService.searchOrders({
+    const searchOrdersResult = await personService.searchOrders({
         personId: 'me',
         orderDateFrom: moment(now).add(-1, 'month').toDate(),
         orderDateThrough: now
     });
+    let orders = searchOrdersResult.data;
     if (orders.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
     } else {
@@ -2942,7 +2948,7 @@ export async function findScreeningEventReservationById(params: {
         const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
         const reservation = ownershipInfo.typeOfGood;
-        const event = await eventService.findScreeningEventById({ eventId: reservation.reservationFor.id });
+        const event = await eventService.findScreeningEventById({ id: reservation.reservationFor.id });
         const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
             ? event.workPerformed.thumbnailUrl
             // tslint:disable-next-line:max-line-length

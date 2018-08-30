@@ -10,11 +10,11 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/api-nodejs-client": "^1.0.0-alpha.7",
+    "@cinerino/api-nodejs-client": "^1.0.0-alpha.8",
     "@line/bot-sdk": "^6.2.1",
     "@motionpicture/express-middleware": "^0.1.0",
     "@pecorino/api-nodejs-client": "^1.0.0",
-    "aws-sdk": "^2.297.0",
+    "aws-sdk": "^2.305.0",
     "body-parser": "^1.18.3",
     "debug": "^3.1.0",
     "ejs": "^2.6.1",
@@ -32,7 +32,7 @@
     "@types/debug": "0.0.30",
     "@types/express": "^4.11.1",
     "@types/http-status": "^0.2.30",
-    "@types/ioredis": "^3.2.8",
+    "@types/ioredis": "^3.2.16",
     "@types/jsonwebtoken": "^7.2.7",
     "@types/mocha": "^5.2.5",
     "@types/request": "^2.47.0",
@@ -44,12 +44,12 @@
     "nsp": "^3.2.1",
     "nyc": "^11.9.0",
     "rimraf": "^2.6.2",
-    "snyk": "^1.92.3",
+    "snyk": "^1.94.0",
     "supertest": "^3.1.0",
     "ts-node": "^6.2.0",
     "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^5.2.0",
-    "typescript": "^3.0.1"
+    "tslint-microsoft-contrib": "^5.2.1",
+    "typescript": "^3.0.3"
   },
   "engines": {
     "node": ">=8.0.0",

@@ -36,11 +36,12 @@ function searchEventsByDate(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const screeningEvents = yield eventService.searchScreeningEvents({
+        const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
             inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
             inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
+        const screeningEvents = searchScreeningEventsResult.data;
         // 上映イベントシリーズをユニークに
         let superEvents = screeningEvents.map((e) => e.superEvent);
         superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
@@ -206,11 +207,12 @@ function askScreeningEvent(params) {
         });
         const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
         const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
-        let screeningEvents = yield eventService.searchScreeningEvents({
+        const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
             inSessionFrom: startFrom,
             inSessionThrough: startThrough
             // superEventLocationIdentifiers: ['MovieTheater-118']
         });
+        let screeningEvents = searchScreeningEventsResult.data;
         // 上映イベントシリーズをユニークに
         screeningEvents = screeningEvents
             .filter((e) => e.superEvent.id === params.screeningEventSeriesId)
@@ -1534,11 +1536,12 @@ function searchAccountMoneyTransferActions(params) {
             throw new Error('口座が見つかりません');
         }
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
-        let transferActions = yield personService.searchAccountMoneyTransferActions({
+        const searchAccountMoneyTransferActionsResult = yield personService.searchAccountMoneyTransferActions({
             personId: 'me',
             accountType: params.accountType,
             accountNumber: params.accountNumber
         });
+        let transferActions = searchAccountMoneyTransferActionsResult.data;
         if (transferActions.length === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
             return;
@@ -1793,10 +1796,11 @@ function searchScreeningEventReservations(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        let ownershipInfos = yield personService.searchScreeningEventReservations({
+        const searchScreeningEventReservationsResult = yield personService.searchScreeningEventReservations({
             // goodType: cinerinoapi.factory.reservationType.EventReservation,
             personId: 'me'
         });
+        let ownershipInfos = searchScreeningEventReservationsResult.data;
         debug(ownershipInfos.length, 'ownershipInfos found.');
         // 未来の予約
         ownershipInfos = ownershipInfos.filter((o) => moment(o.typeOfGood.reservationFor.startDate).toDate() >= now);
@@ -2018,11 +2022,11 @@ function selectSeatOffers(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const event = yield eventService.findScreeningEventById({ eventId: params.eventId });
+        const event = yield eventService.findScreeningEventById({ id: params.eventId });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
         // 販売者情報取得
-        const sellers = yield organizationService.searchMovieTheaters({});
-        const seller = sellers.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
+        const searchMovieTheatersResult = yield organizationService.searchMovieTheaters({});
+        const seller = searchMovieTheatersResult.data.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
         if (seller === undefined) {
             throw new Error('Seller not found');
         }
@@ -2147,15 +2151,16 @@ function authorizeOwnershipInfo(params) {
         let flex;
         switch (params.goodType) {
             case cinerinoapi.factory.chevre.reservationType.EventReservation:
-                const ownershipInfos = yield personService.searchScreeningEventReservations({
+                const searchScreeningEventReservationsResult = yield personService.searchScreeningEventReservations({
                     personId: 'me'
                 });
+                const ownershipInfos = searchScreeningEventReservationsResult.data;
                 const reservation = ownershipInfos.find((o) => o.identifier === params.identifier);
                 if (reservation === undefined) {
                     throw new Error('Reservation not found');
                 }
                 const itemOffered = reservation.typeOfGood;
-                const event = yield eventService.findScreeningEventById({ eventId: itemOffered.reservationFor.id });
+                const event = yield eventService.findScreeningEventById({ id: itemOffered.reservationFor.id });
                 const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
                     ? event.workPerformed.thumbnailUrl
                     // tslint:disable-next-line:max-line-length
@@ -2576,11 +2581,12 @@ function searchOrders(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        let orders = yield personService.searchOrders({
+        const searchOrdersResult = yield personService.searchOrders({
             personId: 'me',
             orderDateFrom: moment(now).add(-1, 'month').toDate(),
             orderDateThrough: now
         });
+        let orders = searchOrdersResult.data;
         if (orders.length === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
         }
@@ -2881,7 +2887,7 @@ function findScreeningEventReservationById(params) {
             const ownershipInfo = yield reservationService.findScreeningEventReservationByToken({ token: token });
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
             const reservation = ownershipInfo.typeOfGood;
-            const event = yield eventService.findScreeningEventById({ eventId: reservation.reservationFor.id });
+            const event = yield eventService.findScreeningEventById({ id: reservation.reservationFor.id });
             const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
                 ? event.workPerformed.thumbnailUrl
                 // tslint:disable-next-line:max-line-length
