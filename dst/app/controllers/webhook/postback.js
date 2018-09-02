@@ -1565,23 +1565,27 @@ function searchAccountMoneyTransferActions(params) {
         if (accountOwnershipInfo === undefined) {
             throw new Error('口座が見つかりません');
         }
-        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
-        const searchAccountMoneyTransferActionsResult = yield personOwnershipInfoService.searchAccountMoneyTransferActions({
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索します...' });
+        const searchActions = yield personOwnershipInfoService.searchAccountMoneyTransferActions({
+            personId: 'me',
             limit: 10,
+            page: 1,
             sort: {
                 endDate: cinerinoapi.factory.pecorino.sortType.Descending
             },
-            personId: 'me',
             accountType: params.accountType,
             accountNumber: params.accountNumber
         });
-        let transferActions = searchAccountMoneyTransferActionsResult.data;
-        if (transferActions.length === 0) {
+        const transferActions = searchActions.data;
+        if (searchActions.totalCount === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
             return;
         }
-        // tslint:disable-next-line:no-magic-numbers
-        transferActions = transferActions.slice(0, 10);
+        yield lineClient_1.default.pushMessage(params.user.userId, {
+            type: 'text',
+            text: `${searchActions.totalCount}件の取引履歴が見つかりました`
+        });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `直近の${transferActions.length}件は以下の通りです` });
         const flex = {
             type: 'flex',
             altText: 'This is a Flex Message',
