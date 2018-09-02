@@ -10,7 +10,7 @@ import * as querystring from 'querystring';
 import LINE from '../../../lineClient';
 import User from '../../user';
 
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 
 /**
  * 使い方を送信する

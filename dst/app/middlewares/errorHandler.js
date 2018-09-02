@@ -9,15 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_1 = require("http-status");
-const lineClient_1 = require("../../lineClient");
-exports.default = (err, req, res, next) => __awaiter(this, void 0, void 0, function* () {
+exports.default = (err, _, res, next) => __awaiter(this, void 0, void 0, function* () {
     console.error(err);
     if (res.headersSent) {
         next(err);
         return;
-    }
-    if (req.user !== undefined) {
-        yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `${err.name}:${err.message}` });
     }
     // エラーオブジェクトの場合は、キャッチされた例外でクライント依存のエラーの可能性が高い
     if (err instanceof Error) {

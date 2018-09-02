@@ -14,7 +14,7 @@ const lineClient_1 = require("../../lineClient");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
 const PostbackController = require("./webhook/postback");
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 /**
  * メッセージが送信されたことを示すEvent Objectです
  */

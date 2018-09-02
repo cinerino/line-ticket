@@ -11,7 +11,7 @@ import * as querystring from 'querystring';
 import LINE from '../../../lineClient';
 import User from '../../user';
 
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 const pecorinoAuthClient = new pecorino.auth.ClientCredentials({
     domain: <string>process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.PECORINO_CLIENT_ID,

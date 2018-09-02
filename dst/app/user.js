@@ -13,7 +13,7 @@ const AWS = require("aws-sdk");
 const createDebug = require("debug");
 const redis = require("ioredis");
 const jwt = require("jsonwebtoken");
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:app');
 // 以下環境変数をセットすること
 // AWS_ACCESS_KEY_ID
 // AWS_SECRET_ACCESS_KEY

@@ -16,7 +16,7 @@ const createDebug = require("debug");
 const moment = require("moment");
 const querystring = require("querystring");
 const lineClient_1 = require("../../../lineClient");
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 /**
  * 使い方を送信する
  */

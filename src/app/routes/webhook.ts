@@ -1,19 +1,19 @@
 /**
  * webhookルーター
  */
-import * as line from '@line/bot-sdk';
+import { WebhookEvent } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as express from 'express';
 import { OK } from 'http-status';
 
-// import LINE from '../../lineClient';
+import LINE from '../../lineClient';
 import * as WebhookController from '../controllers/webhook';
 import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
 import User from '../user';
 
 const webhookRouter = express.Router();
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:router');
 
 webhookRouter.post(
     '',
@@ -22,13 +22,13 @@ webhookRouter.post(
     // line.middleware(config),
     async (req, res) => {
         debug('body:', JSON.stringify(req.body));
-        await Promise.all(req.body.events.map(async (e: line.WebhookEvent) => {
+        await Promise.all(req.body.events.map(async (e: WebhookEvent) => {
             await handleEvent(e, req.user);
         }));
         res.status(OK).send('ok');
     });
 
-async function handleEvent(event: line.WebhookEvent, user: User) {
+async function handleEvent(event: WebhookEvent, user: User) {
     try {
         switch (event.type) {
             case 'message':
@@ -73,6 +73,7 @@ async function handleEvent(event: line.WebhookEvent, user: User) {
         }
     } catch (error) {
         debug(error);
+        await LINE.pushMessage(user.userId, { type: 'text', text: `${error.name}:${error.message}` });
     }
 }
 

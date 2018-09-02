@@ -11,12 +11,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const createDebug = require("debug");
 const express = require("express");
 const http_status_1 = require("http-status");
-// import LINE from '../../lineClient';
+const lineClient_1 = require("../../lineClient");
 const WebhookController = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:router');
 webhookRouter.post('', faceLogin_1.default, authentication_1.default, 
 // line.middleware(config),
 (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -66,6 +66,7 @@ function handleEvent(event, user) {
         }
         catch (error) {
             debug(error);
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `${error.name}:${error.message}` });
         }
     });
 }

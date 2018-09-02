@@ -17,7 +17,7 @@ const createDebug = require("debug");
 const moment = require("moment");
 const querystring = require("querystring");
 const lineClient_1 = require("../../../lineClient");
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 const pecorinoAuthClient = new pecorino.auth.ClientCredentials({
     domain: process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.PECORINO_CLIENT_ID,

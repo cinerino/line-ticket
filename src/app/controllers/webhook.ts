@@ -11,7 +11,7 @@ import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
 
-const debug = createDebug('cinerino-line-ticket:*');
+const debug = createDebug('cinerino-line-ticket:controllers');
 
 /**
  * メッセージが送信されたことを示すEvent Objectです
