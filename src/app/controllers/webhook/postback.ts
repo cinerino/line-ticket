@@ -438,6 +438,10 @@ export async function selectPaymentMethodType(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
     const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -457,11 +461,18 @@ export async function selectPaymentMethodType(params: {
     switch (params.paymentMethodType) {
         case cinerinoapi.factory.paymentMethodType.Account:
             await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
-            let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType.Coin> | string;
+            let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType> | string;
             if (params.code === undefined) {
                 // 口座番号取得
-                let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-                    .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
+                const searchAccountsResult =
+                    await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+                        personId: 'me',
+                        typeOfGood: {
+                            typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                            accountType: cinerinoapi.factory.accountType.Coin
+                        }
+                    });
+                let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
                 accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
                 debug('accounts:', accounts);
                 if (accounts.length === 0) {
@@ -485,7 +496,7 @@ export async function selectPaymentMethodType(params: {
             await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
 
             // 口座番号取得
-            const creditCards = await personService.searchCreditCards({ personId: 'me' });
+            const creditCards = await personOwnershipInfoService.searchCreditCards({ personId: 'me' });
             if (creditCards.length === 0) {
                 throw new Error('クレジットカード未登録です');
             }
@@ -904,9 +915,20 @@ export async function confirmTransferMoney(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-        .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
-    accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        personId: 'me',
+        typeOfGood: {
+            typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+            accountType: cinerinoapi.factory.accountType.Coin
+        }
+    });
+    const accounts = searchAccountsResult.data
+        .map((o) => o.typeOfGood)
+        .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accounts);
     if (accounts.length === 0) {
         throw new Error('口座未開設です');
@@ -1025,11 +1047,11 @@ export async function depositCoinByCreditCard(params: {
     toAccountNumber: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const creditCards = await personService.searchCreditCards({ personId: 'me' });
+    const creditCards = await personOwnershipInfoService.searchCreditCards({ personId: 'me' });
     if (creditCards.length === 0) {
         throw new Error('クレジットカード未登録です');
     }
@@ -1072,11 +1094,11 @@ export async function searchCreditCards(params: {
     user: User;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを検索しています...' });
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const creditCards = await personService.searchCreditCards({ personId: 'me' });
+    const creditCards = await personOwnershipInfoService.searchCreditCards({ personId: 'me' });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
     const flex: FlexMessage = {
         type: 'flex',
@@ -1228,11 +1250,11 @@ export async function addCreditCard(params: {
     user: User;
     token: string;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const creditCard = await personService.addCreditCard({ personId: 'me', creditCard: { token: params.token } });
+    const creditCard = await personOwnershipInfoService.addCreditCard({ personId: 'me', creditCard: { token: params.token } });
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
 }
 export async function deleteCreditCard(params: {
@@ -1240,11 +1262,11 @@ export async function deleteCreditCard(params: {
     user: User;
     cardSeq: string;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    await personService.deleteCreditCard({ personId: 'me', cardSeq: params.cardSeq });
+    await personOwnershipInfoService.deleteCreditCard({ personId: 'me', cardSeq: params.cardSeq });
     await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
 }
 /**
@@ -1256,11 +1278,11 @@ export async function openAccount(params: {
     name: string;
     accountType: cinerinoapi.factory.accountType;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const accountOwnershipInfo = await personService.openAccount({
+    const accountOwnershipInfo = await personOwnershipInfoService.openAccount({
         personId: 'me',
         name: params.name,
         accountType: params.accountType
@@ -1279,23 +1301,29 @@ export async function closeAccount(params: {
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    await personService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
+    await personOwnershipInfoService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
 }
 export async function searchCoinAccounts(params: {
     replyToken: string;
     user: User;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    let accountOwnershipInfos = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin });
-    accountOwnershipInfos = accountOwnershipInfos
+    const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        personId: 'me',
+        typeOfGood: {
+            typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+            accountType: cinerinoapi.factory.accountType.Coin
+        }
+    });
+    const accountOwnershipInfos = searchAccountsResult.data
         .filter((o) => o.typeOfGood.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
     debug('accounts:', accountOwnershipInfos);
     if (accountOwnershipInfos.length === 0) {
@@ -1521,7 +1549,7 @@ export async function searchCoinAccounts(params: {
                                         data: querystring.stringify({
                                             action: 'authorizeOwnershipInfo',
                                             goodType: ownershipInfo.typeOfGood.typeOf,
-                                            identifier: ownershipInfo.identifier
+                                            id: ownershipInfo.id
                                         })
                                     }
                                 },
@@ -1563,21 +1591,28 @@ export async function searchAccountMoneyTransferActions(params: {
     accountType: cinerinoapi.factory.accountType;
     accountNumber: string;
 }) {
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const accountOwnershipInfos = await personService.searchAccounts({
+    const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
         personId: 'me',
-        accountType: params.accountType
+        typeOfGood: {
+            typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+            accountType: params.accountType
+        }
     });
-    const accountOwnershipInfo = accountOwnershipInfos.find((o) => o.typeOfGood.accountNumber === params.accountNumber);
+    const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.typeOfGood.accountNumber === params.accountNumber);
     debug('accounts:', accountOwnershipInfo);
     if (accountOwnershipInfo === undefined) {
         throw new Error('口座が見つかりません');
     }
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索しています...' });
-    const searchAccountMoneyTransferActionsResult = await personService.searchAccountMoneyTransferActions({
+    const searchAccountMoneyTransferActionsResult = await personOwnershipInfoService.searchAccountMoneyTransferActions({
+        limit: 10,
+        sort: {
+            endDate: cinerinoapi.factory.pecorino.sortType.Descending
+        },
         personId: 'me',
         accountType: params.accountType,
         accountNumber: params.accountNumber
@@ -1836,14 +1871,17 @@ export async function searchScreeningEventReservations(params: {
 }) {
     const now = new Date();
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const searchScreeningEventReservationsResult = await personService.searchScreeningEventReservations({
-        // goodType: cinerinoapi.factory.reservationType.EventReservation,
-        personId: 'me'
-    });
+    const searchScreeningEventReservationsResult =
+        await personOwnershipInfoService.search<cinerinoapi.factory.chevre.reservationType.EventReservation>({
+            personId: 'me',
+            typeOfGood: {
+                typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
+            }
+        });
     let ownershipInfos = searchScreeningEventReservationsResult.data;
     debug(ownershipInfos.length, 'ownershipInfos found.');
     // 未来の予約
@@ -2032,7 +2070,7 @@ export async function searchScreeningEventReservations(params: {
                                                 data: querystring.stringify({
                                                     action: 'authorizeOwnershipInfo',
                                                     goodType: ownershipInfo.typeOfGood.typeOf,
-                                                    identifier: ownershipInfo.identifier
+                                                    id: ownershipInfo.id
                                                 })
                                             }
                                         }
@@ -2086,7 +2124,7 @@ export async function selectSeatOffers(params: {
     //     `${process.env.WAITER_ENDPOINT}/passports`,
     //     {
     //         body: {
-    //             scope: `placeOrderTransaction.${seller.identifier}`
+    //             scope: `placeOrderTransaction.${seller.id}`
     //         },
     //         json: true
     //     }
@@ -2186,10 +2224,10 @@ export async function authorizeOwnershipInfo(params: {
     replyToken: string;
     user: User;
     goodType: cinerinoapi.factory.ownershipInfo.IGoodType;
-    identifier: string;
+    id: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
-    const personService = new cinerinoapi.service.Person({
+    const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -2197,20 +2235,23 @@ export async function authorizeOwnershipInfo(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const { code } = await personService.authorizeOwnershipInfo({
+    const { code } = await personOwnershipInfoService.authorize({
         personId: 'me',
-        goodType: params.goodType,
-        identifier: params.identifier
+        ownershipInfoId: params.id
     });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
     let flex: FlexMessage;
     switch (params.goodType) {
         case cinerinoapi.factory.chevre.reservationType.EventReservation:
-            const searchScreeningEventReservationsResult = await personService.searchScreeningEventReservations({
-                personId: 'me'
-            });
+            const searchScreeningEventReservationsResult =
+                await personOwnershipInfoService.search<cinerinoapi.factory.chevre.reservationType.EventReservation>({
+                    personId: 'me',
+                    typeOfGood: {
+                        typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
+                    }
+                });
             const ownershipInfos = searchScreeningEventReservationsResult.data;
-            const reservation = ownershipInfos.find((o) => o.identifier === params.identifier);
+            const reservation = ownershipInfos.find((o) => o.id === params.id);
             if (reservation === undefined) {
                 throw new Error('Reservation not found');
             }
@@ -2409,11 +2450,15 @@ export async function authorizeOwnershipInfo(params: {
             break;
 
         case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
-            const accountOwnershipInfos = await personService.searchAccounts({
-                personId: 'me',
-                accountType: cinerinoapi.factory.accountType.Coin
-            });
-            const accountOwnershipInfo = accountOwnershipInfos.find((o) => o.identifier === params.identifier);
+            const searchAccountsResult =
+                await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+                    personId: 'me',
+                    typeOfGood: {
+                        typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                        accountType: cinerinoapi.factory.accountType.Coin
+                    }
+                });
+            const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.id === params.id);
             if (accountOwnershipInfo === undefined) {
                 throw new Error('Account not found');
             }
@@ -2805,7 +2850,7 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                     spacing: 'sm',
                     contents: [
                         ...order.acceptedOffers.map<FlexBox>((orderItem) => {
-                            const item = <IEventReservation>orderItem.itemOffered;
+                            const item = orderItem.itemOffered;
                             const event = item.reservationFor;
                             // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                             const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;

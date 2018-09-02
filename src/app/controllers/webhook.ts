@@ -287,7 +287,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     replyToken: event.replyToken,
                     user: user,
                     goodType: <any>data.goodType,
-                    identifier: <string>data.identifier
+                    id: <string>data.id
                 });
                 break;
             // 注文検索

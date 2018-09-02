@@ -289,7 +289,7 @@ function postback(event, user) {
                         replyToken: event.replyToken,
                         user: user,
                         goodType: data.goodType,
-                        identifier: data.identifier
+                        id: data.id
                     });
                     break;
                 // 注文検索

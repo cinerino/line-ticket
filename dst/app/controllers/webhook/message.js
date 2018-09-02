@@ -319,9 +319,20 @@ function selectWhomAskForMoney(replyToken, user) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
         });
-        let accounts = yield personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
-            .then((ownershiInfos) => ownershiInfos.map((o) => o.typeOfGood));
-        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+        const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient
+        });
+        const searchAccountsResult = yield personOwnershipInfoService.search({
+            personId: 'me',
+            typeOfGood: {
+                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                accountType: cinerinoapi.factory.accountType.Coin
+            }
+        });
+        const accounts = searchAccountsResult.data
+            .map((o) => o.typeOfGood)
+            .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {
             throw new Error('口座未開設です');
