@@ -1870,7 +1870,7 @@ export async function searchScreeningEventReservations(params: {
     user: User;
 }) {
     const now = new Date();
-    await LINE.replyMessage(params.replyToken, { type: 'text', text: '座席予約を検索しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'ここ一カ月の座席予約を検索しています...' });
     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1880,27 +1880,33 @@ export async function searchScreeningEventReservations(params: {
             personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
+            },
+            ownedFrom: moment(now).add(-1, 'month').toDate(),
+            ownedThrough: now,
+            limit: 10,
+            page: 1,
+            sort: {
+                ownedFrom: cinerinoapi.factory.sortType.Descending
             }
         });
-    let ownershipInfos = searchScreeningEventReservationsResult.data;
-    debug(ownershipInfos.length, 'ownershipInfos found.');
+    const ownershipInfos = searchScreeningEventReservationsResult.data;
+    debug(searchScreeningEventReservationsResult.totalCount, 'ownershipInfos found.');
     // 未来の予約
-    ownershipInfos = ownershipInfos.filter((o) => moment(o.typeOfGood.reservationFor.startDate).toDate() >= now);
-
-    if (ownershipInfos.length === 0) {
+    if (searchScreeningEventReservationsResult.totalCount === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
     } else {
+        await LINE.pushMessage(params.user.userId, {
+            type: 'text',
+            text: `${searchScreeningEventReservationsResult.totalCount}件の座席予約が見つかりました`
+        });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `直近の${ownershipInfos.length}件は以下の通りです` });
         const flex: FlexMessage = {
             type: 'flex',
             altText: 'This is a Flex Message',
             contents: {
                 type: 'carousel',
                 contents: [
-                    // tslint:disable-next-line:max-func-body-length no-magic-numbers
                     ...ownershipInfos
-                        .sort((a, b) => (a.ownedFrom < b.ownedFrom) ? 1 : -1)
-                        // tslint:disable-next-line:no-magic-numbers
-                        .slice(0, 10)
                         // tslint:disable-next-line:max-func-body-length
                         .map<FlexBubble>((ownershipInfo) => {
                             const itemOffered = ownershipInfo.typeOfGood;
@@ -2680,7 +2686,7 @@ export async function searchOrders(params: {
     user: User;
 }) {
     const now = new Date();
-    await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を検索しています...' });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `ここ一カ月の注文を検索しています...` });
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -2688,17 +2694,19 @@ export async function searchOrders(params: {
     const searchOrdersResult = await personService.searchOrders({
         personId: 'me',
         orderDateFrom: moment(now).add(-1, 'month').toDate(),
-        orderDateThrough: now
+        orderDateThrough: now,
+        limit: 10,
+        page: 1,
+        sort: {
+            orderDate: cinerinoapi.factory.sortType.Descending
+        }
     });
-    let orders = searchOrdersResult.data;
-    if (orders.length === 0) {
+    const orders = searchOrdersResult.data;
+    if (searchOrdersResult.totalCount === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
     } else {
-        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${orders.length}件の注文が見つかりました` });
-        orders = orders
-            .sort((a, b) => (a.orderDate < b.orderDate) ? 1 : -1)
-            // tslint:disable-next-line:no-magic-numbers
-            .slice(0, 10);
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${searchOrdersResult.totalCount}件の注文が見つかりました` });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `直近の${orders.length}件は以下の通りです` });
         const contents: FlexBubble[] = orders.map<FlexBubble>(order2bubble);
         const flex: FlexMessage = {
             type: 'flex',
