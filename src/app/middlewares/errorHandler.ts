@@ -7,12 +7,18 @@
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from 'http-status';
 
-export default (err: any, __: Request, res: Response, next: NextFunction) => {
+import LINE from '../../lineClient';
+
+export default async (err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err);
     if (res.headersSent) {
         next(err);
 
         return;
+    }
+
+    if (req.user !== undefined) {
+        await LINE.pushMessage(req.user.userId, { type: 'text', text: `${err.name}:${err.message}` });
     }
 
     // エラーオブジェクトの場合は、キャッチされた例外でクライント依存のエラーの可能性が高い
