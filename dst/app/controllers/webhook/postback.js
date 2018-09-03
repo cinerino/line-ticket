@@ -805,6 +805,20 @@ function confirmOrder(params) {
     });
 }
 exports.confirmOrder = confirmOrder;
+function cancelOrder(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文取引をキャンセルしています...' });
+        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        yield placeOrderService.cancel({
+            transactionId: params.transactionId
+        });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文取引をキャンセルしました' });
+    });
+}
+exports.cancelOrder = cancelOrder;
 /**
  * 友達決済を承認確定
  */

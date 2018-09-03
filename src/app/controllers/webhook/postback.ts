@@ -822,6 +822,21 @@ export async function confirmOrder(params: {
     };
     await LINE.pushMessage(params.user.userId, [flex]);
 }
+export async function cancelOrder(params: {
+    replyToken: string;
+    user: User;
+    transactionId: string;
+}) {
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文取引をキャンセルしています...' });
+    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    await placeOrderService.cancel({
+        transactionId: params.transactionId
+    });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文取引をキャンセルしました' });
+}
 /**
  * 友達決済を承認確定
  */

@@ -162,6 +162,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     transactionId: <string>data.transactionId
                 });
                 break;
+            // 注文確定
+            case 'cancelOrder':
+                await PostbackController.cancelOrder({
+                    replyToken: event.replyToken,
+                    user: user,
+                    transactionId: <string>data.transactionId
+                });
+                break;
             // 友達決済承認確定
             case 'confirmFriendPay':
                 await PostbackController.confirmFriendPay({

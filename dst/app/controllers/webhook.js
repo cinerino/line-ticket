@@ -164,6 +164,14 @@ function postback(event, user) {
                         transactionId: data.transactionId
                     });
                     break;
+                // 注文確定
+                case 'cancelOrder':
+                    yield PostbackController.cancelOrder({
+                        replyToken: event.replyToken,
+                        user: user,
+                        transactionId: data.transactionId
+                    });
+                    break;
                 // 友達決済承認確定
                 case 'confirmFriendPay':
                     yield PostbackController.confirmFriendPay({
