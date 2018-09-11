@@ -15,7 +15,7 @@ const cinerinoapi = require("@cinerino/api-nodejs-client");
 const pecorino = require("@pecorino/api-nodejs-client");
 const createDebug = require("debug");
 const moment = require("moment");
-const querystring = require("querystring");
+const querystring = require("qs");
 const lineClient_1 = require("../../../lineClient");
 const debug = createDebug('cinerino-line-ticket:controllers');
 const pecorinoAuthClient = new pecorino.auth.ClientCredentials({
@@ -482,25 +482,23 @@ function selectPaymentMethodType(params) {
                 break;
             case cinerinoapi.factory.paymentMethodType.CreditCard:
                 yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
-                // 口座番号取得
-                const creditCards = yield personOwnershipInfoService.searchCreditCards({ personId: 'me' });
-                if (creditCards.length === 0) {
-                    throw new Error('クレジットカード未登録です');
+                if (params.creditCard === undefined) {
+                    throw new Error('クレジットカードが指定されていません');
                 }
-                const creditCard = creditCards[0];
                 const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
                 yield placeOrderService.authorizeCreditCardPayment({
                     transactionId: params.transactionId,
                     amount: price,
                     orderId: orderId,
                     method: '1',
-                    creditCard: {
-                        memberId: 'me',
-                        cardSeq: Number(creditCard.cardSeq)
-                        // cardPass?: string;
-                    }
+                    creditCard: params.creditCard
+                    // creditCard: {
+                    //     memberId: 'me',
+                    //     cardSeq: Number(creditCard.cardSeq)
+                    //     cardPass?: string;
+                    // }
                 });
-                yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${creditCard.cardNo}で決済を受け付けます` });
+                yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
                 break;
             default:
                 throw new Error(`Unknown payment method ${params.paymentMethodType}`);
@@ -680,6 +678,99 @@ function selectPaymentMethodType(params) {
     });
 }
 exports.selectPaymentMethodType = selectPaymentMethodType;
+/**
+ * クレジットカード選択
+ */
+// tslint:disable-next-line:max-func-body-length
+function selectCreditCard(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const transaction = yield params.user.findTransaction();
+        const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
+        const footerContets = [
+            {
+                type: 'button',
+                // flex: 2,
+                style: 'primary',
+                action: {
+                    type: 'uri',
+                    label: '入力する',
+                    uri: liffUri
+                }
+            }
+        ];
+        // ログイン状態の場合、会員カードを選択肢に追加
+        if ((yield params.user.getCredentials()) !== null) {
+            const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: params.user.authClient
+            });
+            const creditCards = yield personOwnershipInfoService.searchCreditCards({ personId: 'me' });
+            if (creditCards.length === 0) {
+                const creditCard = creditCards[0];
+                footerContets.push({
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: creditCard.cardNo,
+                        data: querystring.stringify({
+                            action: 'selectPaymentMethodType',
+                            transactionId: params.transactionId,
+                            paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                            creditCard: {
+                                memberId: 'me',
+                                cardSeq: creditCard.cardSeq
+                            }
+                        })
+                    }
+                });
+            }
+        }
+        yield lineClient_1.default.pushMessage(params.user.userId, [
+            {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'bubble',
+                    styles: {
+                        footer: {
+                            separator: true
+                        }
+                    },
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'クレジットカードを選択してください',
+                                weight: 'bold',
+                                color: '#1DB446',
+                                size: 'sm'
+                            },
+                            {
+                                type: 'text',
+                                text: transaction.seller.name.ja,
+                                weight: 'bold',
+                                size: 'xxl',
+                                margin: 'md',
+                                maxLines: 0,
+                                wrap: true
+                            }
+                        ]
+                    },
+                    footer: {
+                        type: 'box',
+                        layout: 'vertical',
+                        spacing: 'sm',
+                        contents: footerContets
+                    }
+                }
+            }
+        ]);
+    });
+}
+exports.selectCreditCard = selectCreditCard;
 /**
  * 購入者情報決定
  */
@@ -2339,8 +2430,7 @@ function selectSeatOffers(params) {
                             type: 'postback',
                             label: 'クレジットカード',
                             data: querystring.stringify({
-                                action: 'selectPaymentMethodType',
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+                                action: 'selectCreditCard',
                                 transactionId: transaction.id
                             })
                         }

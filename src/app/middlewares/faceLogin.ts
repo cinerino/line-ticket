@@ -5,7 +5,7 @@ import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import { WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
-import * as querystring from 'querystring';
+import * as querystring from 'qs';
 import * as request from 'request-promise-native';
 import * as stream from 'stream';
 

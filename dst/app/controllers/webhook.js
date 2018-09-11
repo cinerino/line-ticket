@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const createDebug = require("debug");
-const querystring = require("querystring");
+const querystring = require("qs");
 const lineClient_1 = require("../../lineClient");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
@@ -146,6 +146,13 @@ function postback(event, user) {
                         transactionId: data.transactionId
                     });
                     break;
+                case 'selectCreditCard':
+                    yield PostbackController.selectCreditCard({
+                        replyToken: event.replyToken,
+                        user: user,
+                        transactionId: data.transactionId
+                    });
+                    break;
                 // 決済方法選択
                 case 'selectPaymentMethodType':
                     yield PostbackController.selectPaymentMethodType({
@@ -153,7 +160,8 @@ function postback(event, user) {
                         user: user,
                         paymentMethodType: data.paymentMethod,
                         transactionId: data.transactionId,
-                        code: data.code
+                        code: data.code,
+                        creditCard: data.creditCard
                     });
                     break;
                 // 購入者情報決定

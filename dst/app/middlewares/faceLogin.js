@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const http_status_1 = require("http-status");
-const querystring = require("querystring");
+const querystring = require("qs");
 const request = require("request-promise-native");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");

@@ -50,11 +50,6 @@ transactionsRouter.get(
                 userId: req.query.userId,
                 state: ''
             });
-            const credentials = await user.getCredentials();
-            if (credentials === null) {
-                throw new Error('User credentials not found');
-            }
-            user.setCredentials(credentials);
             const eventService = new cinerinoapi.service.Event({
                 endpoint: <string>process.env.CINERINO_ENDPOINT,
                 auth: user.authClient

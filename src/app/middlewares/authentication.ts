@@ -7,7 +7,7 @@ import { TemplateMessage, WebhookEvent } from '@line/bot-sdk';
 import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
-import * as querystring from 'querystring';
+import * as querystring from 'qs';
 import { URL } from 'url';
 
 import LINE from '../../lineClient';

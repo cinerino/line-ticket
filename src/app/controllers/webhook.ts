@@ -3,7 +3,7 @@
  */
 import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
-import * as querystring from 'querystring';
+import * as querystring from 'qs';
 
 import LINE from '../../lineClient';
 import User from '../user';
@@ -144,6 +144,13 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     transactionId: <string>data.transactionId
                 });
                 break;
+            case 'selectCreditCard':
+                await PostbackController.selectCreditCard({
+                    replyToken: event.replyToken,
+                    user: user,
+                    transactionId: <string>data.transactionId
+                });
+                break;
             // 決済方法選択
             case 'selectPaymentMethodType':
                 await PostbackController.selectPaymentMethodType({
@@ -151,7 +158,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     user: user,
                     paymentMethodType: <PostbackController.PaymentMethodType>data.paymentMethod,
                     transactionId: <string>data.transactionId,
-                    code: <string>data.code
+                    code: data.code,
+                    creditCard: data.creditCard
                 });
                 break;
             // 購入者情報決定
@@ -232,8 +240,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.openAccount({
                     replyToken: event.replyToken,
                     user: user,
-                    name: <string>data.name,
-                    accountType: <any>data.accountType
+                    name: data.name,
+                    accountType: data.accountType
                 });
                 break;
             // 口座解約
@@ -241,8 +249,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.closeAccount({
                     replyToken: event.replyToken,
                     user: user,
-                    accountType: <any>data.accountType,
-                    accountNumber: <string>data.accountNumber
+                    accountType: data.accountType,
+                    accountNumber: data.accountNumber
                 });
                 break;
             // コイン口座検索
@@ -256,8 +264,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.searchAccountMoneyTransferActions({
                     replyToken: event.replyToken,
                     user: user,
-                    accountType: <any>data.accountType,
-                    accountNumber: <string>data.accountNumber
+                    accountType: data.accountType,
+                    accountNumber: data.accountNumber
                 });
                 break;
             // 口座入金金額選択
@@ -265,8 +273,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.selectDepositAmount({
                     replyToken: event.replyToken,
                     user: user,
-                    accountType: <any>data.accountType,
-                    accountNumber: <string>data.accountNumber
+                    accountType: data.accountType,
+                    accountNumber: data.accountNumber
                 });
                 break;
             // 口座入金金額選択
@@ -274,9 +282,9 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.depositCoinByCreditCard({
                     replyToken: event.replyToken,
                     user: user,
-                    amount: Number(<string>data.amount),
-                    accountType: <any>data.accountType,
-                    toAccountNumber: <string>data.toAccountNumber
+                    amount: Number(data.amount),
+                    accountType: data.accountType,
+                    toAccountNumber: data.toAccountNumber
                 });
                 break;
             case 'askEventStartDate':
@@ -306,8 +314,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 await PostbackController.authorizeOwnershipInfo({
                     replyToken: event.replyToken,
                     user: user,
-                    goodType: <any>data.goodType,
-                    id: <string>data.id
+                    goodType: data.goodType,
+                    id: data.id
                 });
                 break;
             // 注文検索

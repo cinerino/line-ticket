@@ -5,7 +5,7 @@ import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import { TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
-import * as querystring from 'querystring';
+import * as querystring from 'qs';
 
 import LINE from '../../../lineClient';
 import User from '../../user';

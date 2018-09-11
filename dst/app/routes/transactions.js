@@ -53,11 +53,6 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
             userId: req.query.userId,
             state: ''
         });
-        const credentials = yield user.getCredentials();
-        if (credentials === null) {
-            throw new Error('User credentials not found');
-        }
-        user.setCredentials(credentials);
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient

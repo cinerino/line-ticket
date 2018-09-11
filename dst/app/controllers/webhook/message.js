@@ -14,7 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const createDebug = require("debug");
 const moment = require("moment");
-const querystring = require("querystring");
+const querystring = require("qs");
 const lineClient_1 = require("../../../lineClient");
 const debug = createDebug('cinerino-line-ticket:controllers');
 /**
