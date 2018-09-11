@@ -28,7 +28,11 @@ export async function message(event: line.MessageEvent, user: User) {
                 switch (true) {
                     // [購入番号]で検索
                     case /^\d{6}$/.test(messageText):
-                        await MessageController.askReservationEventDate(event.replyToken, messageText);
+                        await MessageController.askReservationEventDate({
+                            replyToken: event.replyToken,
+                            user: user,
+                            paymentNo: messageText
+                        });
                         break;
                     // ログイン
                     case /^login$/.test(messageText):
@@ -36,10 +40,16 @@ export async function message(event: line.MessageEvent, user: User) {
                         break;
                     // ログアウト
                     case /^logout$/.test(messageText):
-                        await MessageController.logout(event.replyToken, user);
+                        await MessageController.logout({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     case /^座席予約$/.test(messageText):
-                        await MessageController.showSeatReservationMenu(event.replyToken);
+                        await MessageController.showSeatReservationMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     case /^注文$/.test(messageText):
                         await MessageController.showOrderMenu({
@@ -54,28 +64,48 @@ export async function message(event: line.MessageEvent, user: User) {
                         });
                         break;
                     case /^コイン$/.test(messageText):
-                        await MessageController.showCoinAccountMenu(event.replyToken, user);
+                        await MessageController.showCoinAccountMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     case /^コード$/.test(messageText):
-                        await MessageController.showCodeMenu(event.replyToken, user);
+                        await MessageController.showCodeMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     // 顔写真登録
                     case /^顔写真登録$/.test(messageText):
-                        await MessageController.startIndexingFace(event.replyToken);
+                        await MessageController.startIndexingFace({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     // 友達決済承認ワンタイムメッセージ
                     case /^FriendPayToken/.test(messageText):
                         const token = messageText.replace('FriendPayToken.', '');
-                        await MessageController.askConfirmationOfFriendPay(event.replyToken, token);
+                        await MessageController.askConfirmationOfFriendPay({
+                            replyToken: event.replyToken,
+                            user: user,
+                            token: token
+                        });
                         break;
                     // おこづかいをもらう
                     case /^おこづかい$/.test(messageText):
-                        await MessageController.selectWhomAskForMoney(event.replyToken, user);
+                        await MessageController.selectWhomAskForMoney({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     // おこづかい承認メッセージ
                     case /^TransferMoneyToken/.test(messageText):
                         const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
-                        await MessageController.askConfirmationOfTransferMoney(event.replyToken, user, transferMoneyToken);
+                        await MessageController.askConfirmationOfTransferMoney({
+                            replyToken: event.replyToken,
+                            user: user,
+                            transferMoneyToken: transferMoneyToken
+                        });
                         break;
                     // メッセージで強制的にpostbackイベントを発動
                     case /^postback:/.test(messageText):

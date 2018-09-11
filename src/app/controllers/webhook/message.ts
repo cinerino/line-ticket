@@ -2,7 +2,7 @@
  * LINE Webhook messageコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import { Action, TextMessage } from '@line/bot-sdk';
+import { Action, QuickReplyItem, TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as querystring from 'qs';
@@ -15,70 +15,105 @@ const debug = createDebug('cinerino-line-ticket:controllers');
 /**
  * 使い方を送信する
  */
+// tslint:disable-next-line:max-func-body-length
 export async function pushHowToUse(params: {
     replyToken: string;
     user: User;
 }) {
+    const quickReplyItems: QuickReplyItem[] = [];
+    if (await params.user.getCredentials() !== null) {
+        quickReplyItems.push(
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'message',
+                    label: '座席予約管理',
+                    text: '座席予約'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'クレジットカード管理',
+                    text: 'クレジットカード'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'コイン口座管理',
+                    text: 'コイン'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
+                action: {
+                    type: 'message',
+                    label: '注文管理',
+                    text: '注文'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                action: {
+                    type: 'message',
+                    label: 'コード管理',
+                    text: 'コード'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                action: {
+                    type: 'message',
+                    label: 'おこづかいをもらう',
+                    text: 'おこづかい'
+                }
+            }
+        );
+    } else {
+        quickReplyItems.push(
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'message',
+                    label: '座席予約管理',
+                    text: '座席予約'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
+                action: {
+                    type: 'message',
+                    label: '注文管理',
+                    text: '注文'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                action: {
+                    type: 'message',
+                    label: 'コード管理',
+                    text: 'コード'
+                }
+            }
+        );
+    }
     const message: TextMessage = {
         type: 'text',
         text: 'ご用件はなんでしょう？',
         quickReply: {
-            items: [
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
-                    action: {
-                        type: 'message',
-                        label: '座席予約管理',
-                        text: '座席予約'
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                    action: {
-                        type: 'message',
-                        label: 'クレジットカード管理',
-                        text: 'クレジットカード'
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                    action: {
-                        type: 'message',
-                        label: 'コイン口座管理',
-                        text: 'コイン'
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
-                    action: {
-                        type: 'message',
-                        label: '注文管理',
-                        text: '注文'
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
-                    action: {
-                        type: 'message',
-                        label: 'コード管理',
-                        text: 'コード'
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
-                    action: {
-                        type: 'message',
-                        label: 'おこづかいをもらう',
-                        text: 'おこづかい'
-                    }
-                }
-            ]
+            items: quickReplyItems
         }
     };
     await LINE.replyMessage(params.replyToken, [message]);
@@ -86,8 +121,11 @@ export async function pushHowToUse(params: {
 /**
  * 座席予約メニューを表示する
  */
-export async function showSeatReservationMenu(replyToken: string) {
-    await LINE.replyMessage(replyToken, [
+export async function showSeatReservationMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: '座席予約メニュー',
@@ -190,10 +228,13 @@ export async function showCreditCardMenu(params: {
         }
     ]);
 }
-export async function showCoinAccountMenu(replyToken: string, user: User) {
-    const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+export async function showCoinAccountMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const openAccountUri = `https://${params.user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
-    await LINE.replyMessage(replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'コイン口座管理',
@@ -217,10 +258,13 @@ export async function showCoinAccountMenu(replyToken: string, user: User) {
         }
     ]);
 }
-export async function showCodeMenu(replyToken: string, _: User) {
+export async function showCodeMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
     const scanQRUri = '/reservations/scanScreeningEventReservationCode';
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
-    await LINE.replyMessage(replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'コード管理',
@@ -242,15 +286,21 @@ export async function showCodeMenu(replyToken: string, _: User) {
 /**
  * 顔写真登録を開始する
  */
-export async function startIndexingFace(replyToken: string) {
-    await LINE.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
+export async function startIndexingFace(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: '顔写真を送信してください' });
 }
-
 /**
  * 友達決済承認確認
  */
-export async function askConfirmationOfFriendPay(replyToken: string, token: string) {
-    await LINE.replyMessage(replyToken, [
+export async function askConfirmationOfFriendPay(params: {
+    replyToken: string;
+    user: User;
+    token: string;
+}) {
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'This is a buttons template',
@@ -261,12 +311,12 @@ export async function askConfirmationOfFriendPay(replyToken: string, token: stri
                     {
                         type: 'postback',
                         label: 'Yes',
-                        data: `action=confirmFriendPay&token=${token}`
+                        data: `action=confirmFriendPay&token=${params.token}`
                     },
                     {
                         type: 'postback',
                         label: 'No',
-                        data: `action=rejectFriendPay&token=${token}`
+                        data: `action=rejectFriendPay&token=${params.token}`
                     }
                 ]
             }
@@ -277,9 +327,13 @@ export async function askConfirmationOfFriendPay(replyToken: string, token: stri
 /**
  * おこづかい承認確認
  */
-export async function askConfirmationOfTransferMoney(replyToken: string, user: User, transferMoneyToken: string) {
-    const transferMoneyInfo = await user.verifyTransferMoneyToken(transferMoneyToken);
-    await LINE.replyMessage(replyToken, [
+export async function askConfirmationOfTransferMoney(params: {
+    replyToken: string;
+    user: User;
+    transferMoneyToken: string;
+}) {
+    const transferMoneyInfo = await params.user.verifyTransferMoneyToken(params.transferMoneyToken);
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'おこづかい金額選択',
@@ -290,22 +344,22 @@ export async function askConfirmationOfTransferMoney(replyToken: string, user: U
                     {
                         type: 'postback',
                         label: '10円あげる',
-                        data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=10`
+                        data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=10`
                     },
                     {
                         type: 'postback',
                         label: '100円あげる',
-                        data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=100`
+                        data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=100`
                     },
                     {
                         type: 'postback',
                         label: '1000円あげる',
-                        data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=1000`
+                        data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=1000`
                     },
                     {
                         type: 'postback',
                         label: 'あげない',
-                        data: `action=rejectTransferMoney&token=${transferMoneyToken}`
+                        data: `action=rejectTransferMoney&token=${params.transferMoneyToken}`
                     }
                 ]
             }
@@ -315,15 +369,18 @@ export async function askConfirmationOfTransferMoney(replyToken: string, user: U
 /**
  * 誰からお金をもらうか選択する
  */
-export async function selectWhomAskForMoney(replyToken: string, user: User) {
+export async function selectWhomAskForMoney(params: {
+    replyToken: string;
+    user: User;
+}) {
     const LINE_ID = process.env.LINE_ID;
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: user.authClient
+        auth: params.user.authClient
     });
     const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
         personId: 'me',
@@ -342,8 +399,8 @@ export async function selectWhomAskForMoney(replyToken: string, user: User) {
     const account = accounts[0];
     const contact = await personService.getContacts({ personId: 'me' });
 
-    const token = await user.signTransferMoneyInfo({
-        userId: user.userId,
+    const token = await params.user.signTransferMoneyInfo({
+        userId: params.user.userId,
         accountNumber: account.accountNumber,
         name: `${contact.familyName} ${contact.givenName}`
     });
@@ -351,7 +408,7 @@ export async function selectWhomAskForMoney(replyToken: string, user: User) {
     const message = encodeURIComponent(`おこづかいちょーだい！
 よければ下のリンクを押してそのままメッセージを送信してね
 line://oaMessage/${LINE_ID}/?${friendMessage}`);
-    await LINE.replyMessage(replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'This is a buttons template',
@@ -374,14 +431,17 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
 /**
  * 予約番号or電話番号のボタンを送信する
  */
-export async function pushButtonsReserveNumOrTel(replyToken: string, userId: string, message: string) {
-    debug(userId, message);
-    const datas = message.split('-');
+export async function pushButtonsReserveNumOrTel(params: {
+    replyToken: string;
+    user: User;
+    message: string;
+}) {
+    const datas = params.message.split('-');
     const theater = datas[0];
     const reserveNumOrTel = datas[1];
 
     // キュー実行のボタン表示
-    await LINE.replyMessage(replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'aaa',
@@ -404,12 +464,15 @@ export async function pushButtonsReserveNumOrTel(replyToken: string, userId: str
         }
     ]);
 }
-
 /**
  * 予約のイベント日選択を求める
  */
-export async function askReservationEventDate(replyToken: string, paymentNo: string) {
-    await LINE.replyMessage(replyToken, [
+export async function askReservationEventDate(params: {
+    replyToken: string;
+    user: User;
+    paymentNo: string;
+}) {
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: '日付選択',
@@ -421,7 +484,7 @@ export async function askReservationEventDate(replyToken: string, paymentNo: str
                         type: 'datetimepicker',
                         label: '日付選択',
                         mode: 'date',
-                        data: `action=searchTransactionByPaymentNo&paymentNo=${paymentNo}`,
+                        data: `action=searchTransactionByPaymentNo&paymentNo=${params.paymentNo}`,
                         initial: moment().format('YYYY-MM-DD')
                     }
                 ]
@@ -500,8 +563,11 @@ export async function askEventStartDate(params: {
 /**
  * 日付選択を求める
  */
-export async function askFromWhenAndToWhen(replyToken: string) {
-    await LINE.replyMessage(replyToken, [
+export async function askFromWhenAndToWhen(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: '日付選択',
@@ -522,10 +588,13 @@ export async function askFromWhenAndToWhen(replyToken: string) {
     ]);
 }
 
-export async function logout(replyToken: string, user: User) {
-    const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
+export async function logout(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const logoutUri = `https://${params.user.host}/logout?userId=${params.user.userId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
-    await LINE.replyMessage(replyToken, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'ログアウトボタン',

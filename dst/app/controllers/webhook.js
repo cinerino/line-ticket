@@ -30,7 +30,11 @@ function message(event, user) {
                     switch (true) {
                         // [購入番号]で検索
                         case /^\d{6}$/.test(messageText):
-                            yield MessageController.askReservationEventDate(event.replyToken, messageText);
+                            yield MessageController.askReservationEventDate({
+                                replyToken: event.replyToken,
+                                user: user,
+                                paymentNo: messageText
+                            });
                             break;
                         // ログイン
                         case /^login$/.test(messageText):
@@ -38,10 +42,16 @@ function message(event, user) {
                             break;
                         // ログアウト
                         case /^logout$/.test(messageText):
-                            yield MessageController.logout(event.replyToken, user);
+                            yield MessageController.logout({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         case /^座席予約$/.test(messageText):
-                            yield MessageController.showSeatReservationMenu(event.replyToken);
+                            yield MessageController.showSeatReservationMenu({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         case /^注文$/.test(messageText):
                             yield MessageController.showOrderMenu({
@@ -56,28 +66,48 @@ function message(event, user) {
                             });
                             break;
                         case /^コイン$/.test(messageText):
-                            yield MessageController.showCoinAccountMenu(event.replyToken, user);
+                            yield MessageController.showCoinAccountMenu({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         case /^コード$/.test(messageText):
-                            yield MessageController.showCodeMenu(event.replyToken, user);
+                            yield MessageController.showCodeMenu({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         // 顔写真登録
                         case /^顔写真登録$/.test(messageText):
-                            yield MessageController.startIndexingFace(event.replyToken);
+                            yield MessageController.startIndexingFace({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         // 友達決済承認ワンタイムメッセージ
                         case /^FriendPayToken/.test(messageText):
                             const token = messageText.replace('FriendPayToken.', '');
-                            yield MessageController.askConfirmationOfFriendPay(event.replyToken, token);
+                            yield MessageController.askConfirmationOfFriendPay({
+                                replyToken: event.replyToken,
+                                user: user,
+                                token: token
+                            });
                             break;
                         // おこづかいをもらう
                         case /^おこづかい$/.test(messageText):
-                            yield MessageController.selectWhomAskForMoney(event.replyToken, user);
+                            yield MessageController.selectWhomAskForMoney({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         // おこづかい承認メッセージ
                         case /^TransferMoneyToken/.test(messageText):
                             const transferMoneyToken = messageText.replace('TransferMoneyToken.', '');
-                            yield MessageController.askConfirmationOfTransferMoney(event.replyToken, user, transferMoneyToken);
+                            yield MessageController.askConfirmationOfTransferMoney({
+                                replyToken: event.replyToken,
+                                user: user,
+                                transferMoneyToken: transferMoneyToken
+                            });
                             break;
                         // メッセージで強制的にpostbackイベントを発動
                         case /^postback:/.test(messageText):

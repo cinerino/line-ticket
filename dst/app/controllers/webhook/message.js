@@ -20,68 +20,93 @@ const debug = createDebug('cinerino-line-ticket:controllers');
 /**
  * 使い方を送信する
  */
+// tslint:disable-next-line:max-func-body-length
 function pushHowToUse(params) {
     return __awaiter(this, void 0, void 0, function* () {
+        const quickReplyItems = [];
+        if ((yield params.user.getCredentials()) !== null) {
+            quickReplyItems.push({
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'message',
+                    label: '座席予約管理',
+                    text: '座席予約'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'クレジットカード管理',
+                    text: 'クレジットカード'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'コイン口座管理',
+                    text: 'コイン'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
+                action: {
+                    type: 'message',
+                    label: '注文管理',
+                    text: '注文'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                action: {
+                    type: 'message',
+                    label: 'コード管理',
+                    text: 'コード'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                action: {
+                    type: 'message',
+                    label: 'おこづかいをもらう',
+                    text: 'おこづかい'
+                }
+            });
+        }
+        else {
+            quickReplyItems.push({
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'message',
+                    label: '座席予約管理',
+                    text: '座席予約'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
+                action: {
+                    type: 'message',
+                    label: '注文管理',
+                    text: '注文'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
+                action: {
+                    type: 'message',
+                    label: 'コード管理',
+                    text: 'コード'
+                }
+            });
+        }
         const message = {
             type: 'text',
             text: 'ご用件はなんでしょう？',
             quickReply: {
-                items: [
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
-                        action: {
-                            type: 'message',
-                            label: '座席予約管理',
-                            text: '座席予約'
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                        action: {
-                            type: 'message',
-                            label: 'クレジットカード管理',
-                            text: 'クレジットカード'
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                        action: {
-                            type: 'message',
-                            label: 'コイン口座管理',
-                            text: 'コイン'
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/order-96.png`,
-                        action: {
-                            type: 'message',
-                            label: '注文管理',
-                            text: '注文'
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/qr-code-48.png`,
-                        action: {
-                            type: 'message',
-                            label: 'コード管理',
-                            text: 'コード'
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
-                        action: {
-                            type: 'message',
-                            label: 'おこづかいをもらう',
-                            text: 'おこづかい'
-                        }
-                    }
-                ]
+                items: quickReplyItems
             }
         };
         yield lineClient_1.default.replyMessage(params.replyToken, [message]);
@@ -91,9 +116,9 @@ exports.pushHowToUse = pushHowToUse;
 /**
  * 座席予約メニューを表示する
  */
-function showSeatReservationMenu(replyToken) {
+function showSeatReservationMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: '座席予約メニュー',
@@ -198,11 +223,11 @@ function showCreditCardMenu(params) {
     });
 }
 exports.showCreditCardMenu = showCreditCardMenu;
-function showCoinAccountMenu(replyToken, user) {
+function showCoinAccountMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const openAccountUri = `https://${user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+        const openAccountUri = `https://${params.user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'コイン口座管理',
@@ -228,11 +253,11 @@ function showCoinAccountMenu(replyToken, user) {
     });
 }
 exports.showCoinAccountMenu = showCoinAccountMenu;
-function showCodeMenu(replyToken, _) {
+function showCodeMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const scanQRUri = '/reservations/scanScreeningEventReservationCode';
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'コード管理',
@@ -256,18 +281,18 @@ exports.showCodeMenu = showCodeMenu;
 /**
  * 顔写真登録を開始する
  */
-function startIndexingFace(replyToken) {
+function startIndexingFace(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, { type: 'text', text: '顔写真を送信してください' });
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '顔写真を送信してください' });
     });
 }
 exports.startIndexingFace = startIndexingFace;
 /**
  * 友達決済承認確認
  */
-function askConfirmationOfFriendPay(replyToken, token) {
+function askConfirmationOfFriendPay(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'This is a buttons template',
@@ -278,12 +303,12 @@ function askConfirmationOfFriendPay(replyToken, token) {
                         {
                             type: 'postback',
                             label: 'Yes',
-                            data: `action=confirmFriendPay&token=${token}`
+                            data: `action=confirmFriendPay&token=${params.token}`
                         },
                         {
                             type: 'postback',
                             label: 'No',
-                            data: `action=rejectFriendPay&token=${token}`
+                            data: `action=rejectFriendPay&token=${params.token}`
                         }
                     ]
                 }
@@ -295,10 +320,10 @@ exports.askConfirmationOfFriendPay = askConfirmationOfFriendPay;
 /**
  * おこづかい承認確認
  */
-function askConfirmationOfTransferMoney(replyToken, user, transferMoneyToken) {
+function askConfirmationOfTransferMoney(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const transferMoneyInfo = yield user.verifyTransferMoneyToken(transferMoneyToken);
-        yield lineClient_1.default.replyMessage(replyToken, [
+        const transferMoneyInfo = yield params.user.verifyTransferMoneyToken(params.transferMoneyToken);
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'おこづかい金額選択',
@@ -309,22 +334,22 @@ function askConfirmationOfTransferMoney(replyToken, user, transferMoneyToken) {
                         {
                             type: 'postback',
                             label: '10円あげる',
-                            data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=10`
+                            data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=10`
                         },
                         {
                             type: 'postback',
                             label: '100円あげる',
-                            data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=100`
+                            data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=100`
                         },
                         {
                             type: 'postback',
                             label: '1000円あげる',
-                            data: `action=confirmTransferMoney&token=${transferMoneyToken}&price=1000`
+                            data: `action=confirmTransferMoney&token=${params.transferMoneyToken}&price=1000`
                         },
                         {
                             type: 'postback',
                             label: 'あげない',
-                            data: `action=rejectTransferMoney&token=${transferMoneyToken}`
+                            data: `action=rejectTransferMoney&token=${params.transferMoneyToken}`
                         }
                     ]
                 }
@@ -336,16 +361,16 @@ exports.askConfirmationOfTransferMoney = askConfirmationOfTransferMoney;
 /**
  * 誰からお金をもらうか選択する
  */
-function selectWhomAskForMoney(replyToken, user) {
+function selectWhomAskForMoney(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const LINE_ID = process.env.LINE_ID;
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
+            auth: params.user.authClient
         });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
+            auth: params.user.authClient
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
             personId: 'me',
@@ -363,8 +388,8 @@ function selectWhomAskForMoney(replyToken, user) {
         }
         const account = accounts[0];
         const contact = yield personService.getContacts({ personId: 'me' });
-        const token = yield user.signTransferMoneyInfo({
-            userId: user.userId,
+        const token = yield params.user.signTransferMoneyInfo({
+            userId: params.user.userId,
             accountNumber: account.accountNumber,
             name: `${contact.familyName} ${contact.givenName}`
         });
@@ -372,7 +397,7 @@ function selectWhomAskForMoney(replyToken, user) {
         const message = encodeURIComponent(`おこづかいちょーだい！
 よければ下のリンクを押してそのままメッセージを送信してね
 line://oaMessage/${LINE_ID}/?${friendMessage}`);
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'This is a buttons template',
@@ -396,14 +421,13 @@ exports.selectWhomAskForMoney = selectWhomAskForMoney;
 /**
  * 予約番号or電話番号のボタンを送信する
  */
-function pushButtonsReserveNumOrTel(replyToken, userId, message) {
+function pushButtonsReserveNumOrTel(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        debug(userId, message);
-        const datas = message.split('-');
+        const datas = params.message.split('-');
         const theater = datas[0];
         const reserveNumOrTel = datas[1];
         // キュー実行のボタン表示
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'aaa',
@@ -431,9 +455,9 @@ exports.pushButtonsReserveNumOrTel = pushButtonsReserveNumOrTel;
 /**
  * 予約のイベント日選択を求める
  */
-function askReservationEventDate(replyToken, paymentNo) {
+function askReservationEventDate(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: '日付選択',
@@ -445,7 +469,7 @@ function askReservationEventDate(replyToken, paymentNo) {
                             type: 'datetimepicker',
                             label: '日付選択',
                             mode: 'date',
-                            data: `action=searchTransactionByPaymentNo&paymentNo=${paymentNo}`,
+                            data: `action=searchTransactionByPaymentNo&paymentNo=${params.paymentNo}`,
                             initial: moment().format('YYYY-MM-DD')
                         }
                     ]
@@ -526,9 +550,9 @@ exports.askEventStartDate = askEventStartDate;
 /**
  * 日付選択を求める
  */
-function askFromWhenAndToWhen(replyToken) {
+function askFromWhenAndToWhen(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: '日付選択',
@@ -550,11 +574,11 @@ function askFromWhenAndToWhen(replyToken) {
     });
 }
 exports.askFromWhenAndToWhen = askFromWhenAndToWhen;
-function logout(replyToken, user) {
+function logout(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const logoutUri = `https://${user.host}/logout?userId=${user.userId}`;
+        const logoutUri = `https://${params.user.host}/logout?userId=${params.user.userId}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
-        yield lineClient_1.default.replyMessage(replyToken, [
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'ログアウトボタン',
