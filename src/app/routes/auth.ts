@@ -20,6 +20,10 @@ authRouter.get(
     async (req, res, next) => {
         try {
             // stateにはイベントオブジェクトとして受け取ったリクエストボディが入っている
+            res.json(req.query);
+
+            return;
+
             const body = JSON.parse(req.query.state);
             const event: line.MessageEvent = body.events[0];
             const userId = <string>event.source.userId;

@@ -21,6 +21,8 @@ const authRouter = express.Router();
 authRouter.get('/signIn', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
         // stateにはイベントオブジェクトとして受け取ったリクエストボディが入っている
+        res.json(req.query);
+        return;
         const body = JSON.parse(req.query.state);
         const event = body.events[0];
         const userId = event.source.userId;
