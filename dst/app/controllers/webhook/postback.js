@@ -686,7 +686,20 @@ exports.selectPaymentMethodType = selectPaymentMethodType;
 function selectCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const transaction = yield params.user.findTransaction();
-        const inputCreditCardUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=tshop00026096`;
+        const organizationService = new cinerinoapi.service.Organization({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const searchOrganizationsResult = yield organizationService.searchMovieTheaters({ limit: 1 });
+        const movieTheater = searchOrganizationsResult.data[0];
+        if (movieTheater.paymentAccepted === undefined) {
+            throw new Error('許可された決済方法が見つかりません');
+        }
+        const creditCardPayment = movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+        if (creditCardPayment === undefined) {
+            throw new Error('クレジットカード決済が許可されていません');
+        }
+        const inputCreditCardUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`;
         const footerContets = [
             {

@@ -47,7 +47,10 @@ function message(event, user) {
                             yield MessageController.showOrderMenu(event.replyToken);
                             break;
                         case /^クレジットカード$/.test(messageText):
-                            yield MessageController.showCreditCardMenu(event.replyToken);
+                            yield MessageController.showCreditCardMenu({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
                             break;
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu(event.replyToken, user);
@@ -101,11 +104,7 @@ function message(event, user) {
             }
         }
         catch (error) {
-            // エラーメッセージ表示
-            yield lineClient_1.default.replyMessage(event.replyToken, {
-                type: 'text',
-                text: error.toString()
-            });
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
         }
     });
 }
@@ -344,12 +343,7 @@ function postback(event, user) {
             }
         }
         catch (error) {
-            console.error(error);
-            // エラーメッセージ表示
-            yield lineClient_1.default.replyMessage(event.replyToken, {
-                type: 'text',
-                text: error.toString()
-            });
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
         }
     });
 }

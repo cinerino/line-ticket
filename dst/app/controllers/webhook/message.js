@@ -145,10 +145,23 @@ function showOrderMenu(replyToken) {
     });
 }
 exports.showOrderMenu = showOrderMenu;
-function showCreditCardMenu(replyToken) {
+function showCreditCardMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
-        yield lineClient_1.default.replyMessage(replyToken, [
+        const organizationService = new cinerinoapi.service.Organization({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const searchOrganizationsResult = yield organizationService.searchMovieTheaters({ limit: 1 });
+        const movieTheater = searchOrganizationsResult.data[0];
+        if (movieTheater.paymentAccepted === undefined) {
+            throw new Error('許可された決済方法が見つかりません');
+        }
+        const creditCardPayment = movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+        if (creditCardPayment === undefined) {
+            throw new Error('クレジットカード決済が許可されていません');
+        }
+        const inputCreditCardUri = `/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: 'クレジットカード管理',

@@ -134,9 +134,26 @@ export async function showOrderMenu(replyToken: string) {
         }
     ]);
 }
-export async function showCreditCardMenu(replyToken: string) {
-    const inputCreditCardUri = '/transactions/inputCreditCard?gmoShopId=tshop00026096';
-    await LINE.replyMessage(replyToken, [
+export async function showCreditCardMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const organizationService = new cinerinoapi.service.Organization({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const searchOrganizationsResult = await organizationService.searchMovieTheaters({ limit: 1 });
+    const movieTheater = searchOrganizationsResult.data[0];
+    if (movieTheater.paymentAccepted === undefined) {
+        throw new Error('許可された決済方法が見つかりません');
+    }
+    const creditCardPayment = <cinerinoapi.factory.organization.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+        movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+    if (creditCardPayment === undefined) {
+        throw new Error('クレジットカード決済が許可されていません');
+    }
+    const inputCreditCardUri = `/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: 'クレジットカード管理',

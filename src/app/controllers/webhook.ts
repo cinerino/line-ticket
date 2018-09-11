@@ -45,7 +45,10 @@ export async function message(event: line.MessageEvent, user: User) {
                         await MessageController.showOrderMenu(event.replyToken);
                         break;
                     case /^クレジットカード$/.test(messageText):
-                        await MessageController.showCreditCardMenu(event.replyToken);
+                        await MessageController.showCreditCardMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu(event.replyToken, user);
@@ -100,14 +103,7 @@ export async function message(event: line.MessageEvent, user: User) {
                 throw new Error(`Unknown message type ${event.message.type}`);
         }
     } catch (error) {
-        // エラーメッセージ表示
-        await LINE.replyMessage(
-            event.replyToken,
-            {
-                type: 'text',
-                text: error.toString()
-            }
-        );
+        await LINE.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
     }
 }
 
@@ -342,15 +338,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             default:
         }
     } catch (error) {
-        console.error(error);
-        // エラーメッセージ表示
-        await LINE.replyMessage(
-            event.replyToken,
-            {
-                type: 'text',
-                text: error.toString()
-            }
-        );
+        await LINE.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
     }
 }
 
