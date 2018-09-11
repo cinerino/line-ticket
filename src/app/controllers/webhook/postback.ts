@@ -533,8 +533,7 @@ export async function selectPaymentMethodType(params: {
             telephone: '+819012345678' // dummy
         };
     }
-    const query = querystring.stringify({ userId: params.user.userId });
-    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${query}`;
+    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
     const footerContets: FlexComponent[] = [
         {
@@ -582,7 +581,7 @@ export async function selectPaymentMethodType(params: {
                     contents: [
                         {
                             type: 'text',
-                            text: '注文をご確認ください',
+                            text: '購入者情報をご確認ください',
                             weight: 'bold',
                             color: '#1DB446',
                             size: 'sm'

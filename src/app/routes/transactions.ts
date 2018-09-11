@@ -23,7 +23,21 @@ transactionsRouter.get(
             next(error);
         }
     });
-
+/**
+ * クレジットカード情報入力フォーム
+ */
+transactionsRouter.get(
+    '/placeOrder/:transactionId/setCustomerContact',
+    async (req, res, next) => {
+        try {
+            // フォーム
+            res.render('transactions/placeOrder/setCustomerContact', {
+                transactionId: req.params.transactionId
+            });
+        } catch (error) {
+            next(error);
+        }
+    });
 /**
  * 座席選択フォーム
  */

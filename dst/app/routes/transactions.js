@@ -30,6 +30,20 @@ transactionsRouter.get('/inputCreditCard', (req, res, next) => __awaiter(this, v
     }
 }));
 /**
+ * クレジットカード情報入力フォーム
+ */
+transactionsRouter.get('/placeOrder/:transactionId/setCustomerContact', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    try {
+        // フォーム
+        res.render('transactions/placeOrder/setCustomerContact', {
+            transactionId: req.params.transactionId
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}));
+/**
  * 座席選択フォーム
  */
 transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
