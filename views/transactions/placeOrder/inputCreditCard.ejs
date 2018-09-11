@@ -127,8 +127,7 @@
         $('input[name=token]').val(response.tokenObject.token);
 
         // スクリプトからフォームを submit
-        const creditCard = { token: response.tokenObject.token };
-        const message = 'postback:' + 'action=selectPaymentMethodType&' + $("form").serialize() + '&creditCard=' + creditCard;
+        const message = 'postback:' + 'action=selectPaymentMethodType&' + $("form").serialize() + '&creditCard[token]=' + response.tokenObject.token;
         console.log('sending message...', message);
         liff.sendMessages([
             {
