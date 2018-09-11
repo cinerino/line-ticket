@@ -154,6 +154,18 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     code: <string>data.code
                 });
                 break;
+            // 購入者情報決定
+            case 'setCustomerContact':
+                await PostbackController.setCustomerContact({
+                    replyToken: event.replyToken,
+                    user: user,
+                    transactionId: <string>data.transactionId,
+                    familyName: <string>data.familyName,
+                    givenName: <string>data.givenName,
+                    email: <string>data.email,
+                    telephone: <string>data.telephone
+                });
+                break;
             // 注文確定
             case 'confirmOrder':
                 await PostbackController.confirmOrder({

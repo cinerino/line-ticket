@@ -2,7 +2,7 @@
  * LINE webhook postbackコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import { FlexBox, FlexBubble, FlexMessage, TextMessage } from '@line/bot-sdk';
+import { FlexBox, FlexBubble, FlexComponent, FlexMessage, TextMessage } from '@line/bot-sdk';
 import * as pecorino from '@pecorino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
@@ -456,7 +456,7 @@ export async function selectPaymentMethodType(params: {
         throw new Error('Invalid seat reservation authorization');
     }
     const price = seatReservationAuthorization.result.price;
-    const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
+    // const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
 
     switch (params.paymentMethodType) {
         case cinerinoapi.factory.paymentMethodType.Account:
@@ -519,14 +519,210 @@ export async function selectPaymentMethodType(params: {
         default:
             throw new Error(`Unknown payment method ${params.paymentMethodType}`);
     }
-    // const loginTicket = params.user.authClient.verifyIdToken({});
-    let contact = await personService.getContacts({ personId: 'me' });
-    const lineProfile = await LINE.getProfile(params.user.userId);
-    contact = {
-        givenName: lineProfile.displayName,
-        familyName: 'LINE',
-        email: contact.email,
-        telephone: '+819012345678' // dummy
+
+    // 購入者情報確認
+    let contact: cinerinoapi.factory.person.IContact | undefined;
+    if (await params.user.getCredentials() !== null) {
+        // const loginTicket = params.user.authClient.verifyIdToken({});
+        contact = await personService.getContacts({ personId: 'me' });
+        const lineProfile = await LINE.getProfile(params.user.userId);
+        contact = {
+            givenName: lineProfile.displayName,
+            familyName: 'LINE',
+            email: contact.email,
+            telephone: '+819012345678' // dummy
+        };
+    }
+    const query = querystring.stringify({ userId: params.user.userId });
+    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${query}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
+    const footerContets: FlexComponent[] = [
+        {
+            type: 'button',
+            // flex: 2,
+            style: 'primary',
+            action: {
+                type: 'uri',
+                label: '入力する',
+                uri: liffUri
+            }
+        }
+    ];
+    if (contact !== undefined) {
+        footerContets.push({
+            type: 'button',
+            action: {
+                type: 'postback',
+                label: 'このまま進む',
+                data: querystring.stringify({
+                    action: 'setCustomerContact',
+                    transactionId: params.transactionId,
+                    familyName: contact.familyName,
+                    givenName: contact.givenName,
+                    email: contact.email,
+                    telephone: contact.telephone
+                })
+            }
+        });
+    }
+    await LINE.pushMessage(params.user.userId, [
+        {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'bubble',
+                styles: {
+                    footer: {
+                        separator: true
+                    }
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: '注文をご確認ください',
+                            weight: 'bold',
+                            color: '#1DB446',
+                            size: 'sm'
+                        },
+                        {
+                            type: 'text',
+                            text: transaction.seller.name.ja,
+                            weight: 'bold',
+                            size: 'xxl',
+                            margin: 'md',
+                            maxLines: 0,
+                            wrap: true
+                        },
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'xxl',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Name',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '',
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Email',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: (contact !== undefined) ? contact.email : '',
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            type: 'box',
+                                            layout: 'baseline',
+                                            spacing: 'sm',
+                                            contents: [
+                                                {
+                                                    type: 'text',
+                                                    text: 'Tel',
+                                                    color: '#aaaaaa',
+                                                    size: 'sm',
+                                                    flex: 1
+                                                },
+                                                {
+                                                    type: 'text',
+                                                    text: (contact !== undefined) ? contact.telephone : '',
+                                                    wrap: true,
+                                                    size: 'sm',
+                                                    color: '#666666',
+                                                    flex: 4
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: footerContets
+                }
+            }
+        }
+    ]);
+}
+/**
+ * 購入者情報決定
+ */
+// tslint:disable-next-line:max-func-body-length
+export async function setCustomerContact(params: {
+    replyToken: string;
+    user: User;
+    transactionId: string;
+    familyName: string;
+    givenName: string;
+    email: string;
+    telephone: string;
+}) {
+    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const transaction = await params.user.findTransaction();
+    const seatReservationAuthorization = await params.user.findSeatReservationAuthorization();
+    if (seatReservationAuthorization.result === undefined) {
+        throw new Error('Invalid seat reservation authorization');
+    }
+    const price = seatReservationAuthorization.result.price;
+    const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
+    const contact = {
+        familyName: params.familyName,
+        givenName: params.givenName,
+        email: params.email,
+        telephone: params.telephone
     };
     await placeOrderService.setCustomerContact({
         transactionId: params.transactionId,
@@ -745,27 +941,26 @@ export async function selectPaymentMethodType(params: {
                                             align: 'end'
                                         }
                                     ]
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'horizontal',
-                                    contents: [
-                                        {
-                                            type: 'text',
-                                            text: '決済方法',
-                                            size: 'sm',
-                                            color: '#555555'
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: params.paymentMethodType,
-                                            size: 'sm',
-                                            color: '#111111',
-                                            align: 'end'
-                                        }
-                                    ]
                                 }
-
+                                // {
+                                //     type: 'box',
+                                //     layout: 'horizontal',
+                                //     contents: [
+                                //         {
+                                //             type: 'text',
+                                //             text: '決済方法',
+                                //             size: 'sm',
+                                //             color: '#555555'
+                                //         },
+                                //         {
+                                //             type: 'text',
+                                //             text: params.paymentMethodType,
+                                //             size: 'sm',
+                                //             color: '#111111',
+                                //             align: 'end'
+                                //         }
+                                //     ]
+                                // }
                             ]
                         }
                     ]
@@ -2157,7 +2352,7 @@ export async function selectSeatOffers(params: {
     // debug('passportToken published.', passportToken);
     const transaction = await placeOrderService.start({
         // tslint:disable-next-line:no-magic-numbers
-        expires: moment().add(15, 'minutes').toDate(),
+        expires: moment().add(5, 'minutes').toDate(),
         sellerId: seller.id
         // passportToken: passportToken
     });

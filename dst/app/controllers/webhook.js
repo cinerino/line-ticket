@@ -156,6 +156,18 @@ function postback(event, user) {
                         code: data.code
                     });
                     break;
+                // 購入者情報決定
+                case 'setCustomerContact':
+                    yield PostbackController.setCustomerContact({
+                        replyToken: event.replyToken,
+                        user: user,
+                        transactionId: data.transactionId,
+                        familyName: data.familyName,
+                        givenName: data.givenName,
+                        email: data.email,
+                        telephone: data.telephone
+                    });
+                    break;
                 // 注文確定
                 case 'confirmOrder':
                     yield PostbackController.confirmOrder({
