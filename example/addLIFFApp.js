@@ -1,19 +1,38 @@
 const request = require('request-promise-native');
 
-request.put(
-    `https://api.line.me/liff/v1/apps/${process.env.LIFF_ID}/view`,
+// request.put(
+//     `https://api.line.me/liff/v1/apps/${process.env.LIFF_ID}/view`,
+//     {
+//         headers: {
+//             Authorization: `Bearer ${process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN}`
+//         },
+//         json: true,
+//         body: {
+//             // "view": {
+//             // type: "compact",
+//             type: "tall",
+//             // type: "full",
+//             url: "https://cinerino-line-ticket.azurewebsites.net/liff"
+//             // }
+//         }
+//     }
+// ).then(console.log).catch(console.error);
+// const request = require('request-promise-native');
+
+request.post(
+    `https://api.line.me/liff/v1/apps`,
     {
         headers: {
             Authorization: `Bearer ${process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN}`
         },
         json: true,
         body: {
-            // "view": {
-            // type: "compact",
-            type: "tall",
-            // type: "full",
-            url: "https://cinerino-line-ticket.azurewebsites.net/liff"
-            // }
+            "view": {
+                // type: "compact",
+                type: "tall",
+                // type: "full",
+                url: "https://toei-cinerino-line-ticket-development.azurewebsites.net/liff"
+            }
         }
     }
 ).then(console.log).catch(console.error);
