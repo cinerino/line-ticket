@@ -440,7 +440,6 @@ function selectPaymentMethodType(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const transaction = yield params.user.findTransaction();
         const seatReservationAuthorization = yield params.user.findSeatReservationAuthorization();
         if (seatReservationAuthorization.result === undefined) {
             throw new Error('Invalid seat reservation authorization');
@@ -485,7 +484,6 @@ function selectPaymentMethodType(params) {
                 if (params.creditCard === undefined) {
                     throw new Error('クレジットカードが指定されていません');
                 }
-                yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: JSON.stringify(params.creditCard) });
                 const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
                 yield placeOrderService.authorizeCreditCardPayment({
                     transactionId: params.transactionId,
@@ -493,11 +491,6 @@ function selectPaymentMethodType(params) {
                     orderId: orderId,
                     method: '1',
                     creditCard: params.creditCard
-                    // creditCard: {
-                    //     memberId: 'me',
-                    //     cardSeq: Number(creditCard.cardSeq)
-                    //     cardPass?: string;
-                    // }
                 });
                 yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
                 break;
@@ -570,15 +563,6 @@ function selectPaymentMethodType(params) {
                                 weight: 'bold',
                                 color: '#1DB446',
                                 size: 'sm'
-                            },
-                            {
-                                type: 'text',
-                                text: transaction.seller.name.ja,
-                                weight: 'bold',
-                                size: 'xxl',
-                                margin: 'md',
-                                maxLines: 0,
-                                wrap: true
                             },
                             {
                                 type: 'separator',
@@ -686,7 +670,6 @@ exports.selectPaymentMethodType = selectPaymentMethodType;
 // tslint:disable-next-line:max-func-body-length
 function selectCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const transaction = yield params.user.findTransaction();
         const organizationService = new cinerinoapi.service.Organization({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
@@ -763,15 +746,6 @@ function selectCreditCard(params) {
                                 weight: 'bold',
                                 color: '#1DB446',
                                 size: 'sm'
-                            },
-                            {
-                                type: 'text',
-                                text: transaction.seller.name.ja,
-                                weight: 'bold',
-                                size: 'xxl',
-                                margin: 'md',
-                                maxLines: 0,
-                                wrap: true
                             }
                         ]
                     },
@@ -793,11 +767,16 @@ exports.selectCreditCard = selectCreditCard;
 // tslint:disable-next-line:max-func-body-length
 function setCustomerContact(params) {
     return __awaiter(this, void 0, void 0, function* () {
+        const organizationService = new cinerinoapi.service.Organization({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
         const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
         const transaction = yield params.user.findTransaction();
+        const seller = yield organizationService.findMovieTheaterById({ id: transaction.seller.id });
         const seatReservationAuthorization = yield params.user.findSeatReservationAuthorization();
         if (seatReservationAuthorization.result === undefined) {
             throw new Error('Invalid seat reservation authorization');
@@ -840,11 +819,18 @@ function setCustomerContact(params) {
                             },
                             {
                                 type: 'text',
-                                text: transaction.seller.name.ja,
+                                text: seller.name.ja,
                                 weight: 'bold',
                                 size: 'xxl',
                                 margin: 'md',
                                 maxLines: 0,
+                                wrap: true
+                            },
+                            {
+                                type: 'text',
+                                text: (seller.telephone !== undefined) ? seller.telephone : 'Unknown telephone',
+                                size: 'xs',
+                                color: '#aaaaaa',
                                 wrap: true
                             },
                             {
@@ -2436,49 +2422,51 @@ function selectSeatOffers(params) {
         debug('seatReservationAuthorization:', seatReservationAuthorization);
         yield params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
+        const quickReplyItems = [
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
+                action: {
+                    type: 'postback',
+                    label: 'クレジットカード',
+                    data: querystring.stringify({
+                        action: 'selectCreditCard',
+                        transactionId: transaction.id
+                    })
+                }
+            }
+        ];
+        if ((yield params.user.getCredentials()) !== null) {
+            quickReplyItems.push({
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'postback',
+                    label: 'コイン',
+                    data: querystring.stringify({
+                        action: 'selectPaymentMethodType',
+                        paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                        transactionId: transaction.id
+                    })
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
+                action: {
+                    type: 'postback',
+                    label: 'Friend Pay',
+                    data: querystring.stringify({
+                        action: 'askPaymentCode',
+                        transactionId: transaction.id
+                    })
+                }
+            });
+        }
         const message = {
             type: 'text',
             text: '決済方法を選択してください',
             quickReply: {
-                items: [
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/credit-card-64.png`,
-                        action: {
-                            type: 'postback',
-                            label: 'クレジットカード',
-                            data: querystring.stringify({
-                                action: 'selectCreditCard',
-                                transactionId: transaction.id
-                            })
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
-                        action: {
-                            type: 'postback',
-                            label: 'コイン',
-                            data: querystring.stringify({
-                                action: 'selectPaymentMethodType',
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                                transactionId: transaction.id
-                            })
-                        }
-                    },
-                    {
-                        type: 'action',
-                        imageUrl: `https://${params.user.host}/img/labels/friend-pay-50.png`,
-                        action: {
-                            type: 'postback',
-                            label: 'Friend Pay',
-                            data: querystring.stringify({
-                                action: 'askPaymentCode',
-                                transactionId: transaction.id
-                            })
-                        }
-                    }
-                ]
+                items: quickReplyItems
             }
         };
         yield lineClient_1.default.pushMessage(params.user.userId, [message]);
@@ -3303,14 +3291,14 @@ function order2bubble(order) {
                                     text: '注文番号',
                                     size: 'sm',
                                     color: '#aaaaaa',
-                                    flex: 1
+                                    flex: 2
                                 },
                                 {
                                     type: 'text',
                                     text: `${order.orderNumber}`,
                                     size: 'sm',
                                     color: '#666666',
-                                    flex: 4
+                                    flex: 5
                                 }
                             ]
                         },
@@ -3323,14 +3311,14 @@ function order2bubble(order) {
                                     text: '注文日時',
                                     size: 'sm',
                                     color: '#aaaaaa',
-                                    flex: 1
+                                    flex: 2
                                 },
                                 {
                                     type: 'text',
                                     text: `${moment(order.orderDate).format('llll')}`,
                                     size: 'sm',
                                     color: '#666666',
-                                    flex: 4
+                                    flex: 5
                                 }
                             ]
                         },
@@ -3343,14 +3331,14 @@ function order2bubble(order) {
                                     text: '確認番号',
                                     size: 'sm',
                                     color: '#aaaaaa',
-                                    flex: 1
+                                    flex: 2
                                 },
                                 {
                                     type: 'text',
                                     text: `${order.confirmationNumber}`,
                                     size: 'sm',
                                     color: '#666666',
-                                    flex: 4
+                                    flex: 5
                                 }
                             ]
                         },
@@ -3360,17 +3348,17 @@ function order2bubble(order) {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'ステータス',
+                                    text: 'Status',
                                     size: 'sm',
                                     color: '#aaaaaa',
-                                    flex: 1
+                                    flex: 2
                                 },
                                 {
                                     type: 'text',
                                     text: `${order.orderStatus}`,
                                     size: 'sm',
                                     color: '#666666',
-                                    flex: 4
+                                    flex: 5
                                 }
                             ]
                         }

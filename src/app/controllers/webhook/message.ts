@@ -125,6 +125,18 @@ export async function showSeatReservationMenu(params: {
     replyToken: string;
     user: User;
 }) {
+    const actions: Action[] = [{
+        type: 'postback',
+        label: '座席を予約する',
+        data: `action=askEventStartDate`
+    }];
+    if (await params.user.getCredentials() !== null) {
+        actions.push({
+            type: 'postback',
+            label: '予約を確認する',
+            data: `action=searchScreeningEventReservations`
+        });
+    }
     await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
@@ -133,18 +145,7 @@ export async function showSeatReservationMenu(params: {
                 type: 'buttons',
                 title: '座席予約',
                 text: 'ご用件はなんでしょう？',
-                actions: [
-                    {
-                        type: 'postback',
-                        label: '座席を予約する',
-                        data: `action=askEventStartDate`
-                    },
-                    {
-                        type: 'postback',
-                        label: '予約を確認する',
-                        data: `action=searchScreeningEventReservations`
-                    }
-                ]
+                actions: actions
             }
         }
     ]);
@@ -178,7 +179,7 @@ export async function showOrderMenu(params: {
             altText: '注文メニュー',
             template: {
                 type: 'buttons',
-                title: '注文',
+                title: '注文管理',
                 text: 'ご用件はなんでしょう？',
                 actions: actions
             }
@@ -264,6 +265,15 @@ export async function showCodeMenu(params: {
 }) {
     const scanQRUri = '/reservations/scanScreeningEventReservationCode';
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+    const actions: Action[] = [
+        {
+            type: 'uri',
+            label: '座席予約チケット読み込み',
+            uri: liffUri
+        }
+    ];
+    // if (await params.user.getCredentials() !== null) {
+    // }
     await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
@@ -272,13 +282,7 @@ export async function showCodeMenu(params: {
                 type: 'buttons',
                 title: 'コード管理',
                 text: 'ご用件はなんでしょう？',
-                actions: [
-                    {
-                        type: 'uri',
-                        label: '座席予約チケット読み込み',
-                        uri: liffUri
-                    }
-                ]
+                actions: actions
             }
         }
     ]);
@@ -323,7 +327,6 @@ export async function askConfirmationOfFriendPay(params: {
         }
     ]);
 }
-
 /**
  * おこづかい承認確認
  */
@@ -427,7 +430,6 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
         }
     ]);
 }
-
 /**
  * 予約番号or電話番号のボタンを送信する
  */
@@ -500,9 +502,9 @@ export async function askEventStartDate(params: {
     user: User;
 }) {
     const message: TextMessage = {
-        type: 'text', // ①
+        type: 'text',
         text: 'いつ見ますか？',
-        quickReply: { // ②
+        quickReply: {
             items: [
                 {
                     type: 'action',
@@ -587,7 +589,6 @@ export async function askFromWhenAndToWhen(params: {
         }
     ]);
 }
-
 export async function logout(params: {
     replyToken: string;
     user: User;

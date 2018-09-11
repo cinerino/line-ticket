@@ -118,6 +118,18 @@ exports.pushHowToUse = pushHowToUse;
  */
 function showSeatReservationMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
+        const actions = [{
+                type: 'postback',
+                label: '座席を予約する',
+                data: `action=askEventStartDate`
+            }];
+        if ((yield params.user.getCredentials()) !== null) {
+            actions.push({
+                type: 'postback',
+                label: '予約を確認する',
+                data: `action=searchScreeningEventReservations`
+            });
+        }
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
@@ -126,18 +138,7 @@ function showSeatReservationMenu(params) {
                     type: 'buttons',
                     title: '座席予約',
                     text: 'ご用件はなんでしょう？',
-                    actions: [
-                        {
-                            type: 'postback',
-                            label: '座席を予約する',
-                            data: `action=askEventStartDate`
-                        },
-                        {
-                            type: 'postback',
-                            label: '予約を確認する',
-                            data: `action=searchScreeningEventReservations`
-                        }
-                    ]
+                    actions: actions
                 }
             }
         ]);
@@ -172,7 +173,7 @@ function showOrderMenu(params) {
                 altText: '注文メニュー',
                 template: {
                     type: 'buttons',
-                    title: '注文',
+                    title: '注文管理',
                     text: 'ご用件はなんでしょう？',
                     actions: actions
                 }
@@ -257,6 +258,15 @@ function showCodeMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const scanQRUri = '/reservations/scanScreeningEventReservationCode';
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+        const actions = [
+            {
+                type: 'uri',
+                label: '座席予約チケット読み込み',
+                uri: liffUri
+            }
+        ];
+        // if (await params.user.getCredentials() !== null) {
+        // }
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
@@ -265,13 +275,7 @@ function showCodeMenu(params) {
                     type: 'buttons',
                     title: 'コード管理',
                     text: 'ご用件はなんでしょう？',
-                    actions: [
-                        {
-                            type: 'uri',
-                            label: '座席予約チケット読み込み',
-                            uri: liffUri
-                        }
-                    ]
+                    actions: actions
                 }
             }
         ]);
