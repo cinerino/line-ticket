@@ -500,6 +500,7 @@ export async function selectPaymentMethodType(params: {
             if (params.creditCard === undefined) {
                 throw new Error('クレジットカードが指定されていません');
             }
+            await LINE.pushMessage(params.user.userId, { type: 'text', text: JSON.stringify(params.creditCard) });
             const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
             await placeOrderService.authorizeCreditCardPayment({
                 transactionId: params.transactionId,
@@ -724,7 +725,8 @@ export async function selectCreditCard(params: {
             auth: params.user.authClient
         });
         const creditCards = await personOwnershipInfoService.searchCreditCards({ personId: 'me' });
-        if (creditCards.length === 0) {
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
+        if (creditCards.length > 0) {
             const creditCard = creditCards[0];
             footerContets.push({
                 type: 'button',
@@ -1403,150 +1405,152 @@ export async function searchCreditCards(params: {
     });
     const creditCards = await personOwnershipInfoService.searchCreditCards({ personId: 'me' });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
-    const flex: FlexMessage = {
-        type: 'flex',
-        altText: 'This is a Flex Message',
-        contents: {
-            type: 'carousel',
-            contents: [
-                // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                ...creditCards.map<FlexBubble>((creditCard) => {
-                    return {
-                        type: 'bubble',
-                        styles: {
+    if (creditCards.length > 0) {
+        const flex: FlexMessage = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: [
+                    // tslint:disable-next-line:max-func-body-length no-magic-numbers
+                    ...creditCards.map<FlexBubble>((creditCard) => {
+                        return {
+                            type: 'bubble',
+                            styles: {
+                                footer: {
+                                    separator: true
+                                }
+                            },
+                            body: {
+                                type: 'box',
+                                layout: 'vertical',
+                                spacing: 'md',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        contents: [
+                                            {
+                                                type: 'icon',
+                                                url: `https://${params.user.host}/img/labels/credit-card-64.png`
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
+                                                wrap: true,
+                                                weight: 'bold',
+                                                margin: 'sm',
+                                                gravity: 'center',
+                                                size: 'xl'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'vertical',
+                                        margin: 'lg',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'HolderName',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: creditCard.holderName,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'CarNo',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: creditCard.cardNo,
+                                                        wrap: true,
+                                                        size: 'sm',
+                                                        color: '#666666',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Expire',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 2
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: creditCard.expire,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
                             footer: {
-                                separator: true
+                                type: 'box',
+                                layout: 'vertical',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'button',
+                                        action: {
+                                            type: 'postback',
+                                            label: '削除',
+                                            data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
+                                        }
+                                    },
+                                    {
+                                        type: 'button',
+                                        action: {
+                                            type: 'postback',
+                                            label: 'コード発行',
+                                            data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
+                                        }
+                                    }
+                                ]
                             }
-                        },
-                        body: {
-                            type: 'box',
-                            layout: 'vertical',
-                            spacing: 'md',
-                            contents: [
-                                {
-                                    type: 'box',
-                                    layout: 'baseline',
-                                    contents: [
-                                        {
-                                            type: 'icon',
-                                            url: `https://${params.user.host}/img/labels/credit-card-64.png`
-                                        },
-                                        {
-                                            type: 'text',
-                                            text: (creditCard.cardName.length > 0) ? creditCard.cardName : 'Unknown Card Name',
-                                            wrap: true,
-                                            weight: 'bold',
-                                            margin: 'sm',
-                                            gravity: 'center',
-                                            size: 'xl'
-                                        }
-                                    ]
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'HolderName',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 2
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: creditCard.holderName,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'CarNo',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 2
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: creditCard.cardNo,
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Expire',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 2
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: creditCard.expire,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        footer: {
-                            type: 'box',
-                            layout: 'vertical',
-                            spacing: 'sm',
-                            contents: [
-                                {
-                                    type: 'button',
-                                    action: {
-                                        type: 'postback',
-                                        label: '削除',
-                                        data: `action=deleteCreditCard&cardSeq=${creditCard.cardSeq}`
-                                    }
-                                },
-                                {
-                                    type: 'button',
-                                    action: {
-                                        type: 'postback',
-                                        label: 'コード発行',
-                                        data: `action=publishCreditCardToken&cardSeq=${creditCard.cardSeq}`
-                                    }
-                                }
-                            ]
-                        }
-                    };
-                })
-            ]
-        }
-    };
-    await LINE.pushMessage(params.user.userId, [flex]);
+                        };
+                    })
+                ]
+            }
+        };
+        await LINE.pushMessage(params.user.userId, [flex]);
+    }
 }
 export async function addCreditCard(params: {
     replyToken: string;
