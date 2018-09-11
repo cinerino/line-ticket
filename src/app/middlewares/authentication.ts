@@ -13,6 +13,7 @@ import { URL } from 'url';
 import LINE from '../../lineClient';
 import User from '../user';
 
+const LOGIN_REQUIRED = process.env.LOGIN_REQUIRED === '1';
 export default async (req: Request, res: Response, next: NextFunction) => {
     try {
         const events: WebhookEvent[] = req.body.events;
@@ -50,28 +51,30 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
         const credentials = await req.user.getCredentials();
         if (credentials === null) {
-            // ログインボタンを送信
-            await sendLoginButton(req.user);
-            res.status(OK).send('ok');
-
-            return;
-        }
-
-        // RedisからBearerトークンを取り出す
-        await cognitoAuth({
-            issuers: [<string>process.env.CINERINO_TOKEN_ISSUER],
-            authorizedHandler: async () => {
-                // ログイン状態をセットしてnext
-                req.user.setCredentials(credentials);
-                next();
-            },
-            unauthorizedHandler: async () => {
+            if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
                 await sendLoginButton(req.user);
                 res.status(OK).send('ok');
-            },
-            tokenDetecter: async () => credentials.access_token
-        })(req, res, next);
+            } else {
+                next();
+            }
+        } else {
+            // RedisからBearerトークンを取り出す
+            await cognitoAuth({
+                issuers: [<string>process.env.CINERINO_TOKEN_ISSUER],
+                authorizedHandler: async () => {
+                    // ログイン状態をセットしてnext
+                    req.user.setCredentials(credentials);
+                    next();
+                },
+                unauthorizedHandler: async () => {
+                    // ログインボタンを送信
+                    await sendLoginButton(req.user);
+                    res.status(OK).send('ok');
+                },
+                tokenDetecter: async () => credentials.access_token
+            })(req, res, next);
+        }
     } catch (error) {
         next(new cinerinoapi.factory.errors.Unauthorized(error.message));
     }

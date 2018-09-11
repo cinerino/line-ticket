@@ -19,6 +19,7 @@ const querystring = require("querystring");
 const url_1 = require("url");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
+const LOGIN_REQUIRED = process.env.LOGIN_REQUIRED === '1';
 exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
         const events = req.body.events;
@@ -49,26 +50,32 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
         }
         const credentials = yield req.user.getCredentials();
         if (credentials === null) {
-            // ログインボタンを送信
-            yield sendLoginButton(req.user);
-            res.status(http_status_1.OK).send('ok');
-            return;
-        }
-        // RedisからBearerトークンを取り出す
-        yield express_middleware_1.cognitoAuth({
-            issuers: [process.env.CINERINO_TOKEN_ISSUER],
-            authorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
-                // ログイン状態をセットしてnext
-                req.user.setCredentials(credentials);
-                next();
-            }),
-            unauthorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
+            if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
                 yield sendLoginButton(req.user);
                 res.status(http_status_1.OK).send('ok');
-            }),
-            tokenDetecter: () => __awaiter(this, void 0, void 0, function* () { return credentials.access_token; })
-        })(req, res, next);
+            }
+            else {
+                next();
+            }
+        }
+        else {
+            // RedisからBearerトークンを取り出す
+            yield express_middleware_1.cognitoAuth({
+                issuers: [process.env.CINERINO_TOKEN_ISSUER],
+                authorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
+                    // ログイン状態をセットしてnext
+                    req.user.setCredentials(credentials);
+                    next();
+                }),
+                unauthorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
+                    // ログインボタンを送信
+                    yield sendLoginButton(req.user);
+                    res.status(http_status_1.OK).send('ok');
+                }),
+                tokenDetecter: () => __awaiter(this, void 0, void 0, function* () { return credentials.access_token; })
+            })(req, res, next);
+        }
     }
     catch (error) {
         next(new cinerinoapi.factory.errors.Unauthorized(error.message));
