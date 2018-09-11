@@ -2,7 +2,7 @@
  * LINE Webhook messageコントローラー
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import { TextMessage } from '@line/bot-sdk';
+import { Action, TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as querystring from 'qs';
@@ -114,8 +114,27 @@ export async function showSeatReservationMenu(replyToken: string) {
 /**
  * 注文メニューを表示する
  */
-export async function showOrderMenu(replyToken: string) {
-    await LINE.replyMessage(replyToken, [
+export async function showOrderMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
+    const actions: Action[] = [];
+    if (await params.user.getCredentials() === null) {
+        const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
+        actions.push({
+            type: 'uri',
+            label: '確認番号で照会',
+            uri: liffUri
+        });
+    } else {
+        actions.push({
+            type: 'postback',
+            label: '注文を確認する',
+            data: `action=searchOrders`
+        });
+    }
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
             altText: '注文メニュー',
@@ -123,13 +142,7 @@ export async function showOrderMenu(replyToken: string) {
                 type: 'buttons',
                 title: '注文',
                 text: 'ご用件はなんでしょう？',
-                actions: [
-                    {
-                        type: 'postback',
-                        label: '注文を確認する',
-                        data: `action=searchOrders`
-                    }
-                ]
+                actions: actions
             }
         }
     ]);

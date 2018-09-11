@@ -42,7 +42,10 @@ export async function message(event: line.MessageEvent, user: User) {
                         await MessageController.showSeatReservationMenu(event.replyToken);
                         break;
                     case /^注文$/.test(messageText):
-                        await MessageController.showOrderMenu(event.replyToken);
+                        await MessageController.showOrderMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
                         break;
                     case /^クレジットカード$/.test(messageText):
                         await MessageController.showCreditCardMenu({
@@ -318,6 +321,15 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     user: user,
                     goodType: data.goodType,
                     id: data.id
+                });
+                break;
+            // 注文照会
+            case 'findOrderByConfirmationNumber':
+                await PostbackController.findOrderByConfirmationNumber({
+                    replyToken: event.replyToken,
+                    user: user,
+                    confirmationNumber: Number(data.confirmationNumber),
+                    telephone: data.telephone
                 });
                 break;
             // 注文検索

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <title>Cinerino LIFF App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
+    <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <!-- <h1>クレジットカード情報入力</h1> -->
+        <form method="post">
+            <div class="form-group">
+                <label for="confirmationNumber">Confirmation Number</label>
+                <input type="text" name="confirmationNumber" id="confirmationNumber" class="form-control input-required" value="" data-fieldname="ConfirmationNumber"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="telephone">Telephone</label>
+                <input type="text" name="telephone" id="telephone" class="form-control input-required" value="" data-fieldname="Telephone"
+                    required>
+            </div>
+            <a class="btn btn-primary btn-next" href="javascript:void(0);">
+                <span>Next</span>
+            </a>
+        </form>
+    </div>
+</body>
+
+<script>
+    liff.init(
+        data => {
+            // Now you can call LIFF API
+            const userId = data.context.userId;
+            liff.getProfile()
+                .then(profile => {
+                    const name = profile.displayName
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        },
+        err => {
+            // LIFF initialization failed
+        }
+    );
+
+    $(function () {
+        $('.btn-next').on('click', function () {
+            const message = 'postback:' + 'action=findOrderByConfirmationNumber&' + $('form').serialize();
+            console.log('sending message...', message);
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: message
+                }
+            ])
+                .then(() => {
+                    console.log('message sent');
+                    liff.closeWindow();
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        });
+    });
+</script>
+
+</html>

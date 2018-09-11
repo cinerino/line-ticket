@@ -3045,6 +3045,38 @@ export async function searchOrders(params: {
         await LINE.pushMessage(params.user.userId, [flex]);
     }
 }
+/**
+ * 注文照会
+ */
+export async function findOrderByConfirmationNumber(params: {
+    replyToken: string;
+    user: User;
+    confirmationNumber: number;
+    telephone: string;
+}) {
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.confirmationNumber}で注文を検索しています...` });
+    const orderService = new cinerinoapi.service.Order({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const order = await orderService.findByConfirmationNumber({
+        confirmationNumber: params.confirmationNumber,
+        customer: {
+            telephone: params.telephone
+        }
+    });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりました' });
+    const contents: FlexBubble[] = [order].map<FlexBubble>(order2bubble);
+    const flex: FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: contents
+        }
+    };
+    await LINE.pushMessage(params.user.userId, [flex]);
+}
 // tslint:disable-next-line:max-func-body-length
 function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
     return {

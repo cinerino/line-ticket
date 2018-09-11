@@ -122,9 +122,26 @@ exports.showSeatReservationMenu = showSeatReservationMenu;
 /**
  * 注文メニューを表示する
  */
-function showOrderMenu(replyToken) {
+function showOrderMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield lineClient_1.default.replyMessage(replyToken, [
+        const actions = [];
+        if ((yield params.user.getCredentials()) === null) {
+            const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+            const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
+            actions.push({
+                type: 'uri',
+                label: '確認番号で照会',
+                uri: liffUri
+            });
+        }
+        else {
+            actions.push({
+                type: 'postback',
+                label: '注文を確認する',
+                data: `action=searchOrders`
+            });
+        }
+        yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
                 altText: '注文メニュー',
@@ -132,13 +149,7 @@ function showOrderMenu(replyToken) {
                     type: 'buttons',
                     title: '注文',
                     text: 'ご用件はなんでしょう？',
-                    actions: [
-                        {
-                            type: 'postback',
-                            label: '注文を確認する',
-                            data: `action=searchOrders`
-                        }
-                    ]
+                    actions: actions
                 }
             }
         ]);

@@ -2975,6 +2975,36 @@ function searchOrders(params) {
     });
 }
 exports.searchOrders = searchOrders;
+/**
+ * 注文照会
+ */
+function findOrderByConfirmationNumber(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.confirmationNumber}で注文を検索しています...` });
+        const orderService = new cinerinoapi.service.Order({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const order = yield orderService.findByConfirmationNumber({
+            confirmationNumber: params.confirmationNumber,
+            customer: {
+                telephone: params.telephone
+            }
+        });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりました' });
+        const contents = [order].map(order2bubble);
+        const flex = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: contents
+            }
+        };
+        yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
+    });
+}
+exports.findOrderByConfirmationNumber = findOrderByConfirmationNumber;
 // tslint:disable-next-line:max-func-body-length
 function order2bubble(order) {
     return {
