@@ -160,12 +160,12 @@ export default class User {
     }
 
     public async getCredentials(): Promise<ICredentials | null> {
-        return redisClient.get(`line-ticket.credentials.${this.userId}`)
+        return redisClient.get(`line-ticket:credentials:${this.userId}`)
             .then((value) => (value === null) ? null : JSON.parse(value));
     }
 
     public async getRefreshToken(): Promise<string | null> {
-        return redisClient.get(`line-ticket.refreshToken.${this.userId}`)
+        return redisClient.get(`line-ticket:refreshToken:${this.userId}`)
             .then((value) => (value === null) ? null : value);
     }
 
@@ -195,8 +195,8 @@ export default class User {
 
         // ログイン状態を保持
         const results = await redisClient.multi()
-            .set(`line-ticket.credentials.${this.userId}`, JSON.stringify(credentials))
-            .expire(`line-ticket.credentials.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:credentials:${this.userId}`, JSON.stringify(credentials))
+            .expire(`line-ticket:credentials:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
         debug('results:', results);
 
@@ -222,8 +222,8 @@ export default class User {
 
         // リフレッシュトークンを保管
         await redisClient.multi()
-            .set(`line-ticket.refreshToken.${this.userId}`, credentials.refresh_token)
-            .expire(`line-ticket.refreshToken.${this.userId}`, REFRESH_TOKEN_EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:refreshToken:${this.userId}`, credentials.refresh_token)
+            .expire(`line-ticket:refreshToken:${this.userId}`, REFRESH_TOKEN_EXPIRES_IN_SECONDS, debug)
             .exec();
         debug('refresh token saved.');
 
@@ -235,8 +235,8 @@ export default class User {
     public async signInForcibly(credentials: ICredentials) {
         // ログイン状態を保持
         const results = await redisClient.multi()
-            .set(`line-ticket.credentials.${this.userId}`, JSON.stringify(credentials))
-            .expire(`line-ticket.credentials.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:credentials:${this.userId}`, JSON.stringify(credentials))
+            .expire(`line-ticket:credentials:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
         debug('results:', results);
 
@@ -246,7 +246,7 @@ export default class User {
     }
 
     public async logout() {
-        await redisClient.del(`line-ticket.credentials.${this.userId}`);
+        await redisClient.del(`line-ticket:credentials:${this.userId}`);
     }
 
     public async findTransaction(): Promise<cinerinoapi.factory.transaction.placeOrder.ITransaction> {
@@ -277,19 +277,19 @@ export default class User {
 
     public async saveCallbackState(state: string) {
         await redisClient.multi()
-            .set(`line-ticket.callbackState.${this.userId}`, state)
-            .expire(`line-ticket.callbackState.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:callbackState:${this.userId}`, state)
+            .expire(`line-ticket:callbackState:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
 
     public async findCallbackState(): Promise<Object | null> {
-        return redisClient.get(`line-ticket.callbackState.${this.userId}`).then((value) => {
+        return redisClient.get(`line-ticket:callbackState:${this.userId}`).then((value) => {
             return (value !== null) ? JSON.parse(value) : null;
         });
     }
 
     public async deleteCallbackState() {
-        await redisClient.del(`line-ticket.callbackState.${this.userId}`);
+        await redisClient.del(`line-ticket:callbackState:${this.userId}`);
     }
 
     /**

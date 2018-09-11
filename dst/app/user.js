@@ -78,13 +78,13 @@ class User {
     }
     getCredentials() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket.credentials.${this.userId}`)
+            return redisClient.get(`line-ticket:credentials:${this.userId}`)
                 .then((value) => (value === null) ? null : JSON.parse(value));
         });
     }
     getRefreshToken() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket.refreshToken.${this.userId}`)
+            return redisClient.get(`line-ticket:refreshToken:${this.userId}`)
                 .then((value) => (value === null) ? null : value);
         });
     }
@@ -110,8 +110,8 @@ class User {
             }
             // ログイン状態を保持
             const results = yield redisClient.multi()
-                .set(`line-ticket.credentials.${this.userId}`, JSON.stringify(credentials))
-                .expire(`line-ticket.credentials.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:credentials:${this.userId}`, JSON.stringify(credentials))
+                .expire(`line-ticket:credentials:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
             debug('results:', results);
             // rekognitionコレクション作成
@@ -135,8 +135,8 @@ class User {
             });
             // リフレッシュトークンを保管
             yield redisClient.multi()
-                .set(`line-ticket.refreshToken.${this.userId}`, credentials.refresh_token)
-                .expire(`line-ticket.refreshToken.${this.userId}`, REFRESH_TOKEN_EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:refreshToken:${this.userId}`, credentials.refresh_token)
+                .expire(`line-ticket:refreshToken:${this.userId}`, REFRESH_TOKEN_EXPIRES_IN_SECONDS, debug)
                 .exec();
             debug('refresh token saved.');
             this.setCredentials(Object.assign({}, credentials, { access_token: credentials.access_token }));
@@ -147,8 +147,8 @@ class User {
         return __awaiter(this, void 0, void 0, function* () {
             // ログイン状態を保持
             const results = yield redisClient.multi()
-                .set(`line-ticket.credentials.${this.userId}`, JSON.stringify(credentials))
-                .expire(`line-ticket.credentials.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:credentials:${this.userId}`, JSON.stringify(credentials))
+                .expire(`line-ticket:credentials:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
             debug('results:', results);
             this.setCredentials(Object.assign({}, credentials, { access_token: credentials.access_token }));
@@ -157,7 +157,7 @@ class User {
     }
     logout() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield redisClient.del(`line-ticket.credentials.${this.userId}`);
+            yield redisClient.del(`line-ticket:credentials:${this.userId}`);
         });
     }
     findTransaction() {
@@ -193,21 +193,21 @@ class User {
     saveCallbackState(state) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()
-                .set(`line-ticket.callbackState.${this.userId}`, state)
-                .expire(`line-ticket.callbackState.${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:callbackState:${this.userId}`, state)
+                .expire(`line-ticket:callbackState:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
         });
     }
     findCallbackState() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket.callbackState.${this.userId}`).then((value) => {
+            return redisClient.get(`line-ticket:callbackState:${this.userId}`).then((value) => {
                 return (value !== null) ? JSON.parse(value) : null;
             });
         });
     }
     deleteCallbackState() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield redisClient.del(`line-ticket.callbackState.${this.userId}`);
+            yield redisClient.del(`line-ticket:callbackState:${this.userId}`);
         });
     }
     /**
