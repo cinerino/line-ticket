@@ -123,10 +123,12 @@ export async function sendLoginButton(user: User) {
     if (refreshToken === null) {
         const signUpUrl = new URL(signInUrl.href);
         signUpUrl.pathname = 'signup';
+        const signUpUri = signUpUrl.href;
+        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signUpUri })}`;
         actions.push({
             type: 'uri',
             label: '会員登録',
-            uri: signUpUrl.href
+            uri: signUpLiffUri
         });
     }
     const template: TemplateMessage = {
