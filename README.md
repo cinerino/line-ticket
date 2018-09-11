@@ -12,33 +12,35 @@
 
 ### Environment variables
 
-| Name                               | Required | Purpose                | Value                           |
-|------------------------------------|----------|------------------------|---------------------------------|
-| `DEBUG`                            | false    | cinerino-line-ticket:* | Debug                           |
-| `NODE_ENV`                         | true     |                        | environment name                |
-| `REDIS_HOST`                       | true     |                        |                                 |
-| `REDIS_PORT`                       | true     |                        |                                 |
-| `REDIS_KEY`                        | true     |                        |                                 |
-| `USER_REFRESH_TOKEN`               | true     |                        |                                 |
-| `USER_EXPIRES_IN_SECONDS`          | true     |                        | User login expiration period    |
-| `REFRESH_TOKEN_EXPIRES_IN_SECONDS` | true     |                        | Refresh token expiration period |
-| `CINERINO_ENDPOINT`                | true     |                        |                                 |
-| `CINERINO_AUTHORIZE_SERVER_DOMAIN` | true     |                        |                                 |
-| `CINERINO_CLIENT_ID`               | true     |                        |                                 |
-| `CINERINO_CLIENT_SECRET`           | true     |                        |                                 |
-| `CINERINO_CODE_VERIFIER`           | true     |                        |                                 |
-| `CINERINO_TOKEN_ISSUER`            | true     |                        |                                 |
-| `PECORINO_ENDPOINT`                | true     |                        |                                 |
-| `PECORINO_CLIENT_ID`               | true     |                        |                                 |
-| `PECORINO_CLIENT_SECRET`           | true     |                        |                                 |
-| `PECORINO_AUTHORIZE_SERVER_DOMAIN` | true     |                        |                                 |
-| `AWS_ACCESS_KEY_ID`                | true     |                        |                                 |
-| `AWS_SECRET_ACCESS_KEY`            | true     |                        |                                 |
-| `FACE_MATCH_THRESHOLD`             | true     |                        | Face match threshold            |
-| `LINE_ID`                          | true     |                        | LINE Bot application ID         |
-| `LINE_BOT_CHANNEL_ACCESS_TOKEN`    | true     |                        |                                 |
-| `LINE_BOT_CHANNEL_SECRET`          | true     |                        |                                 |
-| `LIFF_ID`                          | true     |                        |                                 |
+| Name                                        | Required | Purpose                | Value                           |
+|---------------------------------------------|----------|------------------------|---------------------------------|
+| `DEBUG`                                     | false    | cinerino-line-ticket:* | Debug                           |
+| `NODE_ENV`                                  | true     |                        | environment name                |
+| `REDIS_HOST`                                | true     |                        |                                 |
+| `REDIS_PORT`                                | true     |                        |                                 |
+| `REDIS_KEY`                                 | true     |                        |                                 |
+| `USER_REFRESH_TOKEN`                        | true     |                        |                                 |
+| `USER_EXPIRES_IN_SECONDS`                   | true     |                        | User login expiration period    |
+| `REFRESH_TOKEN_EXPIRES_IN_SECONDS`          | true     |                        | Refresh token expiration period |
+| `CINERINO_ENDPOINT`                         | true     |                        |                                 |
+| `CINERINO_AUTHORIZE_SERVER_DOMAIN`          | true     |                        |                                 |
+| `CINERINO_CLIENT_ID_AUTHORIZATION_CODE`     | true     |                        |                                 |
+| `CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE` | true     |                        |                                 |
+| `CINERINO_CLIENT_ID`                        | true     |                        |                                 |
+| `CINERINO_CLIENT_SECRET`                    | true     |                        |                                 |
+| `CINERINO_CODE_VERIFIER`                    | true     |                        |                                 |
+| `CINERINO_TOKEN_ISSUER`                     | true     |                        |                                 |
+| `PECORINO_ENDPOINT`                         | true     |                        |                                 |
+| `PECORINO_CLIENT_ID`                        | true     |                        |                                 |
+| `PECORINO_CLIENT_SECRET`                    | true     |                        |                                 |
+| `PECORINO_AUTHORIZE_SERVER_DOMAIN`          | true     |                        |                                 |
+| `AWS_ACCESS_KEY_ID`                         | true     |                        |                                 |
+| `AWS_SECRET_ACCESS_KEY`                     | true     |                        |                                 |
+| `FACE_MATCH_THRESHOLD`                      | true     |                        | Face match threshold            |
+| `LINE_ID`                                   | true     |                        | LINE Bot application ID         |
+| `LINE_BOT_CHANNEL_ACCESS_TOKEN`             | true     |                        |                                 |
+| `LINE_BOT_CHANNEL_SECRET`                   | true     |                        |                                 |
+| `LIFF_ID`                                   | true     |                        |                                 |
 
 ## Code Samples
 

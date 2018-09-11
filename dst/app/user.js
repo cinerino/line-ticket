@@ -51,12 +51,12 @@ class User {
         this.userId = configurations.userId;
         this.state = configurations.state;
         this.rekognitionCollectionId = `cinerino-line-ticket-${this.userId}`;
-        this.authClient = new cinerinoapi.auth.OAuth2({
+        this.authClient = new cinerinoapi.auth.ClientCredentials({
             domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
             clientId: process.env.CINERINO_CLIENT_ID,
             clientSecret: process.env.CINERINO_CLIENT_SECRET,
-            redirectUri: `https://${configurations.host}/signIn`,
-            logoutUri: `https://${configurations.host}/logout`
+            scopes: [],
+            state: ''
         });
     }
     generateAuthUrl() {
@@ -86,6 +86,13 @@ class User {
         debug('payload:', payload);
         this.payload = payload;
         this.accessToken = credentials.access_token;
+        this.authClient = new cinerinoapi.auth.OAuth2({
+            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
+            clientSecret: process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
+            redirectUri: `https://${this.host}/signIn`,
+            logoutUri: `https://${this.host}/logout`
+        });
         this.authClient.setCredentials(credentials);
         return this;
     }
