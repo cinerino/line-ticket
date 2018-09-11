@@ -685,8 +685,8 @@ exports.selectPaymentMethodType = selectPaymentMethodType;
 function selectCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const transaction = yield params.user.findTransaction();
-        const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
+        const inputCreditCardUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=tshop00026096`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`;
         const footerContets = [
             {
                 type: 'button',

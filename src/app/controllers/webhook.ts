@@ -11,6 +11,8 @@ import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
 
+import * as authentication from '../middlewares/authentication';
+
 const debug = createDebug('cinerino-line-ticket:controllers');
 
 /**
@@ -27,6 +29,10 @@ export async function message(event: line.MessageEvent, user: User) {
                     // [購入番号]で検索
                     case /^\d{6}$/.test(messageText):
                         await MessageController.askReservationEventDate(event.replyToken, messageText);
+                        break;
+                    // ログイン
+                    case /^login$/.test(messageText):
+                        await authentication.sendLoginButton(user);
                         break;
                     // ログアウト
                     case /^logout$/.test(messageText):

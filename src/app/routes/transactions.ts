@@ -24,7 +24,7 @@ transactionsRouter.get(
         }
     });
 /**
- * クレジットカード情報入力フォーム
+ * 購入者情報入力フォーム
  */
 transactionsRouter.get(
     '/placeOrder/:transactionId/setCustomerContact',
@@ -32,6 +32,22 @@ transactionsRouter.get(
         try {
             // フォーム
             res.render('transactions/placeOrder/setCustomerContact', {
+                transactionId: req.params.transactionId
+            });
+        } catch (error) {
+            next(error);
+        }
+    });
+/**
+ * クレジットカード入力フォーム
+ */
+transactionsRouter.get(
+    '/placeOrder/:transactionId/inputCreditCard',
+    async (req, res, next) => {
+        try {
+            // フォーム
+            res.render('transactions/placeOrder/inputCreditCard', {
+                gmoShopId: req.query.gmoShopId,
                 transactionId: req.params.transactionId
             });
         } catch (error) {

@@ -14,6 +14,7 @@ const lineClient_1 = require("../../lineClient");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
 const PostbackController = require("./webhook/postback");
+const authentication = require("../middlewares/authentication");
 const debug = createDebug('cinerino-line-ticket:controllers');
 /**
  * メッセージが送信されたことを示すEvent Objectです
@@ -30,6 +31,10 @@ function message(event, user) {
                         // [購入番号]で検索
                         case /^\d{6}$/.test(messageText):
                             yield MessageController.askReservationEventDate(event.replyToken, messageText);
+                            break;
+                        // ログイン
+                        case /^login$/.test(messageText):
+                            yield authentication.sendLoginButton(user);
                             break;
                         // ログアウト
                         case /^logout$/.test(messageText):

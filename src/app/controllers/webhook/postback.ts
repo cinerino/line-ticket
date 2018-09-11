@@ -703,8 +703,8 @@ export async function selectCreditCard(params: {
     transactionId: string;
 }) {
     const transaction = await params.user.findTransaction();
-    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard`;
-    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
+    const inputCreditCardUri = `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=tshop00026096`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`;
     const footerContets: FlexComponent[] = [
         {
             type: 'button',
