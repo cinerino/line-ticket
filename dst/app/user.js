@@ -58,16 +58,23 @@ class User {
             scopes: [],
             state: ''
         });
+        this.authClientOAuth2 = new cinerinoapi.auth.OAuth2({
+            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
+            clientSecret: process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
+            redirectUri: `https://${this.host}/signIn`,
+            logoutUri: `https://${this.host}/logout`
+        });
     }
     generateAuthUrl() {
-        return this.authClient.generateAuthUrl({
+        return this.authClientOAuth2.generateAuthUrl({
             scopes: [],
             state: this.state,
             codeVerifier: process.env.CINERINO_CODE_VERIFIER
         });
     }
     generateLogoutUrl() {
-        return this.authClient.generateLogoutUrl();
+        return this.authClientOAuth2.generateLogoutUrl();
     }
     getCredentials() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -86,20 +93,14 @@ class User {
         debug('payload:', payload);
         this.payload = payload;
         this.accessToken = credentials.access_token;
-        this.authClient = new cinerinoapi.auth.OAuth2({
-            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
-            clientId: process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
-            clientSecret: process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
-            redirectUri: `https://${this.host}/signIn`,
-            logoutUri: `https://${this.host}/logout`
-        });
+        this.authClient = this.authClientOAuth2;
         this.authClient.setCredentials(credentials);
         return this;
     }
     signIn(code) {
         return __awaiter(this, void 0, void 0, function* () {
             // 認証情報を取得できればログイン成功
-            const credentials = yield this.authClient.getToken(code, process.env.CINERINO_CODE_VERIFIER);
+            const credentials = yield this.authClientOAuth2.getToken(code, process.env.CINERINO_CODE_VERIFIER);
             debug('credentials published', credentials);
             if (credentials.access_token === undefined) {
                 throw new Error('Access token is required for credentials.');

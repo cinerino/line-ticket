@@ -122,7 +122,8 @@ export default class User {
     public userId: string;
     public payload: IPayload;
     public accessToken: string;
-    public authClient: cinerinoapi.auth.OAuth2;
+    public authClient: cinerinoapi.auth.OAuth2 | cinerinoapi.auth.ClientCredentials;
+    public authClientOAuth2: cinerinoapi.auth.OAuth2;
     public rekognitionCollectionId: string;
 
     constructor(configurations: IConfigurations) {
@@ -137,10 +138,17 @@ export default class User {
             scopes: [],
             state: ''
         });
+        this.authClientOAuth2 = new cinerinoapi.auth.OAuth2({
+            domain: <string>process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: <string>process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
+            clientSecret: <string>process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
+            redirectUri: `https://${this.host}/signIn`,
+            logoutUri: `https://${this.host}/logout`
+        });
     }
 
     public generateAuthUrl() {
-        return this.authClient.generateAuthUrl({
+        return this.authClientOAuth2.generateAuthUrl({
             scopes: [],
             state: this.state,
             codeVerifier: <string>process.env.CINERINO_CODE_VERIFIER
@@ -148,7 +156,7 @@ export default class User {
     }
 
     public generateLogoutUrl() {
-        return this.authClient.generateLogoutUrl();
+        return this.authClientOAuth2.generateLogoutUrl();
     }
 
     public async getCredentials(): Promise<ICredentials | null> {
@@ -166,13 +174,7 @@ export default class User {
         debug('payload:', payload);
         this.payload = payload;
         this.accessToken = credentials.access_token;
-        this.authClient = new cinerinoapi.auth.OAuth2({
-            domain: <string>process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
-            clientId: <string>process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
-            clientSecret: <string>process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
-            redirectUri: `https://${this.host}/signIn`,
-            logoutUri: `https://${this.host}/logout`
-        });
+        this.authClient = this.authClientOAuth2;
         this.authClient.setCredentials(credentials);
 
         return this;
@@ -180,7 +182,7 @@ export default class User {
 
     public async signIn(code: string) {
         // 認証情報を取得できればログイン成功
-        const credentials = await this.authClient.getToken(code, <string>process.env.CINERINO_CODE_VERIFIER);
+        const credentials = await this.authClientOAuth2.getToken(code, <string>process.env.CINERINO_CODE_VERIFIER);
         debug('credentials published', credentials);
 
         if (credentials.access_token === undefined) {
