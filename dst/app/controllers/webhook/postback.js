@@ -3051,197 +3051,197 @@ function authorizeOwnershipInfosByOrder(params) {
             }
         });
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
-        let flex;
         const reservations = order.acceptedOffers.map((o) => o.itemOffered);
-        const itemOffered = reservations[0];
-        const event = yield eventService.findScreeningEventById({ id: itemOffered.reservationFor.id });
+        const event = yield eventService.findScreeningEventById({ id: reservations[0].reservationFor.id });
         const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
             ? event.workPerformed.thumbnailUrl
             // tslint:disable-next-line:max-line-length
             : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-        flex = {
-            type: 'flex',
-            altText: 'This is a Flex Message',
-            contents: {
-                type: 'carousel',
-                contents: [
-                    {
-                        type: 'bubble',
-                        hero: {
-                            type: 'image',
-                            url: thumbnailImageUrl,
-                            size: 'full',
-                            aspectRatio: '20:13',
-                            aspectMode: 'cover',
-                            action: {
-                                type: 'uri',
-                                label: 'event',
-                                // tslint:disable-next-line:no-http-string
-                                uri: 'http://linecorp.com/'
-                            }
+        // tslint:disable-next-line:max-func-body-length
+        const bubbles = reservations.map((r) => {
+            return {
+                type: 'bubble',
+                hero: {
+                    type: 'image',
+                    url: thumbnailImageUrl,
+                    size: 'full',
+                    aspectRatio: '20:13',
+                    aspectMode: 'cover',
+                    action: {
+                        type: 'uri',
+                        label: 'event',
+                        // tslint:disable-next-line:no-http-string
+                        uri: 'http://linecorp.com/'
+                    }
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'md',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: event.name.ja,
+                            wrap: true,
+                            weight: 'bold',
+                            gravity: 'center',
+                            size: 'xl'
                         },
-                        body: {
+                        {
                             type: 'box',
                             layout: 'vertical',
-                            spacing: 'md',
+                            margin: 'lg',
+                            spacing: 'sm',
                             contents: [
                                 {
-                                    type: 'text',
-                                    text: event.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '日時',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: moment(event.startDate).format('llll'),
+                                            wrap: true,
+                                            size: 'sm',
+                                            color: '#666666',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '場所',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '座席',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: r.reservedTicket.ticketedSeat.seatNumber,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '券種',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: r.reservedTicket.ticketType.name.ja,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'お名前',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: r.reservedTicket.underName.name,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
                                 },
                                 {
                                     type: 'box',
                                     layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
+                                    margin: 'xxl',
                                     contents: [
                                         {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: '日時',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: moment(event.startDate).format('llll'),
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
+                                            type: 'spacer',
+                                            size: 'md'
                                         },
                                         {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: '場所',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
+                                            type: 'image',
+                                            // tslint:disable-next-line:max-line-length
+                                            url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${r.reservedTicket.ticketToken}`,
+                                            aspectMode: 'cover',
+                                            size: 'xl'
                                         },
                                         {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: '座席',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: '券種',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: itemOffered.reservedTicket.ticketType.name.ja,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'お名前',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: itemOffered.reservedTicket.underName.name,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'vertical',
+                                            type: 'text',
+                                            // tslint:disable-next-line:max-line-length
+                                            text: 'You can enter the theater by using this code instead of a ticket',
+                                            color: '#aaaaaa',
+                                            wrap: true,
                                             margin: 'xxl',
-                                            contents: [
-                                                {
-                                                    type: 'spacer',
-                                                    size: 'md'
-                                                },
-                                                {
-                                                    type: 'image',
-                                                    // tslint:disable-next-line:max-line-length
-                                                    url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${itemOffered.reservedTicket.ticketToken}`,
-                                                    aspectMode: 'cover',
-                                                    size: 'xl'
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    // tslint:disable-next-line:max-line-length
-                                                    text: 'You can enter the theater by using this code instead of a ticket',
-                                                    color: '#aaaaaa',
-                                                    wrap: true,
-                                                    margin: 'xxl',
-                                                    size: 'xs'
-                                                }
-                                            ]
+                                            size: 'xs'
                                         }
                                     ]
                                 }
                             ]
                         }
-                    }
-                ]
+                    ]
+                }
+            };
+        });
+        const flex = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: bubbles
             }
         };
         yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
