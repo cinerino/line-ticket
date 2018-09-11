@@ -507,6 +507,7 @@ function selectPaymentMethodType(params) {
         // 購入者情報確認
         let contact;
         if ((yield params.user.getCredentials()) !== null) {
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
             // const loginTicket = params.user.authClient.verifyIdToken({});
             contact = yield personService.getContacts({ personId: 'me' });
             const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
@@ -523,7 +524,7 @@ function selectPaymentMethodType(params) {
             {
                 type: 'button',
                 // flex: 2,
-                style: 'primary',
+                // style: 'primary',
                 action: {
                     type: 'uri',
                     label: '入力する',
@@ -609,7 +610,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '',
+                                                        text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -631,7 +632,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? contact.email : '',
+                                                        text: (contact !== undefined) ? contact.email : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -653,7 +654,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? contact.telephone : '',
+                                                        text: (contact !== undefined) ? contact.telephone : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -705,7 +706,7 @@ function selectCreditCard(params) {
             {
                 type: 'button',
                 // flex: 2,
-                style: 'primary',
+                // style: 'primary',
                 action: {
                     type: 'uri',
                     label: '入力する',

@@ -524,6 +524,7 @@ export async function selectPaymentMethodType(params: {
     // 購入者情報確認
     let contact: cinerinoapi.factory.person.IContact | undefined;
     if (await params.user.getCredentials() !== null) {
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
         // const loginTicket = params.user.authClient.verifyIdToken({});
         contact = await personService.getContacts({ personId: 'me' });
         const lineProfile = await LINE.getProfile(params.user.userId);
@@ -540,7 +541,7 @@ export async function selectPaymentMethodType(params: {
         {
             type: 'button',
             // flex: 2,
-            style: 'primary',
+            // style: 'primary',
             action: {
                 type: 'uri',
                 label: '入力する',
@@ -626,7 +627,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '',
+                                                    text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -648,7 +649,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? contact.email : '',
+                                                    text: (contact !== undefined) ? contact.email : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -670,7 +671,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? contact.telephone : '',
+                                                    text: (contact !== undefined) ? contact.telephone : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -725,7 +726,7 @@ export async function selectCreditCard(params: {
         {
             type: 'button',
             // flex: 2,
-            style: 'primary',
+            // style: 'primary',
             action: {
                 type: 'uri',
                 label: '入力する',
