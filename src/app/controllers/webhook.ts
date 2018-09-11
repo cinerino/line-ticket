@@ -362,6 +362,15 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     telephone: data.telephone
                 });
                 break;
+            // 注文に対して発券
+            case 'authorizeOwnershipInfosByOrder':
+                await PostbackController.authorizeOwnershipInfosByOrder({
+                    replyToken: event.replyToken,
+                    user: user,
+                    orderNumber: data.orderNumber,
+                    telephone: data.telephone
+                });
+                break;
             // 注文検索
             case 'searchOrders':
                 await PostbackController.searchOrders({

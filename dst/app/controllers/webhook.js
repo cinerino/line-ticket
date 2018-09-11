@@ -366,6 +366,15 @@ function postback(event, user) {
                         telephone: data.telephone
                     });
                     break;
+                // 注文に対して発券
+                case 'authorizeOwnershipInfosByOrder':
+                    yield PostbackController.authorizeOwnershipInfosByOrder({
+                        replyToken: event.replyToken,
+                        user: user,
+                        orderNumber: data.orderNumber,
+                        telephone: data.telephone
+                    });
+                    break;
                 // 注文検索
                 case 'searchOrders':
                     yield PostbackController.searchOrders({
