@@ -19,22 +19,22 @@
         <form method="post">
             <input type="hidden" name="transactionId" value="<%= transactionId %>">
             <div class="form-group">
-                <label for="cardNumber">Family Name</label>
-                <input type="tel" name="familyName" id="familyName" class="form-control input-required" value="" maxlength="16" data-fieldname="Family Name"
+                <label for="familyName">Family Name</label>
+                <input type="text" name="familyName" id="familyName" class="form-control input-required" value="" maxlength="16" data-fieldname="Family Name"
                     required>
             </div>
             <div class="form-group">
-                <label for="holdername">Given Name</label>
+                <label for="givenName">Given Name</label>
                 <input type="text" name="givenName" id="givenName" class="form-control input-required" value="" data-fieldname="Given Name"
                     required>
             </div>
             <div class="form-group">
-                <label for="holdername">Email</label>
-                <input type="text" name="email" id="email" class="form-control input-required" value="" data-fieldname="Email" required>
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" class="form-control input-required" value="" data-fieldname="Email" required>
             </div>
             <div class="form-group">
-                <label for="holdername">Telephone</label>
-                <input type="text" name="telephone" id="telephone" class="form-control input-required" value="" data-fieldname="Telephone"
+                <label for="telephone">Telephone</label>
+                <input type="tel" name="telephone" id="telephone" class="form-control input-required" value="" data-fieldname="Telephone"
                     required>
             </div>
             <a class="btn btn-primary btn-next" href="javascript:void(0);">
