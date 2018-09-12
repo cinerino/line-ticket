@@ -36,7 +36,8 @@ transactionsRouter.get('/placeOrder/:transactionId/setCustomerContact', (req, re
     try {
         // フォーム
         res.render('transactions/placeOrder/setCustomerContact', {
-            transactionId: req.params.transactionId
+            transactionId: req.params.transactionId,
+            values: (req.query.contact !== undefined) ? req.query.contact : {}
         });
     }
     catch (error) {

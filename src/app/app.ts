@@ -3,11 +3,18 @@
  */
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
+import * as qs from 'qs';
 
 import errorHandler from './middlewares/errorHandler';
 import notFoundHandler from './middlewares/notFoundHandler';
 
 const app = express();
+app.set('query parser', (str: any) => qs.parse(str, {
+    arrayLimit: 1000,
+    parseArrays: true,
+    allowDots: false,
+    allowPrototypes: true
+}));
 
 // view engine setup
 app.set('views', `${__dirname}/../../views`);

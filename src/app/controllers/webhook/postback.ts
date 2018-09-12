@@ -528,7 +528,8 @@ export async function selectPaymentMethodType(params: {
             telephone: '+819012345678' // dummy
         };
     }
-    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact`;
+    const setCustomerContactQuery = querystring.stringify({ contact: contact });
+    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
     const footerContets: FlexComponent[] = [
         {

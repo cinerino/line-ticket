@@ -4,9 +4,16 @@
  */
 const bodyParser = require("body-parser");
 const express = require("express");
+const qs = require("qs");
 const errorHandler_1 = require("./middlewares/errorHandler");
 const notFoundHandler_1 = require("./middlewares/notFoundHandler");
 const app = express();
+app.set('query parser', (str) => qs.parse(str, {
+    arrayLimit: 1000,
+    parseArrays: true,
+    allowDots: false,
+    allowPrototypes: true
+}));
 // view engine setup
 app.set('views', `${__dirname}/../../views`);
 app.set('view engine', 'ejs');
