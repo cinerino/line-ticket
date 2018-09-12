@@ -2301,7 +2301,29 @@ function searchScreeningEventReservations(params) {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'お名前',
+                                                            text: '発行者',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservedTicket.issuedBy.name,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: '予約者',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -2309,6 +2331,28 @@ function searchScreeningEventReservations(params) {
                                                         {
                                                             type: 'text',
                                                             text: itemOffered.reservedTicket.underName.name,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Status',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservationStatus,
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2648,7 +2692,29 @@ function authorizeOwnershipInfo(params) {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: 'お名前',
+                                                            text: '発行者',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservedTicket.issuedBy.name,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: '予約者',
                                                             color: '#aaaaaa',
                                                             size: 'sm',
                                                             flex: 1
@@ -2656,6 +2722,28 @@ function authorizeOwnershipInfo(params) {
                                                         {
                                                             type: 'text',
                                                             text: itemOffered.reservedTicket.underName.name,
+                                                            wrap: true,
+                                                            color: '#666666',
+                                                            size: 'sm',
+                                                            flex: 4
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    type: 'box',
+                                                    layout: 'baseline',
+                                                    spacing: 'sm',
+                                                    contents: [
+                                                        {
+                                                            type: 'text',
+                                                            text: 'Status',
+                                                            color: '#aaaaaa',
+                                                            size: 'sm',
+                                                            flex: 1
+                                                        },
+                                                        {
+                                                            type: 'text',
+                                                            text: itemOffered.reservationStatus,
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -3176,7 +3264,29 @@ function authorizeOwnershipInfosByOrder(params) {
                                     contents: [
                                         {
                                             type: 'text',
-                                            text: 'お名前',
+                                            text: '発行者',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: r.reservedTicket.issuedBy.name,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '予約者',
                                             color: '#aaaaaa',
                                             size: 'sm',
                                             flex: 1
@@ -3184,6 +3294,28 @@ function authorizeOwnershipInfosByOrder(params) {
                                         {
                                             type: 'text',
                                             text: r.reservedTicket.underName.name,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'Status',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: r.reservationStatus,
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -3653,7 +3785,29 @@ function findScreeningEventReservationById(params) {
                                                 contents: [
                                                     {
                                                         type: 'text',
-                                                        text: 'お名前',
+                                                        text: '発行者',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: reservation.reservedTicket.issuedBy.name,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: '予約者',
                                                         color: '#aaaaaa',
                                                         size: 'sm',
                                                         flex: 1
@@ -3661,6 +3815,28 @@ function findScreeningEventReservationById(params) {
                                                     {
                                                         type: 'text',
                                                         text: reservation.reservedTicket.underName.name,
+                                                        wrap: true,
+                                                        color: '#666666',
+                                                        size: 'sm',
+                                                        flex: 4
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                type: 'box',
+                                                layout: 'baseline',
+                                                spacing: 'sm',
+                                                contents: [
+                                                    {
+                                                        type: 'text',
+                                                        text: 'Status',
+                                                        color: '#aaaaaa',
+                                                        size: 'sm',
+                                                        flex: 1
+                                                    },
+                                                    {
+                                                        type: 'text',
+                                                        text: reservation.reservationStatus,
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
