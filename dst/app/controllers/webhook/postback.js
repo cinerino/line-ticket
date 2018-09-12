@@ -1076,7 +1076,8 @@ function confirmOrder(params) {
             auth: params.user.authClient
         });
         const { order } = yield placeOrderService.confirm({
-            transactionId: params.transactionId
+            transactionId: params.transactionId,
+            sendEmailMessage: true
         });
         const flex = {
             type: 'flex',

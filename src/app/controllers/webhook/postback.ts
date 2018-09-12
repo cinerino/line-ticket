@@ -1105,7 +1105,8 @@ export async function confirmOrder(params: {
         auth: params.user.authClient
     });
     const { order } = await placeOrderService.confirm({
-        transactionId: params.transactionId
+        transactionId: params.transactionId,
+        sendEmailMessage: true
     });
     const flex: FlexMessage = {
         type: 'flex',
