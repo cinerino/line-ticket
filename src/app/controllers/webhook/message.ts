@@ -76,10 +76,28 @@ export async function pushHowToUse(params: {
                     label: 'おこづかいをもらう',
                     text: 'おこづかい'
                 }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/login-96.png`,
+                action: {
+                    type: 'message',
+                    label: 'ログアウト',
+                    text: 'logout'
+                }
             }
         );
     } else {
         quickReplyItems.push(
+            {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/login-96.png`,
+                action: {
+                    type: 'message',
+                    label: 'ログイン',
+                    text: 'login'
+                }
+            },
             {
                 type: 'action',
                 imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
