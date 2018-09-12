@@ -150,17 +150,16 @@ exports.showSeatReservationMenu = showSeatReservationMenu;
  */
 function showOrderMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const actions = [];
-        if ((yield params.user.getCredentials()) === null) {
-            const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
-            const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
-            actions.push({
+        const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
+        const actions = [
+            {
                 type: 'uri',
                 label: '確認番号で照会',
                 uri: liffUri
-            });
-        }
-        else {
+            }
+        ];
+        if ((yield params.user.getCredentials()) !== null) {
             actions.push({
                 type: 'postback',
                 label: '注文を確認する',

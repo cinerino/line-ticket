@@ -157,16 +157,16 @@ export async function showOrderMenu(params: {
     replyToken: string;
     user: User;
 }) {
-    const actions: Action[] = [];
-    if (await params.user.getCredentials() === null) {
-        const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
-        actions.push({
+    const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
+    const actions: Action[] = [
+        {
             type: 'uri',
             label: '確認番号で照会',
             uri: liffUri
-        });
-    } else {
+        }
+    ];
+    if (await params.user.getCredentials() !== null) {
         actions.push({
             type: 'postback',
             label: '注文を確認する',
