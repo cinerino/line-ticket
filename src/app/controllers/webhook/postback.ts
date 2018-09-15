@@ -522,10 +522,10 @@ export async function selectPaymentMethodType(params: {
         profile = await personService.getProfile({ personId: 'me' });
         const lineProfile = await LINE.getProfile(params.user.userId);
         profile = {
-            givenName: lineProfile.displayName,
-            familyName: 'LINE',
+            givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
+            familyName: (profile.familyName === '') ? 'LINE' : profile.familyName,
             email: profile.email,
-            telephone: '+819012345678' // dummy
+            telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
         };
     }
     const setCustomerContactQuery = qs.stringify({ profile: profile });

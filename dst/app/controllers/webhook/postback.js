@@ -505,10 +505,10 @@ function selectPaymentMethodType(params) {
             profile = yield personService.getProfile({ personId: 'me' });
             const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
             profile = {
-                givenName: lineProfile.displayName,
-                familyName: 'LINE',
+                givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
+                familyName: (profile.familyName === '') ? 'LINE' : profile.familyName,
                 email: profile.email,
-                telephone: '+819012345678' // dummy
+                telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
             };
         }
         const setCustomerContactQuery = qs.stringify({ profile: profile });
