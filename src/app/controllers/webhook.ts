@@ -45,6 +45,14 @@ export async function message(event: line.MessageEvent, user: User) {
                             user: user
                         });
                         break;
+                    // プロフィール管理
+                    case /^プロフィール/.test(messageText):
+                        await MessageController.showProfileMenu({
+                            replyToken: event.replyToken,
+                            user: user
+                        });
+                        break;
+                    // ログアウト
                     case /^座席予約$/.test(messageText):
                         await MessageController.showSeatReservationMenu({
                             replyToken: event.replyToken,
@@ -384,6 +392,21 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     replyToken: event.replyToken,
                     user: user,
                     code: <string>data.code
+                });
+                break;
+            // プロフィール検索
+            case 'getProfile':
+                await PostbackController.getProfile({
+                    replyToken: event.replyToken,
+                    user: user
+                });
+                break;
+            // プロフィール更新
+            case 'updateProfile':
+                await PostbackController.updateProfile({
+                    replyToken: event.replyToken,
+                    user: user,
+                    profile: data.profile
                 });
                 break;
             default:

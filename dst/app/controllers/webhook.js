@@ -47,6 +47,14 @@ function message(event, user) {
                                 user: user
                             });
                             break;
+                        // プロフィール管理
+                        case /^プロフィール/.test(messageText):
+                            yield MessageController.showProfileMenu({
+                                replyToken: event.replyToken,
+                                user: user
+                            });
+                            break;
+                        // ログアウト
                         case /^座席予約$/.test(messageText):
                             yield MessageController.showSeatReservationMenu({
                                 replyToken: event.replyToken,
@@ -388,6 +396,21 @@ function postback(event, user) {
                         replyToken: event.replyToken,
                         user: user,
                         code: data.code
+                    });
+                    break;
+                // プロフィール検索
+                case 'getProfile':
+                    yield PostbackController.getProfile({
+                        replyToken: event.replyToken,
+                        user: user
+                    });
+                    break;
+                // プロフィール更新
+                case 'updateProfile':
+                    yield PostbackController.updateProfile({
+                        replyToken: event.replyToken,
+                        user: user,
+                        profile: data.profile
                     });
                     break;
                 default:

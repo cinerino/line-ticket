@@ -3084,7 +3084,6 @@ export async function authorizeOwnershipInfo(params: {
             throw new Error(`Unknown goodType ${params.goodType}`);
     }
 }
-
 /**
  * 注文を検索する
  */
@@ -3942,4 +3941,168 @@ export async function findScreeningEventReservationById(params: {
     } catch (error) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `Invalid code ${error.message}` });
     }
+}
+/**
+ * プロフィール検索
+ */
+// tslint:disable-next-line:max-func-body-length
+export async function getProfile(params: {
+    replyToken: string;
+    user: User;
+}) {
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを検索しています...` });
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const profile = await personService.getProfile({ personId: 'me' });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールが見つかりました' });
+    const contents: FlexBubble[] = [profile2bubble(profile)];
+    const flex: FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: contents
+        }
+    };
+    await LINE.pushMessage(params.user.userId, [flex]);
+}
+/**
+ * プロフィール更新
+ */
+export async function updateProfile(params: {
+    replyToken: string;
+    user: User;
+    profile: cinerinoapi.factory.person.IProfile;
+}) {
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
+    await personService.updateProfile({ personId: 'me', ...params.profile });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しました` });
+    const contents: FlexBubble[] = [profile2bubble(params.profile)];
+    const flex: FlexMessage = {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: contents
+        }
+    };
+    await LINE.pushMessage(params.user.userId, [flex]);
+}
+// tslint:disable-next-line:max-func-body-length
+function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble {
+    return {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+                {
+                    type: 'text',
+                    text: 'PROFILE',
+                    weight: 'bold',
+                    color: '#1DB446',
+                    size: 'sm'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'xxl',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '姓',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.familyName !== '') ? params.familyName : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '名',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.givenName !== '') ? params.givenName : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Eメール',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.email !== '') ? params.email : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'TEL',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.telephone !== '') ? params.telephone : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    };
 }

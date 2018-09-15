@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - line-bot-sdkで再構築。
 - 注文管理機能を追加。
 - コード管理機能を追加。
+- プロフィール管理を追加。
 
 ### Changed
 

@@ -3862,3 +3862,166 @@ function findScreeningEventReservationById(params) {
     });
 }
 exports.findScreeningEventReservationById = findScreeningEventReservationById;
+/**
+ * プロフィール検索
+ */
+// tslint:disable-next-line:max-func-body-length
+function getProfile(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを検索しています...` });
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const profile = yield personService.getProfile({ personId: 'me' });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールが見つかりました' });
+        const contents = [profile2bubble(profile)];
+        const flex = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: contents
+            }
+        };
+        yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
+    });
+}
+exports.getProfile = getProfile;
+/**
+ * プロフィール更新
+ */
+function updateProfile(params) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
+        yield personService.updateProfile(Object.assign({ personId: 'me' }, params.profile));
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しました` });
+        const contents = [profile2bubble(params.profile)];
+        const flex = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: contents
+            }
+        };
+        yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
+    });
+}
+exports.updateProfile = updateProfile;
+// tslint:disable-next-line:max-func-body-length
+function profile2bubble(params) {
+    return {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+                {
+                    type: 'text',
+                    text: 'PROFILE',
+                    weight: 'bold',
+                    color: '#1DB446',
+                    size: 'sm'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'xxl',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '姓',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.familyName !== '') ? params.familyName : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '名',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.givenName !== '') ? params.givenName : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Eメール',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.email !== '') ? params.email : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'TEL',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.telephone !== '') ? params.telephone : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+}

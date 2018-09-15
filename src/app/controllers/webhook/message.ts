@@ -79,6 +79,15 @@ export async function pushHowToUse(params: {
             },
             {
                 type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/profile-96.png`,
+                action: {
+                    type: 'message',
+                    label: 'プロフィール管理',
+                    text: 'プロフィール'
+                }
+            },
+            {
+                type: 'action',
                 imageUrl: `https://${params.user.host}/img/labels/login-96.png`,
                 action: {
                     type: 'message',
@@ -135,6 +144,50 @@ export async function pushHowToUse(params: {
         }
     };
     await LINE.replyMessage(params.replyToken, [message]);
+}
+/**
+ * プロフィールメニューを表示する
+ */
+export async function showProfileMenu(params: {
+    replyToken: string;
+    user: User;
+}) {
+    if (await params.user.getCredentials() === null) {
+        throw new Error('Login required');
+    }
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const profile = await personService.getProfile({ personId: 'me' });
+    const actions: Action[] = [];
+    const updateProfileQuery = querystring.stringify({ profile: profile });
+    const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: updateProfileUri })}`;
+    actions.push(
+        {
+            type: 'postback',
+            label: 'プロフィールを確認',
+            data: `action=getProfile`
+        },
+        {
+            type: 'uri',
+            label: 'プロフィール変更',
+            uri: liffUri
+        }
+    );
+    await LINE.replyMessage(params.replyToken, [
+        {
+            type: 'template',
+            altText: 'プロフィール管理',
+            template: {
+                type: 'buttons',
+                title: 'プロフィール管理',
+                text: 'ご用件はなんでしょう？',
+                actions: actions
+            }
+        }
+    ]);
 }
 /**
  * 座席予約メニューを表示する
