@@ -157,8 +157,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
         arrayLimit: 1000,
         parseArrays: true,
         plainObjects: true,
-        allowDots: false,
-        allowPrototypes: true
+        allowDots: false
     });
     debug('data:', data);
     try {

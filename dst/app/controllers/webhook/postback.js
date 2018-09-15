@@ -3897,9 +3897,9 @@ function updateProfile(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...${JSON.stringify(params.profile)}` });
+        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
         yield personService.updateProfile(Object.assign({ personId: 'me' }, params.profile));
-        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しました` });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを更新しました' });
         const contents = [profile2bubble(params.profile)];
         const flex = {
             type: 'flex',
