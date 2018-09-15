@@ -418,12 +418,12 @@ export async function selectWhomAskForMoney(params: {
         throw new Error('口座未開設です');
     }
     const account = accounts[0];
-    const contact = await personService.getContacts({ personId: 'me' });
+    const profile = await personService.getProfile({ personId: 'me' });
 
     const token = await params.user.signTransferMoneyInfo({
         userId: params.user.userId,
         accountNumber: account.accountNumber,
-        name: `${contact.familyName} ${contact.givenName}`
+        name: `${profile.familyName} ${profile.givenName}`
     });
     const friendMessage = `TransferMoneyToken.${token}`;
     const message = encodeURIComponent(`おこづかいちょーだい！

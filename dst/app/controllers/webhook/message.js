@@ -406,11 +406,11 @@ function selectWhomAskForMoney(params) {
             throw new Error('口座未開設です');
         }
         const account = accounts[0];
-        const contact = yield personService.getContacts({ personId: 'me' });
+        const profile = yield personService.getProfile({ personId: 'me' });
         const token = yield params.user.signTransferMoneyInfo({
             userId: params.user.userId,
             accountNumber: account.accountNumber,
-            name: `${contact.familyName} ${contact.givenName}`
+            name: `${profile.familyName} ${profile.givenName}`
         });
         const friendMessage = `TransferMoneyToken.${token}`;
         const message = encodeURIComponent(`おこづかいちょーだい！

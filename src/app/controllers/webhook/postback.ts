@@ -515,20 +515,20 @@ export async function selectPaymentMethodType(params: {
     }
 
     // 購入者情報確認
-    let contact: cinerinoapi.factory.person.IContact | undefined;
+    let profile: cinerinoapi.factory.person.IProfile | undefined;
     if (await params.user.getCredentials() !== null) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
         // const loginTicket = params.user.authClient.verifyIdToken({});
-        contact = await personService.getContacts({ personId: 'me' });
+        profile = await personService.getProfile({ personId: 'me' });
         const lineProfile = await LINE.getProfile(params.user.userId);
-        contact = {
+        profile = {
             givenName: lineProfile.displayName,
             familyName: 'LINE',
-            email: contact.email,
+            email: profile.email,
             telephone: '+819012345678' // dummy
         };
     }
-    const setCustomerContactQuery = querystring.stringify({ contact: contact });
+    const setCustomerContactQuery = querystring.stringify({ profile: profile });
     const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
     const footerContets: FlexComponent[] = [
@@ -543,7 +543,7 @@ export async function selectPaymentMethodType(params: {
             }
         }
     ];
-    if (contact !== undefined) {
+    if (profile !== undefined) {
         footerContets.push({
             type: 'button',
             action: {
@@ -552,10 +552,10 @@ export async function selectPaymentMethodType(params: {
                 data: querystring.stringify({
                     action: 'setCustomerContact',
                     transactionId: params.transactionId,
-                    familyName: contact.familyName,
-                    givenName: contact.givenName,
-                    email: contact.email,
-                    telephone: contact.telephone
+                    familyName: profile.familyName,
+                    givenName: profile.givenName,
+                    email: profile.email,
+                    telephone: profile.telephone
                 })
             }
         });
@@ -612,7 +612,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '---',
+                                                    text: (profile !== undefined) ? `${profile.givenName} ${profile.familyName}` : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -634,7 +634,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? contact.email : '---',
+                                                    text: (profile !== undefined) ? profile.email : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -656,7 +656,7 @@ export async function selectPaymentMethodType(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: (contact !== undefined) ? contact.telephone : '---',
+                                                    text: (profile !== undefined) ? profile.telephone : '---',
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -1276,12 +1276,12 @@ export async function confirmTransferMoney(params: {
     debug('transaction confirmed.');
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
 
-    const contact = await personService.getContacts({ personId: 'me' });
+    const profile = await personService.getProfile({ personId: 'me' });
 
     // 振込先に通知
     await LINE.pushMessage(params.user.userId, {
         type: 'text',
-        text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました`
+        text: `${profile.familyName} ${profile.givenName}から${params.price}円おこづかいが振り込まれました`
     });
 }
 /**

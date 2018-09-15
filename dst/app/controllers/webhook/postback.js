@@ -498,20 +498,20 @@ function selectPaymentMethodType(params) {
                 throw new Error(`Unknown payment method ${params.paymentMethodType}`);
         }
         // 購入者情報確認
-        let contact;
+        let profile;
         if ((yield params.user.getCredentials()) !== null) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
             // const loginTicket = params.user.authClient.verifyIdToken({});
-            contact = yield personService.getContacts({ personId: 'me' });
+            profile = yield personService.getProfile({ personId: 'me' });
             const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
-            contact = {
+            profile = {
                 givenName: lineProfile.displayName,
                 familyName: 'LINE',
-                email: contact.email,
+                email: profile.email,
                 telephone: '+819012345678' // dummy
             };
         }
-        const setCustomerContactQuery = querystring.stringify({ contact: contact });
+        const setCustomerContactQuery = querystring.stringify({ profile: profile });
         const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
         const footerContets = [
@@ -526,7 +526,7 @@ function selectPaymentMethodType(params) {
                 }
             }
         ];
-        if (contact !== undefined) {
+        if (profile !== undefined) {
             footerContets.push({
                 type: 'button',
                 action: {
@@ -535,10 +535,10 @@ function selectPaymentMethodType(params) {
                     data: querystring.stringify({
                         action: 'setCustomerContact',
                         transactionId: params.transactionId,
-                        familyName: contact.familyName,
-                        givenName: contact.givenName,
-                        email: contact.email,
-                        telephone: contact.telephone
+                        familyName: profile.familyName,
+                        givenName: profile.givenName,
+                        email: profile.email,
+                        telephone: profile.telephone
                     })
                 }
             });
@@ -595,7 +595,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? `${contact.givenName} ${contact.familyName}` : '---',
+                                                        text: (profile !== undefined) ? `${profile.givenName} ${profile.familyName}` : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -617,7 +617,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? contact.email : '---',
+                                                        text: (profile !== undefined) ? profile.email : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -639,7 +639,7 @@ function selectPaymentMethodType(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (contact !== undefined) ? contact.telephone : '---',
+                                                        text: (profile !== undefined) ? profile.telephone : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -1238,11 +1238,11 @@ function confirmTransferMoney(params) {
         });
         debug('transaction confirmed.');
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-        const contact = yield personService.getContacts({ personId: 'me' });
+        const profile = yield personService.getProfile({ personId: 'me' });
         // 振込先に通知
         yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
-            text: `${contact.familyName} ${contact.givenName}から${params.price}円おこづかいが振り込まれました`
+            text: `${profile.familyName} ${profile.givenName}から${params.price}円おこづかいが振り込まれました`
         });
     });
 }
