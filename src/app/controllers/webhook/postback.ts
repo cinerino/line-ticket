@@ -3980,7 +3980,7 @@ export async function updateProfile(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...${params.profile}` });
+    await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...${JSON.stringify(params.profile)}` });
     await personService.updateProfile({ personId: 'me', ...params.profile });
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しました` });
     const contents: FlexBubble[] = [profile2bubble(params.profile)];
