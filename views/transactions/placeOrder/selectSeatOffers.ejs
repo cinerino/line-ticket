@@ -42,6 +42,7 @@
 
 <script>
     var availableSeatNumbers = $('input[name="availableSeatNumbers"]').val().split(',');
+    var submitting = false;
     liff.init(
         data => {
             // Now you can call LIFF API
@@ -156,12 +157,21 @@
         sc.find('f').status('unavailable');
         sc.get(availableSeatNumbers).status('available');
 
-        $('.checkout-button').on('click', function () {
+        $('.btn-next').on('click', function () {
             var seatNumbers = [];
             sc.find('selected').each(function () {
                 seatNumbers.push(this.settings.id);
             });
             console.log('checking out...', seatNumbers);
+            if (seatNumbers.length === 0) {
+                alert('座席を選択してください');
+
+                return;
+            }
+
+            if (submitting) { return false; }
+            submitting = true;
+            $('.btn-next').addClass('disabled').find('span').text('Sending...');
 
             var message = 'postback:' + 'action=selectSeatOffers&seatNumbers=' + seatNumbers.join(',') + '&eventId=' + '<%= eventId %>';
             console.log('sending message...', message);
