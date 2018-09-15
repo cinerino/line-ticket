@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const createDebug = require("debug");
-const querystring = require("qs");
+const qs = require("qs");
 const lineClient_1 = require("../../lineClient");
 const MessageController = require("./webhook/message");
 const ImageMessageController = require("./webhook/message/image");
@@ -156,7 +156,13 @@ exports.message = message;
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 function postback(event, user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const data = querystring.parse(event.postback.data);
+        const data = qs.parse(event.postback.data, {
+            arrayLimit: 1000,
+            parseArrays: true,
+            plainObjects: true,
+            allowDots: false,
+            allowPrototypes: true
+        });
         debug('data:', data);
         try {
             switch (data.action) {

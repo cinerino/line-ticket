@@ -5,7 +5,7 @@ import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import { WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
-import * as querystring from 'qs';
+import * as qs from 'qs';
 import * as request from 'request-promise-native';
 import * as stream from 'stream';
 
@@ -120,7 +120,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
             // face loginイベントであれば、メッセージを送信
             case 'postback':
-                const data = querystring.parse(event.postback.data);
+                const data = qs.parse(event.postback.data);
                 if (data.action === 'loginByFace') {
                     // ログイン前のstateを保管
                     await req.user.saveCallbackState(<string>data.state);

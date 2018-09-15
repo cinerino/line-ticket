@@ -3,7 +3,7 @@
  */
 import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
-import * as querystring from 'qs';
+import * as qs from 'qs';
 
 import LINE from '../../lineClient';
 import User from '../user';
@@ -153,7 +153,13 @@ export async function message(event: line.MessageEvent, user: User) {
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 export async function postback(event: line.PostbackEvent, user: User) {
-    const data = querystring.parse(event.postback.data);
+    const data = qs.parse(event.postback.data, {
+        arrayLimit: 1000,
+        parseArrays: true,
+        plainObjects: true,
+        allowDots: false,
+        allowPrototypes: true
+    });
     debug('data:', data);
     try {
         switch (data.action) {

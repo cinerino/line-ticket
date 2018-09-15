@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const http_status_1 = require("http-status");
-const querystring = require("qs");
+const qs = require("qs");
 const request = require("request-promise-native");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
@@ -122,7 +122,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                 break;
             // face loginイベントであれば、メッセージを送信
             case 'postback':
-                const data = querystring.parse(event.postback.data);
+                const data = qs.parse(event.postback.data);
                 if (data.action === 'loginByFace') {
                     // ログイン前のstateを保管
                     yield req.user.saveCallbackState(data.state);

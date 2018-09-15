@@ -6,7 +6,7 @@ import { FlexBox, FlexBubble, FlexComponent, FlexMessage, QuickReplyItem, TextMe
 import * as pecorino from '@pecorino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
-import * as querystring from 'qs';
+import * as qs from 'qs';
 
 import LINE from '../../../lineClient';
 import User from '../../user';
@@ -175,7 +175,7 @@ export async function searchEventsByDate(params: {
                                     action: {
                                         type: 'postback',
                                         label: 'スケジュール選択',
-                                        data: querystring.stringify({
+                                        data: qs.stringify({
                                             action: 'askScreeningEvent',
                                             screeningEventSeriesId: event.id,
                                             date: params.date
@@ -223,9 +223,9 @@ export async function askScreeningEvent(params: {
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
     // tslint:disable-next-line:max-func-body-length
     const bubbles: FlexBubble[] = screeningEvents.map<FlexBubble>((event) => {
-        const query = querystring.stringify({ eventId: event.id, userId: params.user.userId });
+        const query = qs.stringify({ eventId: event.id, userId: params.user.userId });
         const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: selectSeatsUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: selectSeatsUri })}`;
         let availability = 100;
         if (event.maximumAttendeeCapacity !== undefined && event.remainingAttendeeCapacity !== undefined) {
             // tslint:disable-next-line:no-magic-numbers
@@ -401,7 +401,7 @@ export async function askPaymentCode(params: {
     //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください
     // line://oaMessage/${LINE_ID}/?${friendMessage}`);
     const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
-    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: scanQRUri })}`;
     await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
@@ -528,9 +528,9 @@ export async function selectPaymentMethodType(params: {
             telephone: '+819012345678' // dummy
         };
     }
-    const setCustomerContactQuery = querystring.stringify({ profile: profile });
+    const setCustomerContactQuery = qs.stringify({ profile: profile });
     const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
-    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: setCustomerContactUri })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: setCustomerContactUri })}`;
     const footerContets: FlexComponent[] = [
         {
             type: 'button',
@@ -549,7 +549,7 @@ export async function selectPaymentMethodType(params: {
             action: {
                 type: 'postback',
                 label: 'このまま進む',
-                data: querystring.stringify({
+                data: qs.stringify({
                     action: 'setCustomerContact',
                     transactionId: params.transactionId,
                     familyName: profile.familyName,
@@ -705,7 +705,7 @@ export async function selectCreditCard(params: {
     }
     const inputCreditCardUri =
         `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
-    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`;
     const footerContets: FlexComponent[] = [
         {
             type: 'button',
@@ -733,7 +733,7 @@ export async function selectCreditCard(params: {
                 action: {
                     type: 'postback',
                     label: creditCard.cardNo,
-                    data: querystring.stringify({
+                    data: qs.stringify({
                         action: 'selectPaymentMethodType',
                         transactionId: params.transactionId,
                         paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
@@ -1189,7 +1189,7 @@ export async function confirmFriendPay(params: {
     //             {
     //                 type: 'postback',
     //                 label: 'Yes',
-    //                 data: querystring.stringify({
+    //                 data: qs.stringify({
     //                     action: 'continueTransactionAfterFriendPayConfirmation',
     //                     transactionId: friendPayInfo.transactionId,
     //                     price: friendPayInfo.price
@@ -1198,7 +1198,7 @@ export async function confirmFriendPay(params: {
     //             {
     //                 type: 'postback',
     //                 label: 'No',
-    //                 data: querystring.stringify({
+    //                 data: qs.stringify({
     //                     action: 'cancelTransactionAfterFriendPayConfirmation',
     //                     transactionId: friendPayInfo.transactionId,
     //                     price: friendPayInfo.price
@@ -1304,7 +1304,7 @@ export async function selectDepositAmount(params: {
                     action: {
                         type: 'postback',
                         label: '100',
-                        data: querystring.stringify({
+                        data: qs.stringify({
                             action: 'depositCoinByCreditCard',
                             amount: 100,
                             accountType: params.accountType,
@@ -1318,7 +1318,7 @@ export async function selectDepositAmount(params: {
                     action: {
                         type: 'postback',
                         label: '1000',
-                        data: querystring.stringify({
+                        data: qs.stringify({
                             action: 'depositCoinByCreditCard',
                             amount: 1000,
                             accountType: params.accountType,
@@ -1332,7 +1332,7 @@ export async function selectDepositAmount(params: {
                     action: {
                         type: 'postback',
                         label: '10000',
-                        data: querystring.stringify({
+                        data: qs.stringify({
                             action: 'depositCoinByCreditCard',
                             amount: 10000,
                             accountType: params.accountType,
@@ -1833,7 +1833,7 @@ export async function searchCoinAccounts(params: {
                                     action: {
                                         type: 'postback',
                                         label: '取引履歴確認',
-                                        data: querystring.stringify({
+                                        data: qs.stringify({
                                             action: 'searchAccountMoneyTransferActions',
                                             accountType: cinerinoapi.factory.accountType.Coin,
                                             accountNumber: account.accountNumber
@@ -1845,7 +1845,7 @@ export async function searchCoinAccounts(params: {
                                     action: {
                                         type: 'postback',
                                         label: 'クレジットカードで入金',
-                                        data: querystring.stringify({
+                                        data: qs.stringify({
                                             action: 'selectDepositAmount',
                                             accountType: cinerinoapi.factory.accountType.Coin,
                                             accountNumber: account.accountNumber
@@ -1857,7 +1857,7 @@ export async function searchCoinAccounts(params: {
                                     action: {
                                         type: 'postback',
                                         label: 'コード発行',
-                                        data: querystring.stringify({
+                                        data: qs.stringify({
                                             action: 'authorizeOwnershipInfo',
                                             goodType: ownershipInfo.typeOfGood.typeOf,
                                             id: ownershipInfo.id
@@ -1877,7 +1877,7 @@ export async function searchCoinAccounts(params: {
                                     action: {
                                         type: 'postback',
                                         label: '解約',
-                                        data: querystring.stringify({
+                                        data: qs.stringify({
                                             action: 'closeAccount',
                                             accountType: account.accountType,
                                             accountNumber: account.accountNumber
@@ -2432,7 +2432,7 @@ export async function searchScreeningEventReservations(params: {
                                             action: {
                                                 type: 'postback',
                                                 label: 'コード発行',
-                                                data: querystring.stringify({
+                                                data: qs.stringify({
                                                     action: 'authorizeOwnershipInfo',
                                                     goodType: ownershipInfo.typeOfGood.typeOf,
                                                     id: ownershipInfo.id
@@ -2541,7 +2541,7 @@ export async function selectSeatOffers(params: {
             action: {
                 type: 'postback',
                 label: 'クレジットカード',
-                data: querystring.stringify({
+                data: qs.stringify({
                     action: 'selectCreditCard',
                     transactionId: transaction.id
                 })
@@ -2556,7 +2556,7 @@ export async function selectSeatOffers(params: {
                 action: {
                     type: 'postback',
                     label: 'コイン',
-                    data: querystring.stringify({
+                    data: qs.stringify({
                         action: 'selectPaymentMethodType',
                         paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
                         transactionId: transaction.id
@@ -2569,7 +2569,7 @@ export async function selectSeatOffers(params: {
                 action: {
                     type: 'postback',
                     label: 'Friend Pay',
-                    data: querystring.stringify({
+                    data: qs.stringify({
                         action: 'askPaymentCode',
                         transactionId: transaction.id
                     })
@@ -3170,7 +3170,7 @@ export async function findOrderByConfirmationNumber(params: {
                     action: {
                         type: 'postback',
                         label: '発券する',
-                        data: querystring.stringify({
+                        data: qs.stringify({
                             action: 'authorizeOwnershipInfosByOrder',
                             amount: 100,
                             orderNumber: order.orderNumber,

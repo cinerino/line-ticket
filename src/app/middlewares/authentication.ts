@@ -7,7 +7,7 @@ import { TemplateMessage, WebhookEvent } from '@line/bot-sdk';
 import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
-import * as querystring from 'qs';
+import * as qs from 'qs';
 import { URL } from 'url';
 
 import LINE from '../../lineClient';
@@ -84,9 +84,9 @@ export async function sendLoginButton(user: User) {
     // tslint:disable-next-line:no-multiline-string
     let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
     const signInUrl = new URL(user.generateAuthUrl());
-    const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
     const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-    const googleLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: googleSignInUrl })}`;
+    const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
     const actions: any[] = [
         {
             type: 'uri',
@@ -124,7 +124,7 @@ export async function sendLoginButton(user: User) {
         const signUpUrl = new URL(signInUrl.href);
         signUpUrl.pathname = 'signup';
         const signUpUri = signUpUrl.href;
-        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signUpUri })}`;
+        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
         actions.push({
             type: 'uri',
             label: '会員登録',

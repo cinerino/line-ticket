@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express_middleware_1 = require("@motionpicture/express-middleware");
 const http_status_1 = require("http-status");
-const querystring = require("qs");
+const qs = require("qs");
 const url_1 = require("url");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
@@ -86,9 +86,9 @@ function sendLoginButton(user) {
         // tslint:disable-next-line:no-multiline-string
         let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
         const signInUrl = new url_1.URL(user.generateAuthUrl());
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signInUrl.href })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
         const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: googleSignInUrl })}`;
+        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
         const actions = [
             {
                 type: 'uri',
@@ -124,7 +124,7 @@ function sendLoginButton(user) {
             const signUpUrl = new url_1.URL(signInUrl.href);
             signUpUrl.pathname = 'signup';
             const signUpUri = signUpUrl.href;
-            const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: signUpUri })}`;
+            const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
             actions.push({
                 type: 'uri',
                 label: '会員登録',

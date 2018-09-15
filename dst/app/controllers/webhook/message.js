@@ -14,7 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const createDebug = require("debug");
 const moment = require("moment");
-const querystring = require("qs");
+const qs = require("qs");
 const lineClient_1 = require("../../../lineClient");
 const debug = createDebug('cinerino-line-ticket:controllers');
 /**
@@ -151,9 +151,9 @@ function showProfileMenu(params) {
         });
         const profile = yield personService.getProfile({ personId: 'me' });
         const actions = [];
-        const updateProfileQuery = querystring.stringify({ profile: profile });
+        const updateProfileQuery = qs.stringify({ profile: profile });
         const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: updateProfileUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
         actions.push({
             type: 'postback',
             label: 'プロフィールを確認',
@@ -216,7 +216,7 @@ exports.showSeatReservationMenu = showSeatReservationMenu;
 function showOrderMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: findOrderUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: findOrderUri })}`;
         const actions = [
             {
                 type: 'uri',
@@ -274,7 +274,7 @@ function showCreditCardMenu(params) {
                         {
                             type: 'uri',
                             label: 'クレジットカード追加',
-                            uri: `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: inputCreditCardUri })}`
+                            uri: `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`
                         },
                         {
                             type: 'postback',
@@ -291,7 +291,7 @@ exports.showCreditCardMenu = showCreditCardMenu;
 function showCoinAccountMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const openAccountUri = `https://${params.user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: openAccountUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
@@ -321,7 +321,7 @@ exports.showCoinAccountMenu = showCoinAccountMenu;
 function showCodeMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const scanQRUri = '/reservations/scanScreeningEventReservationCode';
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: scanQRUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: scanQRUri })}`;
         const actions = [
             {
                 type: 'uri',
@@ -563,7 +563,7 @@ function askEventStartDate(params) {
                         action: {
                             type: 'postback',
                             label: '今日',
-                            data: querystring.stringify({
+                            data: qs.stringify({
                                 action: 'searchEventsByDate',
                                 date: moment().add(0, 'days').format('YYYY-MM-DD')
                             })
@@ -575,7 +575,7 @@ function askEventStartDate(params) {
                         action: {
                             type: 'postback',
                             label: '明日',
-                            data: querystring.stringify({
+                            data: qs.stringify({
                                 action: 'searchEventsByDate',
                                 date: moment().add(1, 'days').format('YYYY-MM-DD')
                             })
@@ -587,7 +587,7 @@ function askEventStartDate(params) {
                         action: {
                             type: 'postback',
                             label: '明後日',
-                            data: querystring.stringify({
+                            data: qs.stringify({
                                 action: 'searchEventsByDate',
                                 // tslint:disable-next-line:no-magic-numbers
                                 date: moment().add(2, 'days').format('YYYY-MM-DD')
@@ -645,7 +645,7 @@ exports.askFromWhenAndToWhen = askFromWhenAndToWhen;
 function logout(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const logoutUri = `https://${params.user.host}/logout?userId=${params.user.userId}`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${querystring.stringify({ cb: logoutUri })}`;
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: logoutUri })}`;
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
