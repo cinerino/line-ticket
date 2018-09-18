@@ -2436,8 +2436,11 @@ function selectSeatOffers(params) {
         const transaction = yield placeOrderService.start({
             // tslint:disable-next-line:no-magic-numbers
             expires: moment().add(5, 'minutes').toDate(),
-            sellerId: seller.id
-            // passportToken: passportToken
+            seller: {
+                typeOf: cinerinoapi.factory.organizationType.MovieTheater,
+                id: seller.id
+            },
+            object: {}
         });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
