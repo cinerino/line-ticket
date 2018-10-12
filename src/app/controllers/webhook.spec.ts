@@ -2,29 +2,12 @@
 /**
  * webhookルーターテスト
  */
-import * as assert from 'assert';
-import * as HTTPStatus from 'http-status';
-import * as supertest from 'supertest';
-
-import * as app from '../app';
-
+before(() => {
+    process.env.LINE_BOT_CHANNEL_ACCESS_TOKEN = 'xxxx';
+    process.env.LINE_BOT_CHANNEL_SECRET = 'xxxx';
+    process.env.USER_EXPIRES_IN_SECONDS = '3600';
+    process.env.REFRESH_TOKEN_EXPIRES_IN_SECONDS = '2678400';
+});
 describe('POST /webhook', () => {
-    it('found', async () => {
-        await supertest(app)
-            .post('/webhook')
-            .send({
-                events: [
-                    {
-                        source: {
-                            type: 'user',
-                            userId: 'U28fba84b4008d60291fc861e2562b34f'
-                        }
-                    }
-                ]
-            })
-            .expect(HTTPStatus.OK)
-            .then((response) => {
-                assert.equal(response.text, 'ok');
-            });
-    });
+    // no test
 });

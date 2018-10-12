@@ -60,6 +60,100 @@ export async function searchEventsByDate(params: {
                         // tslint:disable-next-line:max-line-length
                         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
 
+                    const body: FlexBox = {
+                        type: 'box',
+                        layout: 'vertical',
+                        spacing: 'md',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: event.name.ja,
+                                wrap: true,
+                                weight: 'bold',
+                                gravity: 'center',
+                                size: 'xl'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'lg',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'Place',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: event.location.name.ja,
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'VideoFormat',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (Array.isArray(event.videoFormat))
+                                                    ? event.videoFormat.map((format) => format.typeOf).join(',')
+                                                    : '---',
+                                                wrap: true,
+                                                size: 'sm',
+                                                color: '#666666',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'Duration',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (event.duration !== undefined)
+                                                    ? moment.duration(event.duration).toIsoString()
+                                                    : '---',
+                                                wrap: true,
+                                                size: 'sm',
+                                                color: '#666666',
+                                                flex: 4
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+
                     return {
                         type: 'bubble',
                         hero: {
@@ -75,97 +169,7 @@ export async function searchEventsByDate(params: {
                                 uri: 'http://linecorp.com/'
                             }
                         },
-                        body: {
-                            type: 'box',
-                            layout: 'vertical',
-                            spacing: 'md',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: event.name.ja,
-                                    wrap: true,
-                                    weight: 'bold',
-                                    gravity: 'center',
-                                    size: 'xl'
-                                },
-                                {
-                                    type: 'box',
-                                    layout: 'vertical',
-                                    margin: 'lg',
-                                    spacing: 'sm',
-                                    contents: [
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Place',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: event.location.name.ja,
-                                                    wrap: true,
-                                                    color: '#666666',
-                                                    size: 'sm',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'VideoFormat',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: (event.videoFormat !== undefined) ? event.videoFormat : '---',
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            type: 'box',
-                                            layout: 'baseline',
-                                            spacing: 'sm',
-                                            contents: [
-                                                {
-                                                    type: 'text',
-                                                    text: 'Duration',
-                                                    color: '#aaaaaa',
-                                                    size: 'sm',
-                                                    flex: 1
-                                                },
-                                                {
-                                                    type: 'text',
-                                                    text: (event.duration !== undefined)
-                                                        ? moment.duration(event.duration).toIsoString()
-                                                        : '---',
-                                                    wrap: true,
-                                                    size: 'sm',
-                                                    color: '#666666',
-                                                    flex: 4
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
+                        body: body,
                         footer: {
                             type: 'box',
                             layout: 'horizontal',
@@ -2508,19 +2512,17 @@ export async function selectSeatOffers(params: {
     await params.user.saveTransaction(transaction);
 
     // 券種をランダムに選択
-    const ticketTypes = await eventService.searchScreeningEventTicketTypes({ eventId: params.eventId });
+    const ticketOffers = await eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
     // tslint:disable-next-line:insecure-random
-    const selectedTicketType = ticketTypes[Math.floor(ticketTypes.length * Math.random())];
+    const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
 
     debug('creating a seat reservation authorization...');
     const seatReservationAuthorization = await placeOrderService.authorizeSeatReservation({
         transactionId: transaction.id,
         event: { id: event.id },
-        tickets: params.seatNumbers.map((seatNumber) => {
+        acceptedOffer: params.seatNumbers.map((seatNumber) => {
             return {
-                ticketType: {
-                    id: selectedTicketType.id
-                },
+                id: selectedTicketOffer.id,
                 ticketedSeat: {
                     typeOf: cinerinoapi.factory.chevre.placeType.Seat,
                     seatNumber: seatNumber,
