@@ -490,6 +490,7 @@ export async function selectPaymentMethodType(params: {
                 account = token;
             }
             const accountAuthorization = await placeOrderService.authorizeAccountPayment({
+                typeOf: cinerinoapi.factory.paymentMethodType.Account,
                 transactionId: params.transactionId,
                 amount: price,
                 fromAccount: account
@@ -505,10 +506,11 @@ export async function selectPaymentMethodType(params: {
             }
             const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
             await placeOrderService.authorizeCreditCardPayment({
+                typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
                 transactionId: params.transactionId,
                 amount: price,
                 orderId: orderId,
-                method: '1',
+                method: <any>'1',
                 creditCard: params.creditCard
             });
             await LINE.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
@@ -2511,8 +2513,15 @@ export async function selectSeatOffers(params: {
     debug('transaction started.', transaction.id);
     await params.user.saveTransaction(transaction);
 
-    // 券種をランダムに選択
-    const ticketOffers = await eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+    let ticketOffers = await eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+    // ムビチケ以外のオファーを選択
+    ticketOffers = ticketOffers.filter((offer) => {
+        const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find(
+            (component) => component.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.MovieTicketTypeChargeSpecification
+        );
+
+        return movieTicketTypeChargeSpecification === undefined;
+    });
     // tslint:disable-next-line:insecure-random
     const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
 

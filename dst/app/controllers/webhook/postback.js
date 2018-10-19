@@ -475,6 +475,7 @@ function selectPaymentMethodType(params) {
                     account = token;
                 }
                 const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
+                    typeOf: cinerinoapi.factory.paymentMethodType.Account,
                     transactionId: params.transactionId,
                     amount: price,
                     fromAccount: account
@@ -489,6 +490,7 @@ function selectPaymentMethodType(params) {
                 }
                 const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
                 yield placeOrderService.authorizeCreditCardPayment({
+                    typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
                     transactionId: params.transactionId,
                     amount: price,
                     orderId: orderId,
@@ -2447,8 +2449,12 @@ function selectSeatOffers(params) {
         });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
-        // 券種をランダムに選択
-        const ticketOffers = yield eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+        let ticketOffers = yield eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+        // ムビチケ以外のオファーを選択
+        ticketOffers = ticketOffers.filter((offer) => {
+            const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find((component) => component.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.MovieTicketTypeChargeSpecification);
+            return movieTicketTypeChargeSpecification === undefined;
+        });
         // tslint:disable-next-line:insecure-random
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
         debug('creating a seat reservation authorization...');
