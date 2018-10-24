@@ -2516,7 +2516,7 @@ export async function selectSeatOffers(params: {
     let ticketOffers = await eventService.searchScreeningEventTicketOffers({
         event: { id: params.eventId },
         seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
-        store: { id: <string>process.env.PECORINO_CLIENT_ID }
+        store: { id: <string>params.user.authClient.options.clientId }
     });
     // ムビチケ以外のオファーを選択
     ticketOffers = ticketOffers.filter((offer) => {

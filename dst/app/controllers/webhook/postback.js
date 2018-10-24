@@ -2452,7 +2452,7 @@ function selectSeatOffers(params) {
         let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
             event: { id: params.eventId },
             seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
-            store: { id: process.env.PECORINO_CLIENT_ID }
+            store: { id: params.user.authClient.options.clientId }
         });
         // ムビチケ以外のオファーを選択
         ticketOffers = ticketOffers.filter((offer) => {
