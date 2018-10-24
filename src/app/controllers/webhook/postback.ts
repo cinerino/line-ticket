@@ -2513,7 +2513,11 @@ export async function selectSeatOffers(params: {
     debug('transaction started.', transaction.id);
     await params.user.saveTransaction(transaction);
 
-    let ticketOffers = await eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+    let ticketOffers = await eventService.searchScreeningEventTicketOffers({
+        event: { id: params.eventId },
+        seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
+        store: { id: <string>process.env.PECORINO_CLIENT_ID }
+    });
     // ムビチケ以外のオファーを選択
     ticketOffers = ticketOffers.filter((offer) => {
         const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find(

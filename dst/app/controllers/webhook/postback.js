@@ -2449,7 +2449,11 @@ function selectSeatOffers(params) {
         });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
-        let ticketOffers = yield eventService.searchScreeningEventTicketOffers({ eventId: params.eventId });
+        let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
+            event: { id: params.eventId },
+            seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
+            store: { id: process.env.PECORINO_CLIENT_ID }
+        });
         // ムビチケ以外のオファーを選択
         ticketOffers = ticketOffers.filter((offer) => {
             const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find((component) => component.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.MovieTicketTypeChargeSpecification);
