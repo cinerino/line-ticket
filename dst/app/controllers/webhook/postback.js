@@ -2427,7 +2427,6 @@ function selectSeatOffers(params) {
             auth: params.user.authClient
         });
         const event = yield eventService.findScreeningEventById({ id: params.eventId });
-        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
         // 販売者情報取得
         const searchMovieTheatersResult = yield organizationService.searchMovieTheaters({});
         const seller = searchMovieTheatersResult.data.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
@@ -2446,6 +2445,7 @@ function selectSeatOffers(params) {
         //     }
         // ).then((body) => body.token);
         // debug('passportToken published.', passportToken);
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
         const transaction = yield placeOrderService.start({
             // tslint:disable-next-line:no-magic-numbers
             expires: moment().add(5, 'minutes').toDate(),
@@ -2457,6 +2457,7 @@ function selectSeatOffers(params) {
         });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'オファーを検索しています...' });
         let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
             event: { id: params.eventId },
             seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
@@ -2469,6 +2470,7 @@ function selectSeatOffers(params) {
         });
         // tslint:disable-next-line:insecure-random
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
+        yield lineClient_1.default.pushMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
         debug('creating a seat reservation authorization...');
         const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
             object: {
@@ -2490,8 +2492,8 @@ function selectSeatOffers(params) {
             purpose: transaction
         });
         debug('seatReservationAuthorization:', seatReservationAuthorization);
-        yield params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
+        yield params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
         const quickReplyItems = [
             {
                 type: 'action',
