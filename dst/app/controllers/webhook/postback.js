@@ -2470,6 +2470,9 @@ function selectSeatOffers(params) {
             const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find((component) => component.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.MovieTicketTypeChargeSpecification);
             return movieTicketTypeChargeSpecification === undefined;
         });
+        if (ticketOffers.length === 0) {
+            throw new Error('ムビチケなしのオファーが見つかりません');
+        }
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
         // tslint:disable-next-line:insecure-random
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];

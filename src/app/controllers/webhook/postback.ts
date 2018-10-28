@@ -2529,6 +2529,7 @@ export async function selectSeatOffers(params: {
         store: { id: storeId }
     });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件のオファーが見つかりました` });
+
     // ムビチケ以外のオファーを選択
     ticketOffers = ticketOffers.filter((offer) => {
         const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find(
@@ -2537,8 +2538,11 @@ export async function selectSeatOffers(params: {
 
         return movieTicketTypeChargeSpecification === undefined;
     });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
+    if (ticketOffers.length === 0) {
+        throw new Error('ムビチケなしのオファーが見つかりません');
+    }
 
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
     // tslint:disable-next-line:insecure-random
     const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
