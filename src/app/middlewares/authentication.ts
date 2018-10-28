@@ -29,10 +29,16 @@ export default async (req: Request, res: Response, next: NextFunction) => {
             return;
         }
 
+        let state: string = '';
+        try {
+            state = JSON.stringify(req.body);
+        } catch (error) {
+            // no op
+        }
         req.user = new User({
             host: req.hostname,
             userId: userId,
-            state: JSON.stringify(req.body)
+            state: state
         });
 
         // ユーザー認証無効化の設定の場合

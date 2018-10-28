@@ -144,7 +144,13 @@ export async function message(event: line.MessageEvent, user: User) {
                 throw new Error(`Unknown message type ${event.message.type}`);
         }
     } catch (error) {
-        await LINE.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
+        let text: string = error.message;
+        try {
+            text = JSON.stringify(error);
+        } catch (error) {
+            // no op
+        }
+        await LINE.pushMessage(user.userId, { type: 'text', text: text });
     }
 }
 
@@ -417,7 +423,13 @@ export async function postback(event: line.PostbackEvent, user: User) {
             default:
         }
     } catch (error) {
-        await LINE.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
+        let text: string = error.message;
+        try {
+            text = JSON.stringify(error);
+        } catch (error) {
+            // no op
+        }
+        await LINE.pushMessage(user.userId, { type: 'text', text: text });
     }
 }
 

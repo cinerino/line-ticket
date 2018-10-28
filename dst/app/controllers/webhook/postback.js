@@ -435,7 +435,7 @@ function selectPaymentMethodType(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -475,10 +475,12 @@ function selectPaymentMethodType(params) {
                     account = token;
                 }
                 const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
-                    typeOf: cinerinoapi.factory.paymentMethodType.Account,
-                    transactionId: params.transactionId,
-                    amount: price,
-                    fromAccount: account
+                    object: {
+                        typeOf: cinerinoapi.factory.paymentMethodType.Account,
+                        amount: price,
+                        fromAccount: account
+                    },
+                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                 });
                 debug('残高確認済', accountAuthorization);
                 yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
@@ -490,12 +492,14 @@ function selectPaymentMethodType(params) {
                 }
                 const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
                 yield placeOrderService.authorizeCreditCardPayment({
-                    typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
-                    transactionId: params.transactionId,
-                    amount: price,
-                    orderId: orderId,
-                    method: '1',
-                    creditCard: params.creditCard
+                    object: {
+                        typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                        amount: price,
+                        orderId: orderId,
+                        method: '1',
+                        creditCard: params.creditCard
+                    },
+                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                 });
                 yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
                 break;
@@ -777,7 +781,7 @@ function setCustomerContact(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -796,8 +800,10 @@ function setCustomerContact(params) {
             telephone: params.telephone
         };
         yield placeOrderService.setCustomerContact({
-            transactionId: params.transactionId,
-            contact: contact
+            id: params.transactionId,
+            object: {
+                customerContact: contact
+            }
         });
         debug('customer contact set.');
         // 注文内容確認
@@ -1077,13 +1083,15 @@ exports.setCustomerContact = setCustomerContact;
 function confirmOrder(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
         const { order } = yield placeOrderService.confirm({
-            transactionId: params.transactionId,
-            sendEmailMessage: true
+            id: params.transactionId,
+            options: {
+                sendEmailMessage: true
+            }
         });
         const flex = {
             type: 'flex',
@@ -1097,12 +1105,12 @@ exports.confirmOrder = confirmOrder;
 function cancelOrder(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文取引をキャンセルしています...' });
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
         yield placeOrderService.cancel({
-            transactionId: params.transactionId
+            id: params.transactionId
         });
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文取引をキャンセルしました' });
     });
@@ -1121,7 +1129,7 @@ function confirmFriendPay(params) {
         //     endpoint: <string>process.env.CINERINO_ENDPOINT,
         //     auth: params.user.authClient
         // });
-        // const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        // const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         //     endpoint: <string>process.env.CINERINO_ENDPOINT,
         //     auth: params.user.authClient
         // });
@@ -2414,7 +2422,7 @@ function selectSeatOffers(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -2463,21 +2471,23 @@ function selectSeatOffers(params) {
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
         debug('creating a seat reservation authorization...');
         const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
-            transactionId: transaction.id,
-            event: { id: event.id },
-            acceptedOffer: params.seatNumbers.map((seatNumber) => {
-                return {
-                    id: selectedTicketOffer.id,
-                    ticketedSeat: {
-                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                        seatNumber: seatNumber,
-                        seatSection: 'Default',
-                        seatRow: '',
-                        seatingType: ''
-                    }
-                };
-            }),
-            notes: 'test from samples'
+            object: {
+                event: { id: event.id },
+                acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                    return {
+                        id: selectedTicketOffer.id,
+                        ticketedSeat: {
+                            typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                            seatNumber: seatNumber,
+                            seatSection: 'Default',
+                            seatRow: '',
+                            seatingType: ''
+                        }
+                    };
+                }),
+                notes: 'test from samples'
+            },
+            purpose: transaction
         });
         debug('seatReservationAuthorization:', seatReservationAuthorization);
         yield params.user.saveSeatReservationAuthorization(seatReservationAuthorization);

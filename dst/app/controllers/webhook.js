@@ -145,7 +145,14 @@ function message(event, user) {
             }
         }
         catch (error) {
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
+            let text = error.message;
+            try {
+                text = JSON.stringify(error);
+            }
+            catch (error) {
+                // no op
+            }
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: text });
         }
     });
 }
@@ -422,7 +429,14 @@ function postback(event, user) {
             }
         }
         catch (error) {
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: JSON.stringify(error) });
+            let text = error.message;
+            try {
+                text = JSON.stringify(error);
+            }
+            catch (error) {
+                // no op
+            }
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: text });
         }
     });
 }

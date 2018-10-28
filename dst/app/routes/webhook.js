@@ -20,7 +20,7 @@ const debug = createDebug('cinerino-line-ticket:router');
 webhookRouter.post('', faceLogin_1.default, authentication_1.default, 
 // line.middleware(config),
 (req, res) => __awaiter(this, void 0, void 0, function* () {
-    debug('body:', JSON.stringify(req.body));
+    debug('body:', req.body);
     yield Promise.all(req.body.events.map((e) => __awaiter(this, void 0, void 0, function* () {
         yield handleEvent(e, req.user);
     })));

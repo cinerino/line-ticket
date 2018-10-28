@@ -449,7 +449,7 @@ export async function selectPaymentMethodType(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -490,10 +490,12 @@ export async function selectPaymentMethodType(params: {
                 account = token;
             }
             const accountAuthorization = await placeOrderService.authorizeAccountPayment({
-                typeOf: cinerinoapi.factory.paymentMethodType.Account,
-                transactionId: params.transactionId,
-                amount: price,
-                fromAccount: account
+                object: {
+                    typeOf: cinerinoapi.factory.paymentMethodType.Account,
+                    amount: price,
+                    fromAccount: account
+                },
+                purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
             });
             debug('残高確認済', accountAuthorization);
             await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
@@ -506,12 +508,14 @@ export async function selectPaymentMethodType(params: {
             }
             const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
             await placeOrderService.authorizeCreditCardPayment({
-                typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
-                transactionId: params.transactionId,
-                amount: price,
-                orderId: orderId,
-                method: <any>'1',
-                creditCard: params.creditCard
+                object: {
+                    typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                    amount: price,
+                    orderId: orderId,
+                    method: <any>'1',
+                    creditCard: params.creditCard
+                },
+                purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
             });
             await LINE.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
             break;
@@ -803,7 +807,7 @@ export async function setCustomerContact(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -822,8 +826,10 @@ export async function setCustomerContact(params: {
         telephone: params.telephone
     };
     await placeOrderService.setCustomerContact({
-        transactionId: params.transactionId,
-        contact: contact
+        id: params.transactionId,
+        object: {
+            customerContact: contact
+        }
     });
     debug('customer contact set.');
     // 注文内容確認
@@ -1107,13 +1113,15 @@ export async function confirmOrder(params: {
     transactionId: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
     const { order } = await placeOrderService.confirm({
-        transactionId: params.transactionId,
-        sendEmailMessage: true
+        id: params.transactionId,
+        options: {
+            sendEmailMessage: true
+        }
     });
     const flex: FlexMessage = {
         type: 'flex',
@@ -1128,12 +1136,12 @@ export async function cancelOrder(params: {
     transactionId: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文取引をキャンセルしています...' });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
     await placeOrderService.cancel({
-        transactionId: params.transactionId
+        id: params.transactionId
     });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文取引をキャンセルしました' });
 }
@@ -1154,7 +1162,7 @@ export async function confirmFriendPay(params: {
     //     endpoint: <string>process.env.CINERINO_ENDPOINT,
     //     auth: params.user.authClient
     // });
-    // const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    // const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
     //     endpoint: <string>process.env.CINERINO_ENDPOINT,
     //     auth: params.user.authClient
     // });
@@ -2474,7 +2482,7 @@ export async function selectSeatOffers(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -2531,21 +2539,23 @@ export async function selectSeatOffers(params: {
 
     debug('creating a seat reservation authorization...');
     const seatReservationAuthorization = await placeOrderService.authorizeSeatReservation({
-        transactionId: transaction.id,
-        event: { id: event.id },
-        acceptedOffer: params.seatNumbers.map((seatNumber) => {
-            return {
-                id: selectedTicketOffer.id,
-                ticketedSeat: {
-                    typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                    seatNumber: seatNumber,
-                    seatSection: 'Default',
-                    seatRow: '',
-                    seatingType: ''
-                }
-            };
-        }),
-        notes: 'test from samples'
+        object: {
+            event: { id: event.id },
+            acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                return {
+                    id: selectedTicketOffer.id,
+                    ticketedSeat: {
+                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                        seatNumber: seatNumber,
+                        seatSection: 'Default',
+                        seatRow: '',
+                        seatingType: ''
+                    }
+                };
+            }),
+            notes: 'test from samples'
+        },
+        purpose: transaction
     });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
     await params.user.saveSeatReservationAuthorization(seatReservationAuthorization);

@@ -32,10 +32,17 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
             next();
             return;
         }
+        let state = '';
+        try {
+            state = JSON.stringify(req.body);
+        }
+        catch (error) {
+            // no op
+        }
         req.user = new user_1.default({
             host: req.hostname,
             userId: userId,
-            state: JSON.stringify(req.body)
+            state: state
         });
         // ユーザー認証無効化の設定の場合
         if (process.env.USER_REFRESH_TOKEN !== undefined) {

@@ -21,7 +21,7 @@ webhookRouter.post(
     authentication,
     // line.middleware(config),
     async (req, res) => {
-        debug('body:', JSON.stringify(req.body));
+        debug('body:', req.body);
         await Promise.all(req.body.events.map(async (e: WebhookEvent) => {
             await handleEvent(e, req.user);
         }));
