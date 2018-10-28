@@ -2457,12 +2457,14 @@ function selectSeatOffers(params) {
         });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'オファーを検索しています...' });
+        const storeId = params.user.authClient.options.clientId;
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
         let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
             event: { id: params.eventId },
-            seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
-            store: { id: params.user.authClient.options.clientId }
+            seller: seller,
+            store: { id: storeId }
         });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件のオファーが見つかりました` });
         // ムビチケ以外のオファーを選択
         ticketOffers = ticketOffers.filter((offer) => {
             const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find((component) => component.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.MovieTicketTypeChargeSpecification);

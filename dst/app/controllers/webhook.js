@@ -145,7 +145,7 @@ function message(event, user) {
             }
         }
         catch (error) {
-            let text = error.message;
+            let text = `${error.name} ${error.message}`;
             try {
                 text = JSON.stringify(error);
             }
@@ -429,7 +429,7 @@ function postback(event, user) {
             }
         }
         catch (error) {
-            let text = error.message;
+            let text = `${error.name} ${error.message}`;
             try {
                 text = JSON.stringify(error);
             }

@@ -144,7 +144,7 @@ export async function message(event: line.MessageEvent, user: User) {
                 throw new Error(`Unknown message type ${event.message.type}`);
         }
     } catch (error) {
-        let text: string = error.message;
+        let text: string = `${error.name} ${error.message}`;
         try {
             text = JSON.stringify(error);
         } catch (error) {
@@ -423,7 +423,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             default:
         }
     } catch (error) {
-        let text: string = error.message;
+        let text: string = `${error.name} ${error.message}`;
         try {
             text = JSON.stringify(error);
         } catch (error) {

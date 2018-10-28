@@ -2521,12 +2521,14 @@ export async function selectSeatOffers(params: {
     debug('transaction started.', transaction.id);
     await params.user.saveTransaction(transaction);
 
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: 'オファーを検索しています...' });
+    const storeId = <string>params.user.authClient.options.clientId;
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
     let ticketOffers = await eventService.searchScreeningEventTicketOffers({
         event: { id: params.eventId },
-        seller: { typeOf: transaction.seller.typeOf, id: transaction.seller.id },
-        store: { id: <string>params.user.authClient.options.clientId }
+        seller: seller,
+        store: { id: storeId }
     });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件のオファーが見つかりました` });
     // ムビチケ以外のオファーを選択
     ticketOffers = ticketOffers.filter((offer) => {
         const movieTicketTypeChargeSpecification = offer.priceSpecification.priceComponent.find(
