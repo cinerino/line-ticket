@@ -2537,6 +2537,8 @@ export async function selectSeatOffers(params: {
 
         return movieTicketTypeChargeSpecification === undefined;
     });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
+
     // tslint:disable-next-line:insecure-random
     const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
