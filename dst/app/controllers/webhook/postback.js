@@ -2472,7 +2472,7 @@ function selectSeatOffers(params) {
         });
         // tslint:disable-next-line:insecure-random
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
-        yield lineClient_1.default.pushMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
         debug('creating a seat reservation authorization...');
         const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
             object: {

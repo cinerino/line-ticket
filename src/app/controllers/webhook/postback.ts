@@ -2540,7 +2540,7 @@ export async function selectSeatOffers(params: {
     // tslint:disable-next-line:insecure-random
     const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
 
-    await LINE.pushMessage(params.replyToken, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
     debug('creating a seat reservation authorization...');
     const seatReservationAuthorization = await placeOrderService.authorizeSeatReservation({
         object: {
