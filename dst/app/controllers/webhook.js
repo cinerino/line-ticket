@@ -145,9 +145,10 @@ function message(event, user) {
             }
         }
         catch (error) {
-            let text = `${error.name} ${error.message}`;
+            const text = `${error.name} ${error.message}`;
+            // let text: string = `${error.name} ${error.message}`;
             try {
-                text = JSON.stringify(error);
+                // text = JSON.stringify(error);
             }
             catch (error) {
                 // no op
@@ -429,9 +430,10 @@ function postback(event, user) {
             }
         }
         catch (error) {
-            let text = `${error.name} ${error.message}`;
+            const text = `${error.name} ${error.message}`;
+            // let text: string = `${error.name} ${error.message}`;
             try {
-                text = JSON.stringify(error);
+                // text = JSON.stringify(error);
             }
             catch (error) {
                 // no op

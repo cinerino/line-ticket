@@ -144,9 +144,10 @@ export async function message(event: line.MessageEvent, user: User) {
                 throw new Error(`Unknown message type ${event.message.type}`);
         }
     } catch (error) {
-        let text: string = `${error.name} ${error.message}`;
+        const text: string = `${error.name} ${error.message}`;
+        // let text: string = `${error.name} ${error.message}`;
         try {
-            text = JSON.stringify(error);
+            // text = JSON.stringify(error);
         } catch (error) {
             // no op
         }
@@ -423,9 +424,10 @@ export async function postback(event: line.PostbackEvent, user: User) {
             default:
         }
     } catch (error) {
-        let text: string = `${error.name} ${error.message}`;
+        const text: string = `${error.name} ${error.message}`;
+        // let text: string = `${error.name} ${error.message}`;
         try {
-            text = JSON.stringify(error);
+            // text = JSON.stringify(error);
         } catch (error) {
             // no op
         }
