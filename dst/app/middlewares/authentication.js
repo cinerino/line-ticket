@@ -120,11 +120,11 @@ function sendLoginButton(user) {
             //     label: 'Face Login',
             //     data: `action=loginByFace&state=${user.state}`
             // });
-            actions.push({
-                type: 'uri',
-                label: 'Face Login',
-                uri: 'line://nv/camera/'
-            });
+            // actions.push({
+            //     type: 'uri',
+            //     label: 'Face Login',
+            //     uri: 'line://nv/camera/'
+            // });
         }
         // 会員として未使用であれば会員登録ボタン表示
         if (refreshToken === null) {
