@@ -946,6 +946,14 @@ function setCustomerContact(params) {
                                         const event = item.reservationFor;
                                         // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                         const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+                                        let priceStr = item.priceCurrency.toString();
+                                        // tslint:disable-next-line:max-line-length
+                                        const unitPriceSpec = item.price.priceComponent.find(
+                                        // tslint:disable-next-line:max-line-length
+                                        (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
+                                        if (unitPriceSpec !== undefined) {
+                                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                        }
                                         return {
                                             type: 'box',
                                             layout: 'horizontal',
@@ -972,7 +980,7 @@ function setCustomerContact(params) {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: `${item.price} ${item.priceCurrency}`,
+                                                    text: priceStr,
                                                     size: 'xs',
                                                     color: '#111111',
                                                     align: 'end',
@@ -3546,6 +3554,14 @@ function order2bubble(order) {
                             const event = item.reservationFor;
                             // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                             const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+                            let priceStr = item.priceCurrency.toString();
+                            // tslint:disable-next-line:max-line-length
+                            const unitPriceSpec = item.price.priceComponent.find(
+                            // tslint:disable-next-line:max-line-length
+                            (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
+                            if (unitPriceSpec !== undefined) {
+                                priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                            }
                             return {
                                 type: 'box',
                                 layout: 'horizontal',
@@ -3572,7 +3588,7 @@ function order2bubble(order) {
                                     },
                                     {
                                         type: 'text',
-                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                        text: priceStr,
                                         size: 'xs',
                                         color: '#111111',
                                         align: 'end',

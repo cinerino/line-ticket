@@ -972,6 +972,16 @@ export async function setCustomerContact(params: {
                                     const event = item.reservationFor;
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+                                    let priceStr = item.priceCurrency.toString();
+                                    // tslint:disable-next-line:max-line-length
+                                    const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                                        item.price.priceComponent.find(
+                                            // tslint:disable-next-line:max-line-length
+                                            (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                                        );
+                                    if (unitPriceSpec !== undefined) {
+                                        priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                    }
 
                                     return {
                                         type: 'box',
@@ -999,7 +1009,7 @@ export async function setCustomerContact(params: {
                                             },
                                             {
                                                 type: 'text',
-                                                text: `${item.price} ${item.priceCurrency}`,
+                                                text: priceStr,
                                                 size: 'xs',
                                                 color: '#111111',
                                                 align: 'end',
@@ -3630,6 +3640,16 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                             const event = item.reservationFor;
                             // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                             const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
+                            let priceStr = item.priceCurrency.toString();
+                            // tslint:disable-next-line:max-line-length
+                            const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                                item.price.priceComponent.find(
+                                    // tslint:disable-next-line:max-line-length
+                                    (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                                );
+                            if (unitPriceSpec !== undefined) {
+                                priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                            }
 
                             return {
                                 type: 'box',
@@ -3657,7 +3677,7 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                                     },
                                     {
                                         type: 'text',
-                                        text: `${orderItem.price} ${orderItem.priceCurrency}`,
+                                        text: priceStr,
                                         size: 'xs',
                                         color: '#111111',
                                         align: 'end',
