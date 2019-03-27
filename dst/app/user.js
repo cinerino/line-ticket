@@ -182,7 +182,9 @@ class User {
             });
         });
     }
-    saveSeatReservationAuthorization(authorization) {
+    saveSeatReservationAuthorization(
+    // tslint:disable-next-line:max-line-length
+    authorization) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()
                 .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))

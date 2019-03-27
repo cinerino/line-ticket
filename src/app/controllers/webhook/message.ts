@@ -270,7 +270,7 @@ export async function showCreditCardMenu(params: {
     if (movieTheater.paymentAccepted === undefined) {
         throw new Error('許可された決済方法が見つかりません');
     }
-    const creditCardPayment = <cinerinoapi.factory.organization.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+    const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
         movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
     if (creditCardPayment === undefined) {
         throw new Error('クレジットカード決済が許可されていません');

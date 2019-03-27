@@ -7,6 +7,7 @@ import * as pecorino from '@pecorino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as qs from 'qs';
+import { format } from 'util';
 
 import LINE from '../../../lineClient';
 import User from '../../user';
@@ -35,6 +36,7 @@ export async function searchEventsByDate(params: {
         auth: params.user.authClient
     });
     const searchScreeningEventsResult = await eventService.searchScreeningEvents({
+        typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
         inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
         inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
         // superEventLocationIdentifiers: ['MovieTheater-118']
@@ -55,7 +57,8 @@ export async function searchEventsByDate(params: {
             contents: [
                 // tslint:disable-next-line:max-func-body-length no-magic-numbers
                 ...superEvents.slice(0, 10).map<FlexBubble>((event) => {
-                    const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+                    const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined
+                        && event.workPerformed.thumbnailUrl !== null)
                         ? event.workPerformed.thumbnailUrl
                         // tslint:disable-next-line:max-line-length
                         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
@@ -116,7 +119,7 @@ export async function searchEventsByDate(params: {
                                             {
                                                 type: 'text',
                                                 text: (Array.isArray(event.videoFormat))
-                                                    ? event.videoFormat.map((format) => format.typeOf).join(',')
+                                                    ? event.videoFormat.map((f) => f.typeOf).join(',')
                                                     : '---',
                                                 wrap: true,
                                                 size: 'sm',
@@ -214,6 +217,7 @@ export async function askScreeningEvent(params: {
     const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
     const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
     const searchScreeningEventsResult = await eventService.searchScreeningEvents({
+        typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
         inSessionFrom: startFrom,
         inSessionThrough: startThrough
         // superEventLocationIdentifiers: ['MovieTheater-118']
@@ -506,12 +510,11 @@ export async function selectPaymentMethodType(params: {
             if (params.creditCard === undefined) {
                 throw new Error('クレジットカードが指定されていません');
             }
-            const orderId = `${moment().format('YYYYMMDD')}${moment().unix().toString()}`;
+
             await placeOrderService.authorizeCreditCardPayment({
                 object: {
                     typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
                     amount: price,
-                    orderId: orderId,
                     method: <any>'1',
                     creditCard: params.creditCard
                 },
@@ -699,16 +702,16 @@ export async function selectCreditCard(params: {
     user: User;
     transactionId: string;
 }) {
-    const organizationService = new cinerinoapi.service.Organization({
+    const sellerService = new cinerinoapi.service.Organization({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const searchOrganizationsResult = await organizationService.searchMovieTheaters({ limit: 1 });
+    const searchOrganizationsResult = await sellerService.searchMovieTheaters({ limit: 1 });
     const movieTheater = searchOrganizationsResult.data[0];
     if (movieTheater.paymentAccepted === undefined) {
         throw new Error('許可された決済方法が見つかりません');
     }
-    const creditCardPayment = <cinerinoapi.factory.organization.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+    const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
         movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
     if (creditCardPayment === undefined) {
         throw new Error('クレジットカード決済が許可されていません');
@@ -803,7 +806,7 @@ export async function setCustomerContact(params: {
     email: string;
     telephone: string;
 }) {
-    const organizationService = new cinerinoapi.service.Organization({
+    const sellerService = new cinerinoapi.service.Organization({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -812,7 +815,7 @@ export async function setCustomerContact(params: {
         auth: params.user.authClient
     });
     const transaction = await params.user.findTransaction();
-    const seller = await organizationService.findMovieTheaterById({ id: transaction.seller.id });
+    const seller = await sellerService.findMovieTheaterById({ id: transaction.seller.id });
     const seatReservationAuthorization = await params.user.findSeatReservationAuthorization();
     if (seatReservationAuthorization.result === undefined) {
         throw new Error('Invalid seat reservation authorization');
@@ -971,16 +974,25 @@ export async function setCustomerContact(params: {
                                     const item = tmpReservation;
                                     const event = item.reservationFor;
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                    const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
-                                    let priceStr = item.priceCurrency.toString();
-                                    // tslint:disable-next-line:max-line-length
-                                    const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
-                                        item.price.priceComponent.find(
+                                    const str = (item.reservedTicket.ticketedSeat !== undefined)
+                                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
+                                        : ' No reservedTicket.ticketedSeat';
+                                    let priceStr = String(item.priceCurrency);
+                                    if (item.price !== undefined) {
+                                        if (typeof item.price === 'number') {
+                                            priceStr = `${item.price} ${item.priceCurrency}`;
+                                        } else {
                                             // tslint:disable-next-line:max-line-length
-                                            (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
-                                        );
-                                    if (unitPriceSpec !== undefined) {
-                                        priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                            const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                                                item.price.priceComponent.find(
+                                                    // tslint:disable-next-line:max-line-length
+                                                    (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                                                );
+                                            if (unitPriceSpec !== undefined) {
+                                                // tslint:disable-next-line:max-line-length
+                                                priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                            }
+                                        }
                                     }
 
                                     return {
@@ -2250,7 +2262,9 @@ export async function searchScreeningEventReservations(params: {
                         .map<FlexBubble>((ownershipInfo) => {
                             const itemOffered = ownershipInfo.typeOfGood;
                             const event = itemOffered.reservationFor;
-                            const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+                            const thumbnailImageUrl = (event.workPerformed !== undefined
+                                && event.workPerformed.thumbnailUrl !== undefined
+                                && event.workPerformed.thumbnailUrl !== null)
                                 ? event.workPerformed.thumbnailUrl
                                 // tslint:disable-next-line:max-line-length
                                 : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
@@ -2347,7 +2361,9 @@ export async function searchScreeningEventReservations(params: {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                            text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
+                                                                ? itemOffered.reservedTicket.ticketedSeat.seatNumber
+                                                                : 'No reservedTicket.ticketedSeat',
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2391,7 +2407,9 @@ export async function searchScreeningEventReservations(params: {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: itemOffered.reservedTicket.issuedBy.name,
+                                                            text: (itemOffered.reservedTicket.issuedBy !== undefined)
+                                                                ? itemOffered.reservedTicket.issuedBy.name
+                                                                : 'No reservedTicket.issuedBy',
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2413,7 +2431,9 @@ export async function searchScreeningEventReservations(params: {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: itemOffered.reservedTicket.underName.name,
+                                                            text: (itemOffered.reservedTicket.underName !== undefined)
+                                                                ? itemOffered.reservedTicket.underName.name
+                                                                : 'No reservedTicket.underName',
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2435,7 +2455,7 @@ export async function searchScreeningEventReservations(params: {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: itemOffered.reservationStatus,
+                                                            text: String(itemOffered.reservationStatus),
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2488,7 +2508,7 @@ export async function selectSeatOffers(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const organizationService = new cinerinoapi.service.Organization({
+    const sellerService = new cinerinoapi.service.Seller({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
@@ -2500,8 +2520,10 @@ export async function selectSeatOffers(params: {
     const event = await eventService.findScreeningEventById({ id: params.eventId });
 
     // 販売者情報取得
-    const searchMovieTheatersResult = await organizationService.searchMovieTheaters({});
-    const seller = searchMovieTheatersResult.data.find((o) => o.location.branchCode === event.superEvent.location.branchCode);
+    const searchMovieTheatersResult = await sellerService.search({});
+    const seller = searchMovieTheatersResult.data.find((o) => {
+        return o.location !== undefined && o.location.branchCode === event.superEvent.location.branchCode;
+    });
     if (seller === undefined) {
         throw new Error('Seller not found');
     }
@@ -2559,25 +2581,27 @@ export async function selectSeatOffers(params: {
 
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
     debug('creating a seat reservation authorization...');
-    const seatReservationAuthorization = await placeOrderService.authorizeSeatReservation({
-        object: {
-            event: { id: event.id },
-            acceptedOffer: params.seatNumbers.map((seatNumber) => {
-                return {
-                    id: selectedTicketOffer.id,
-                    ticketedSeat: {
-                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                        seatNumber: seatNumber,
-                        seatSection: 'Default',
-                        seatRow: '',
-                        seatingType: ''
-                    }
-                };
-            }),
-            notes: 'test from samples'
-        },
-        purpose: transaction
-    });
+    const seatReservationAuthorization =
+        <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
+        await placeOrderService.authorizeSeatReservation({
+            object: {
+                event: { id: event.id },
+                acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                    return {
+                        id: selectedTicketOffer.id,
+                        ticketedSeat: {
+                            typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                            seatNumber: seatNumber,
+                            seatSection: 'Default',
+                            seatRow: '',
+                            seatingType: <any>{}
+                        },
+                        additionalProperty: []
+                    };
+                })
+            },
+            purpose: transaction
+        });
     debug('seatReservationAuthorization:', seatReservationAuthorization);
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
 
@@ -2676,7 +2700,9 @@ export async function authorizeOwnershipInfo(params: {
             }
             const itemOffered = reservation.typeOfGood;
             const event = await eventService.findScreeningEventById({ id: itemOffered.reservationFor.id });
-            const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+            const thumbnailImageUrl = (event.workPerformed !== undefined
+                && event.workPerformed.thumbnailUrl !== undefined
+                && event.workPerformed.thumbnailUrl !== null)
                 ? event.workPerformed.thumbnailUrl
                 // tslint:disable-next-line:max-line-length
                 : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
@@ -2778,7 +2804,9 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: itemOffered.reservedTicket.ticketedSeat.seatNumber,
+                                                        text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
+                                                            ? itemOffered.reservedTicket.ticketedSeat.seatNumber
+                                                            : 'No reservedTicket.ticketedSeat',
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2822,7 +2850,9 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: itemOffered.reservedTicket.issuedBy.name,
+                                                        text: (itemOffered.reservedTicket.issuedBy !== undefined)
+                                                            ? itemOffered.reservedTicket.issuedBy.name
+                                                            : 'No reservedTicket.issuedBy',
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2844,7 +2874,9 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: itemOffered.reservedTicket.underName.name,
+                                                        text: (itemOffered.reservedTicket.underName !== undefined)
+                                                            ? itemOffered.reservedTicket.underName.name
+                                                            : 'No edTicket.underName',
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2866,7 +2898,7 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: itemOffered.reservationStatus,
+                                                        text: String(itemOffered.reservationStatus),
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -3258,9 +3290,13 @@ export async function authorizeOwnershipInfosByOrder(params: {
         }
     });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
-    const reservations = order.acceptedOffers.map((o) => o.itemOffered);
+    const reservations = <cinerinoapi.factory.order.IReservation[]>order.acceptedOffers
+        .filter((o) => o.itemOffered.typeOf === cinerinoapi.factory.chevre.reservationType.EventReservation)
+        .map((o) => o.itemOffered);
     const event = await eventService.findScreeningEventById({ id: reservations[0].reservationFor.id });
-    const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+    const thumbnailImageUrl = (event.workPerformed !== undefined
+        && event.workPerformed.thumbnailUrl !== undefined
+        && event.workPerformed.thumbnailUrl !== null)
         ? event.workPerformed.thumbnailUrl
         // tslint:disable-next-line:max-line-length
         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
@@ -3358,7 +3394,9 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                     },
                                     {
                                         type: 'text',
-                                        text: r.reservedTicket.ticketedSeat.seatNumber,
+                                        text: (r.reservedTicket.ticketedSeat !== undefined)
+                                            ? r.reservedTicket.ticketedSeat.seatNumber
+                                            : 'No reservedTicket.ticketedSeat',
                                         wrap: true,
                                         color: '#666666',
                                         size: 'sm',
@@ -3402,7 +3440,9 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                     },
                                     {
                                         type: 'text',
-                                        text: r.reservedTicket.issuedBy.name,
+                                        text: (r.reservedTicket.issuedBy !== undefined)
+                                            ? r.reservedTicket.issuedBy.name
+                                            : 'No reservedTicket.issuedBy',
                                         wrap: true,
                                         color: '#666666',
                                         size: 'sm',
@@ -3424,7 +3464,9 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                     },
                                     {
                                         type: 'text',
-                                        text: r.reservedTicket.underName.name,
+                                        text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
+                                            ? r.reservedTicket.underName.name
+                                            : 'No reservedTicket.underName',
                                         wrap: true,
                                         color: '#666666',
                                         size: 'sm',
@@ -3446,7 +3488,7 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                     },
                                     {
                                         type: 'text',
-                                        text: r.reservationStatus,
+                                        text: String(r.reservationStatus),
                                         wrap: true,
                                         color: '#666666',
                                         size: 'sm',
@@ -3466,7 +3508,11 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                     {
                                         type: 'image',
                                         // tslint:disable-next-line:max-line-length
-                                        url: `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=${r.reservedTicket.ticketToken}`,
+                                        url: format(
+                                            '%s%s',
+                                            `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=`,
+                                            (r.reservedTicket !== undefined) ? r.reservedTicket.ticketToken : 'notickettoken'
+                                        ),
                                         aspectMode: 'cover',
                                         size: 'xl'
                                     },
@@ -3636,19 +3682,39 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                     spacing: 'sm',
                     contents: [
                         ...order.acceptedOffers.map<FlexBox>((orderItem) => {
-                            const item = orderItem.itemOffered;
-                            const event = item.reservationFor;
-                            // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                            const str = `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`;
-                            let priceStr = item.priceCurrency.toString();
-                            // tslint:disable-next-line:max-line-length
-                            const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
-                                item.price.priceComponent.find(
-                                    // tslint:disable-next-line:max-line-length
-                                    (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
-                                );
-                            if (unitPriceSpec !== undefined) {
-                                priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                            let itemName = String(orderItem.itemOffered.typeOf);
+                            let itemDescription = 'no description';
+                            let priceStr = orderItem.priceCurrency.toString();
+
+                            switch (orderItem.itemOffered.typeOf) {
+                                case 'ProgramMembership':
+                                    break;
+
+                                case cinerinoapi.factory.chevre.reservationType.EventReservation:
+                                    const item = orderItem.itemOffered;
+                                    const event = item.reservationFor;
+                                    itemName = `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`;
+                                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                                    itemDescription = (item.reservedTicket !== undefined && item.reservedTicket.ticketedSeat !== undefined)
+                                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
+                                        : 'No reservedTicket';
+                                    if (orderItem.priceSpecification !== undefined) {
+                                        const priceSpecification =
+                                            <cinerinoapi.factory.chevre.reservation.event.IPriceSpecification>orderItem.priceSpecification;
+                                        // tslint:disable-next-line:max-line-length
+                                        const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                                            priceSpecification.priceComponent.find(
+                                                // tslint:disable-next-line:max-line-length
+                                                (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                                            );
+                                        if (unitPriceSpec !== undefined) {
+                                            // tslint:disable-next-line:max-line-length
+                                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                        }
+                                    }
+
+                                    break;
+                                default:
                             }
 
                             return {
@@ -3662,14 +3728,14 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                                         contents: [
                                             {
                                                 type: 'text',
-                                                text: `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`,
+                                                text: itemName,
                                                 size: 'xs',
                                                 color: '#555555',
                                                 wrap: true
                                             },
                                             {
                                                 type: 'text',
-                                                text: str,
+                                                text: itemDescription,
                                                 size: 'xs',
                                                 color: '#aaaaaa'
                                             }
@@ -3790,7 +3856,9 @@ export async function findScreeningEventReservationById(params: {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
         const reservation = ownershipInfo.typeOfGood;
         const event = await eventService.findScreeningEventById({ id: reservation.reservationFor.id });
-        const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined)
+        const thumbnailImageUrl = (event.workPerformed !== undefined
+            && event.workPerformed.thumbnailUrl !== undefined
+            && event.workPerformed.thumbnailUrl !== null)
             ? event.workPerformed.thumbnailUrl
             // tslint:disable-next-line:max-line-length
             : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
@@ -3892,7 +3960,9 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: reservation.reservedTicket.ticketedSeat.seatNumber,
+                                                    text: (reservation.reservedTicket.ticketedSeat !== undefined)
+                                                        ? reservation.reservedTicket.ticketedSeat.seatNumber
+                                                        : 'No ticketedSeat',
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
@@ -3936,7 +4006,9 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: reservation.reservedTicket.issuedBy.name,
+                                                    text: (reservation.reservedTicket.issuedBy !== undefined)
+                                                        ? reservation.reservedTicket.issuedBy.name
+                                                        : 'No issuedBy',
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
@@ -3958,7 +4030,9 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: reservation.reservedTicket.underName.name,
+                                                    text: (reservation.reservedTicket.underName !== undefined)
+                                                        ? reservation.reservedTicket.underName.name
+                                                        : 'No underName',
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
@@ -3980,7 +4054,7 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: reservation.reservationStatus,
+                                                    text: String(reservation.reservationStatus),
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
@@ -4092,7 +4166,7 @@ function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble
                                 },
                                 {
                                     type: 'text',
-                                    text: (params.familyName !== '') ? params.familyName : 'Unknown',
+                                    text: (params.familyName !== '') ? String(params.familyName) : 'Unknown',
                                     size: 'sm',
                                     color: '#666666',
                                     flex: 5
@@ -4112,7 +4186,7 @@ function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble
                                 },
                                 {
                                     type: 'text',
-                                    text: (params.givenName !== '') ? params.givenName : 'Unknown',
+                                    text: (params.givenName !== '') ? String(params.givenName) : 'Unknown',
                                     size: 'sm',
                                     color: '#666666',
                                     flex: 5
@@ -4132,7 +4206,7 @@ function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble
                                 },
                                 {
                                     type: 'text',
-                                    text: (params.email !== '') ? params.email : 'Unknown',
+                                    text: (params.email !== '') ? String(params.email) : 'Unknown',
                                     size: 'sm',
                                     color: '#666666',
                                     flex: 5
@@ -4152,7 +4226,7 @@ function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble
                                 },
                                 {
                                     type: 'text',
-                                    text: (params.telephone !== '') ? params.telephone : 'Unknown',
+                                    text: (params.telephone !== '') ? String(params.telephone) : 'Unknown',
                                     size: 'sm',
                                     color: '#666666',
                                     flex: 5

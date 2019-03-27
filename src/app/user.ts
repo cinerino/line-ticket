@@ -261,13 +261,14 @@ export default class User {
             .exec();
     }
     public async findSeatReservationAuthorization(
-    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction> {
+    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>> {
         return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`).then((value) => {
             return (value !== null) ? JSON.parse(value) : null;
         });
     }
     public async saveSeatReservationAuthorization(
-        authorization: cinerinoapi.factory.action.authorize.offer.seatReservation.IAction
+        // tslint:disable-next-line:max-line-length
+        authorization: cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>
     ) {
         await redisClient.multi()
             .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
