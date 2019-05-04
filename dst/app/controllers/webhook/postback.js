@@ -41,7 +41,6 @@ function searchEventsByDate(params) {
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
             inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
             inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
-            // superEventLocationIdentifiers: ['MovieTheater-118']
         });
         const screeningEvents = searchScreeningEventsResult.data;
         // 上映イベントシリーズをユニークに
@@ -217,7 +216,6 @@ function askScreeningEvent(params) {
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
             inSessionFrom: startFrom,
             inSessionThrough: startThrough
-            // superEventLocationIdentifiers: ['MovieTheater-118']
         });
         let screeningEvents = searchScreeningEventsResult.data;
         // 上映イベントシリーズをユニークに
@@ -948,7 +946,7 @@ function setCustomerContact(params) {
                                         // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                         const str = (item.reservedTicket.ticketedSeat !== undefined)
                                             ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
-                                            : ' No reservedTicket.ticketedSeat';
+                                            : '座席なし';
                                         let priceStr = String(item.priceCurrency);
                                         if (item.price !== undefined) {
                                             if (typeof item.price === 'number') {
@@ -2296,7 +2294,7 @@ function searchScreeningEventReservations(params) {
                                                             type: 'text',
                                                             text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
                                                                 ? itemOffered.reservedTicket.ticketedSeat.seatNumber
-                                                                : 'No reservedTicket.ticketedSeat',
+                                                                : '座席なし',
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -2449,8 +2447,8 @@ function selectSeatOffers(params) {
         });
         const event = yield eventService.findScreeningEventById({ id: params.eventId });
         // 販売者情報取得
-        const searchMovieTheatersResult = yield sellerService.search({});
-        const seller = searchMovieTheatersResult.data.find((o) => {
+        const searchSellersResult = yield sellerService.search({});
+        const seller = searchSellersResult.data.find((o) => {
             return o.location !== undefined && o.location.branchCode === event.superEvent.location.branchCode;
         });
         if (seller === undefined) {
@@ -2468,16 +2466,14 @@ function selectSeatOffers(params) {
         //     }
         // ).then((body) => body.token);
         // debug('passportToken published.', passportToken);
+        const TRANSACTION_EXPIRES_IN_MINUTES = 5;
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
         const transaction = yield placeOrderService.start({
-            // tslint:disable-next-line:no-magic-numbers
-            expires: moment().add(5, 'minutes').toDate(),
-            seller: {
-                typeOf: cinerinoapi.factory.organizationType.MovieTheater,
-                id: seller.id
-            },
+            expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
+            seller: seller,
             object: {}
         });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
         debug('transaction started.', transaction.id);
         yield params.user.saveTransaction(transaction);
         const storeId = params.user.authClient.options.clientId;
@@ -2715,7 +2711,7 @@ function authorizeOwnershipInfo(params) {
                                                             type: 'text',
                                                             text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
                                                                 ? itemOffered.reservedTicket.ticketedSeat.seatNumber
-                                                                : 'No reservedTicket.ticketedSeat',
+                                                                : '座席なし',
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -3295,7 +3291,7 @@ function authorizeOwnershipInfosByOrder(params) {
                                             type: 'text',
                                             text: (r.reservedTicket.ticketedSeat !== undefined)
                                                 ? r.reservedTicket.ticketedSeat.seatNumber
-                                                : 'No reservedTicket.ticketedSeat',
+                                                : '座席なし',
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -3341,7 +3337,7 @@ function authorizeOwnershipInfosByOrder(params) {
                                             type: 'text',
                                             text: (r.reservedTicket.issuedBy !== undefined)
                                                 ? r.reservedTicket.issuedBy.name
-                                                : 'No reservedTicket.issuedBy',
+                                                : 'No Issued By',
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -3365,7 +3361,7 @@ function authorizeOwnershipInfosByOrder(params) {
                                             type: 'text',
                                             text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
                                                 ? r.reservedTicket.underName.name
-                                                : 'No reservedTicket.underName',
+                                                : 'No Under Name',
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -3588,11 +3584,19 @@ function order2bubble(order) {
                                 case cinerinoapi.factory.chevre.reservationType.EventReservation:
                                     const item = orderItem.itemOffered;
                                     const event = item.reservationFor;
-                                    itemName = `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`;
+                                    itemName = util_1.format('%s %s', event.name.ja, moment(event.startDate).format('MM/DD HH:mm'));
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
-                                    itemDescription = (item.reservedTicket !== undefined && item.reservedTicket.ticketedSeat !== undefined)
-                                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
-                                        : 'No reservedTicket';
+                                    if (item.reservedTicket !== undefined) {
+                                        if (item.reservedTicket.ticketedSeat !== undefined) {
+                                            itemDescription = util_1.format('%s %s', item.reservedTicket.ticketedSeat.seatNumber, item.reservedTicket.ticketType.name.ja);
+                                        }
+                                        else {
+                                            itemDescription = util_1.format('%s %s', '座席なし', item.reservedTicket.ticketType.name.ja);
+                                        }
+                                    }
+                                    else {
+                                        itemDescription = 'No Reserved Ticket';
+                                    }
                                     if (orderItem.priceSpecification !== undefined) {
                                         const priceSpecification = orderItem.priceSpecification;
                                         // tslint:disable-next-line:max-line-length
@@ -3601,8 +3605,14 @@ function order2bubble(order) {
                                         (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
                                         if (unitPriceSpec !== undefined) {
                                             // tslint:disable-next-line:max-line-length
-                                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${unitPriceSpec.priceCurrency}`;
                                         }
+                                        else {
+                                            priceStr = 'No Unit Price Spec';
+                                        }
+                                    }
+                                    else {
+                                        priceStr = 'No Price Spec';
                                     }
                                     break;
                                 default:
@@ -3694,22 +3704,51 @@ function order2bubble(order) {
                 },
                 {
                     type: 'box',
-                    layout: 'horizontal',
-                    margin: 'md',
+                    layout: 'vertical',
+                    margin: 'none',
+                    spacing: 'sm',
                     contents: [
                         {
-                            type: 'text',
-                            text: 'PAYMENT ID',
-                            size: 'xs',
-                            color: '#aaaaaa',
-                            flex: 0
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'PAYMENT ID',
+                                    size: 'xs',
+                                    color: '#aaaaaa',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: (order.paymentMethods.length > 0) ? order.paymentMethods[0].paymentMethodId : '---',
+                                    color: '#aaaaaa',
+                                    size: 'xs',
+                                    align: 'end'
+                                }
+                            ]
                         },
                         {
-                            type: 'text',
-                            text: order.paymentMethods[0].paymentMethodId,
-                            color: '#aaaaaa',
-                            size: 'xs',
-                            align: 'end'
+                            type: 'box',
+                            layout: 'horizontal',
+                            margin: 'md',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'ACCOUNT ID',
+                                    size: 'xs',
+                                    color: '#aaaaaa',
+                                    flex: 0
+                                },
+                                {
+                                    type: 'text',
+                                    text: (order.paymentMethods.length > 0) ? String(order.paymentMethods[0].accountId) : '---',
+                                    color: '#aaaaaa',
+                                    size: 'xs',
+                                    align: 'end'
+                                }
+                            ]
                         }
                     ]
                 }
