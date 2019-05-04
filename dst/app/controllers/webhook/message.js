@@ -149,7 +149,7 @@ function showProfileMenu(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const profile = yield personService.getProfile({ personId: 'me' });
+        const profile = yield personService.getProfile({});
         const actions = [];
         const updateProfileQuery = qs.stringify({ profile: profile });
         const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
@@ -248,16 +248,16 @@ function showOrderMenu(params) {
 exports.showOrderMenu = showOrderMenu;
 function showCreditCardMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const organizationService = new cinerinoapi.service.Organization({
+        const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const searchOrganizationsResult = yield organizationService.searchMovieTheaters({ limit: 1 });
-        const movieTheater = searchOrganizationsResult.data[0];
-        if (movieTheater.paymentAccepted === undefined) {
+        const searchSellersResult = yield sellerService.search({ limit: 1 });
+        const seller = searchSellersResult.data[0];
+        if (seller.paymentAccepted === undefined) {
             throw new Error('許可された決済方法が見つかりません');
         }
-        const creditCardPayment = movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+        const creditCardPayment = seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
         if (creditCardPayment === undefined) {
             throw new Error('クレジットカード決済が許可されていません');
         }
@@ -441,7 +441,6 @@ function selectWhomAskForMoney(params) {
             auth: params.user.authClient
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
-            personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                 accountType: cinerinoapi.factory.accountType.Coin
@@ -455,7 +454,7 @@ function selectWhomAskForMoney(params) {
             throw new Error('口座未開設です');
         }
         const account = accounts[0];
-        const profile = yield personService.getProfile({ personId: 'me' });
+        const profile = yield personService.getProfile({});
         const token = yield params.user.signTransferMoneyInfo({
             userId: params.user.userId,
             accountNumber: account.accountNumber,

@@ -439,7 +439,7 @@ function selectPaymentMethodType(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
+        const paymentService = new cinerinoapi.service.Payment({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -460,7 +460,6 @@ function selectPaymentMethodType(params) {
                 if (params.code === undefined) {
                     // 口座番号取得
                     const searchAccountsResult = yield personOwnershipInfoService.search({
-                        personId: 'me',
                         typeOfGood: {
                             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                             accountType: cinerinoapi.factory.accountType.Coin
@@ -478,7 +477,7 @@ function selectPaymentMethodType(params) {
                     const { token } = yield ownershipInfoService.getToken({ code: params.code });
                     account = token;
                 }
-                const accountAuthorization = yield placeOrderService.authorizeAccountPayment({
+                const accountAuthorization = yield paymentService.authorizeAccount({
                     object: {
                         typeOf: cinerinoapi.factory.paymentMethodType.Account,
                         amount: price,
@@ -494,7 +493,7 @@ function selectPaymentMethodType(params) {
                 if (params.creditCard === undefined) {
                     throw new Error('クレジットカードが指定されていません');
                 }
-                yield placeOrderService.authorizeCreditCardPayment({
+                yield paymentService.authorizeCreditCard({
                     object: {
                         typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
                         amount: price,
@@ -513,7 +512,7 @@ function selectPaymentMethodType(params) {
         if ((yield params.user.getCredentials()) !== null) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
             // const loginTicket = params.user.authClient.verifyIdToken({});
-            profile = yield personService.getProfile({ personId: 'me' });
+            profile = yield personService.getProfile({});
             const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
             profile = {
                 givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
@@ -682,16 +681,16 @@ exports.selectPaymentMethodType = selectPaymentMethodType;
 // tslint:disable-next-line:max-func-body-length
 function selectCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const sellerService = new cinerinoapi.service.Organization({
+        const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const searchOrganizationsResult = yield sellerService.searchMovieTheaters({ limit: 1 });
-        const movieTheater = searchOrganizationsResult.data[0];
-        if (movieTheater.paymentAccepted === undefined) {
+        const searchOrganizationsResult = yield sellerService.search({ limit: 1 });
+        const seller = searchOrganizationsResult.data[0];
+        if (seller.paymentAccepted === undefined) {
             throw new Error('許可された決済方法が見つかりません');
         }
-        const creditCardPayment = movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+        const creditCardPayment = seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
         if (creditCardPayment === undefined) {
             throw new Error('クレジットカード決済が許可されていません');
         }
@@ -715,7 +714,7 @@ function selectCreditCard(params) {
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: params.user.authClient
             });
-            const creditCards = yield personOwnershipInfoService.searchCreditCards({ personId: 'me' });
+            const creditCards = yield personOwnershipInfoService.searchCreditCards({});
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
             if (creditCards.length > 0) {
                 const creditCard = creditCards[0];
@@ -779,7 +778,7 @@ exports.selectCreditCard = selectCreditCard;
 // tslint:disable-next-line:max-func-body-length
 function setCustomerContact(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const sellerService = new cinerinoapi.service.Organization({
+        const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -788,7 +787,7 @@ function setCustomerContact(params) {
             auth: params.user.authClient
         });
         const transaction = yield params.user.findTransaction();
-        const seller = yield sellerService.findMovieTheaterById({ id: transaction.seller.id });
+        const seller = yield sellerService.findById({ id: transaction.seller.id });
         const seatReservationAuthorization = yield params.user.findSeatReservationAuthorization();
         if (seatReservationAuthorization.result === undefined) {
             throw new Error('Invalid seat reservation authorization');
@@ -1159,7 +1158,7 @@ function confirmFriendPay(params) {
         //     .filter((a) => a.actionStatus === cinerinoapi.factory.actionStatusType.CompletedActionStatus)
         //     .filter((a) => a.object.typeOf === cinerinoapi.factory.action.authorize.offer.seatReservation.ObjectType.SeatReservation);
         // const requiredPoint = (<cinerinoapi.factory.action.authorize.offer.seatReservation.IResult>seatReservations[0].result).point;
-        // let accounts = await personService.searchAccounts({ personId: 'me', accountType: cinerinoapi.factory.accountType.Coin })
+        // let accounts = await personService.searchAccounts({ accountType: cinerinoapi.factory.accountType.Coin })
         //     .then((ownershipInfos) => ownershipInfos.map((o) => o.typeOfGood));
         // accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         // debug('accounts:', accounts);
@@ -1226,7 +1225,6 @@ function confirmTransferMoney(params) {
             auth: params.user.authClient
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
-            personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                 accountType: cinerinoapi.factory.accountType.Coin
@@ -1271,7 +1269,7 @@ function confirmTransferMoney(params) {
         });
         debug('transaction confirmed.');
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-        const profile = yield personService.getProfile({ personId: 'me' });
+        const profile = yield personService.getProfile({});
         // 振込先に通知
         yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
@@ -1349,7 +1347,7 @@ function depositCoinByCreditCard(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const creditCards = yield personOwnershipInfoService.searchCreditCards({ personId: 'me' });
+        const creditCards = yield personOwnershipInfoService.searchCreditCards({});
         if (creditCards.length === 0) {
             throw new Error('クレジットカード未登録です');
         }
@@ -1396,7 +1394,7 @@ function searchCreditCards(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const creditCards = yield personOwnershipInfoService.searchCreditCards({ personId: 'me' });
+        const creditCards = yield personOwnershipInfoService.searchCreditCards({});
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
         if (creditCards.length > 0) {
             const flex = {
@@ -1553,7 +1551,7 @@ function addCreditCard(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const creditCard = yield personOwnershipInfoService.addCreditCard({ personId: 'me', creditCard: { token: params.token } });
+        const creditCard = yield personOwnershipInfoService.addCreditCard({ creditCard: { token: params.token } });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
     });
 }
@@ -1564,7 +1562,7 @@ function deleteCreditCard(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        yield personOwnershipInfoService.deleteCreditCard({ personId: 'me', cardSeq: params.cardSeq });
+        yield personOwnershipInfoService.deleteCreditCard({ cardSeq: params.cardSeq });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
     });
 }
@@ -1579,7 +1577,6 @@ function openAccount(params) {
             auth: params.user.authClient
         });
         const accountOwnershipInfo = yield personOwnershipInfoService.openAccount({
-            personId: 'me',
             name: params.name,
             accountType: params.accountType
         });
@@ -1599,7 +1596,7 @@ function closeAccount(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        yield personOwnershipInfoService.closeAccount({ personId: 'me', accountType: params.accountType, accountNumber: params.accountNumber });
+        yield personOwnershipInfoService.closeAccount({ accountType: params.accountType, accountNumber: params.accountNumber });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
     });
 }
@@ -1611,7 +1608,6 @@ function searchCoinAccounts(params) {
             auth: params.user.authClient
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
-            personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                 accountType: cinerinoapi.factory.accountType.Coin
@@ -1887,7 +1883,6 @@ function searchAccountMoneyTransferActions(params) {
             auth: params.user.authClient
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
-            personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                 accountType: params.accountType
@@ -1900,7 +1895,6 @@ function searchAccountMoneyTransferActions(params) {
         }
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '取引履歴を検索します...' });
         const searchActions = yield personOwnershipInfoService.searchAccountMoneyTransferActions({
-            personId: 'me',
             limit: 10,
             page: 1,
             sort: {
@@ -2168,7 +2162,6 @@ function searchScreeningEventReservations(params) {
             auth: params.user.authClient
         });
         const searchScreeningEventReservationsResult = yield personOwnershipInfoService.search({
-            personId: 'me',
             typeOfGood: {
                 typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
             },
@@ -2598,7 +2591,6 @@ function authorizeOwnershipInfo(params) {
             auth: params.user.authClient
         });
         const { code } = yield personOwnershipInfoService.authorize({
-            personId: 'me',
             ownershipInfoId: params.id
         });
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'コードが発行されました' });
@@ -2606,7 +2598,6 @@ function authorizeOwnershipInfo(params) {
         switch (params.goodType) {
             case cinerinoapi.factory.chevre.reservationType.EventReservation:
                 const searchScreeningEventReservationsResult = yield personOwnershipInfoService.search({
-                    personId: 'me',
                     typeOfGood: {
                         typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
                     }
@@ -2863,7 +2854,6 @@ function authorizeOwnershipInfo(params) {
                 break;
             case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
                 const searchAccountsResult = yield personOwnershipInfoService.search({
-                    personId: 'me',
                     typeOfGood: {
                         typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
                         accountType: cinerinoapi.factory.accountType.Coin
@@ -3094,7 +3084,6 @@ function searchOrders(params) {
             auth: params.user.authClient
         });
         const searchOrdersResult = yield personService.searchOrders({
-            personId: 'me',
             orderDateFrom: moment(now).add(-1, 'month').toDate(),
             orderDateThrough: now,
             limit: 10,
@@ -3986,7 +3975,7 @@ function getProfile(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const profile = yield personService.getProfile({ personId: 'me' });
+        const profile = yield personService.getProfile({});
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールが見つかりました' });
         const contents = [profile2bubble(profile)];
         const flex = {
@@ -4011,7 +4000,7 @@ function updateProfile(params) {
             auth: params.user.authClient
         });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
-        yield personService.updateProfile(Object.assign({ personId: 'me' }, params.profile));
+        yield personService.updateProfile(Object.assign({}, params.profile));
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを更新しました' });
         const contents = [profile2bubble(params.profile)];
         const flex = {

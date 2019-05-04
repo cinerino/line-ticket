@@ -145,6 +145,7 @@ export async function pushHowToUse(params: {
     };
     await LINE.replyMessage(params.replyToken, [message]);
 }
+
 /**
  * プロフィールメニューを表示する
  */
@@ -159,7 +160,7 @@ export async function showProfileMenu(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const profile = await personService.getProfile({ personId: 'me' });
+    const profile = await personService.getProfile({});
     const actions: Action[] = [];
     const updateProfileQuery = qs.stringify({ profile: profile });
     const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
@@ -189,6 +190,7 @@ export async function showProfileMenu(params: {
         }
     ]);
 }
+
 /**
  * 座席予約メニューを表示する
  */
@@ -221,6 +223,7 @@ export async function showSeatReservationMenu(params: {
         }
     ]);
 }
+
 /**
  * 注文メニューを表示する
  */
@@ -257,21 +260,22 @@ export async function showOrderMenu(params: {
         }
     ]);
 }
+
 export async function showCreditCardMenu(params: {
     replyToken: string;
     user: User;
 }) {
-    const organizationService = new cinerinoapi.service.Organization({
+    const sellerService = new cinerinoapi.service.Seller({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
-    const searchOrganizationsResult = await organizationService.searchMovieTheaters({ limit: 1 });
-    const movieTheater = searchOrganizationsResult.data[0];
-    if (movieTheater.paymentAccepted === undefined) {
+    const searchSellersResult = await sellerService.search({ limit: 1 });
+    const seller = searchSellersResult.data[0];
+    if (seller.paymentAccepted === undefined) {
         throw new Error('許可された決済方法が見つかりません');
     }
     const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
-        movieTheater.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+        seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
     if (creditCardPayment === undefined) {
         throw new Error('クレジットカード決済が許可されていません');
     }
@@ -300,6 +304,7 @@ export async function showCreditCardMenu(params: {
         }
     ]);
 }
+
 export async function showCoinAccountMenu(params: {
     replyToken: string;
     user: User;
@@ -330,6 +335,7 @@ export async function showCoinAccountMenu(params: {
         }
     ]);
 }
+
 export async function showCodeMenu(params: {
     replyToken: string;
     user: User;
@@ -358,6 +364,7 @@ export async function showCodeMenu(params: {
         }
     ]);
 }
+
 /**
  * 顔写真登録を開始する
  */
@@ -367,6 +374,7 @@ export async function startIndexingFace(params: {
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '顔写真を送信してください' });
 }
+
 /**
  * 友達決済承認確認
  */
@@ -398,6 +406,7 @@ export async function askConfirmationOfFriendPay(params: {
         }
     ]);
 }
+
 /**
  * おこづかい承認確認
  */
@@ -440,6 +449,7 @@ export async function askConfirmationOfTransferMoney(params: {
         }
     ]);
 }
+
 /**
  * 誰からお金をもらうか選択する
  */
@@ -457,7 +467,6 @@ export async function selectWhomAskForMoney(params: {
         auth: params.user.authClient
     });
     const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
-        personId: 'me',
         typeOfGood: {
             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
             accountType: cinerinoapi.factory.accountType.Coin
@@ -471,7 +480,7 @@ export async function selectWhomAskForMoney(params: {
         throw new Error('口座未開設です');
     }
     const account = accounts[0];
-    const profile = await personService.getProfile({ personId: 'me' });
+    const profile = await personService.getProfile({});
 
     const token = await params.user.signTransferMoneyInfo({
         userId: params.user.userId,
@@ -501,6 +510,7 @@ line://oaMessage/${LINE_ID}/?${friendMessage}`);
         }
     ]);
 }
+
 /**
  * 予約番号or電話番号のボタンを送信する
  */
@@ -537,6 +547,7 @@ export async function pushButtonsReserveNumOrTel(params: {
         }
     ]);
 }
+
 /**
  * 予約のイベント日選択を求める
  */
@@ -565,6 +576,7 @@ export async function askReservationEventDate(params: {
         }
     ]);
 }
+
 /**
  * 日付選択を求める
  */
@@ -633,6 +645,7 @@ export async function askEventStartDate(params: {
     };
     await LINE.replyMessage(params.replyToken, [message]);
 }
+
 /**
  * 日付選択を求める
  */
@@ -660,6 +673,7 @@ export async function askFromWhenAndToWhen(params: {
         }
     ]);
 }
+
 export async function logout(params: {
     replyToken: string;
     user: User;
