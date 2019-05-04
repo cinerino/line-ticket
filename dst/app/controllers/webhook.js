@@ -369,6 +369,16 @@ function postback(event, user) {
                         seatNumbers: seatNumbers
                     });
                     break;
+                // 座席数選択
+                case 'selectNumSeats':
+                    const numSeats = Number(data.numSeats);
+                    yield PostbackController.selectSeatOffers({
+                        replyToken: event.replyToken,
+                        user: user,
+                        eventId: data.eventId,
+                        numSeats: numSeats
+                    });
+                    break;
                 // 所有権コード発行
                 case 'authorizeOwnershipInfo':
                     yield PostbackController.authorizeOwnershipInfo({

@@ -22,7 +22,9 @@ transactionsRouter.get(
         } catch (error) {
             next(error);
         }
-    });
+    }
+);
+
 /**
  * 購入者情報入力フォーム
  */
@@ -38,7 +40,9 @@ transactionsRouter.get(
         } catch (error) {
             next(error);
         }
-    });
+    }
+);
+
 /**
  * クレジットカード入力フォーム
  */
@@ -54,7 +58,9 @@ transactionsRouter.get(
         } catch (error) {
             next(error);
         }
-    });
+    }
+);
+
 /**
  * 座席選択フォーム
  */
@@ -71,20 +77,36 @@ transactionsRouter.get(
                 endpoint: <string>process.env.CINERINO_ENDPOINT,
                 auth: user.authClient
             });
-            const eventOffers = await eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
-            const availableSeats = eventOffers[0].containsPlace.filter(
-                (p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock'
-            );
-            const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
-            // フォーム
-            res.render('transactions/placeOrder/selectSeatOffers', {
-                eventId: req.query.eventId,
-                availableSeatNumbers: availableSeatNumbers
-            });
+
+            const event = await eventService.findScreeningEventById({ id: req.query.eventId });
+
+            const reservedSeatsAvailable = (event.offers !== undefined
+                && event.offers.itemOffered !== undefined
+                && event.offers.itemOffered.serviceOutput !== undefined
+                && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
+                && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
+
+            if (reservedSeatsAvailable) {
+                const eventOffers = await eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
+                const availableSeats = eventOffers[0].containsPlace.filter(
+                    (p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock'
+                );
+                const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
+
+                res.render('transactions/placeOrder/selectSeatOffers', {
+                    eventId: req.query.eventId,
+                    availableSeatNumbers: availableSeatNumbers
+                });
+            } else {
+                res.render('transactions/placeOrder/selectNumSeats', {
+                    eventId: req.query.eventId
+                });
+            }
         } catch (error) {
             next(error);
         }
-    });
+    }
+);
 
 /**
  * QRスキャン
@@ -100,6 +122,7 @@ transactionsRouter.get(
         } catch (error) {
             next(error);
         }
-    });
+    }
+);
 
 export default transactionsRouter;

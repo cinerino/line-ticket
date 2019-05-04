@@ -2488,6 +2488,7 @@ export async function searchScreeningEventReservations(params: {
         await LINE.pushMessage(params.user.userId, [flex]);
     }
 }
+
 /**
  * 座席仮予約
  */
@@ -2496,9 +2497,9 @@ export async function selectSeatOffers(params: {
     replyToken: string;
     user: User;
     eventId: string;
-    seatNumbers: string[];
+    seatNumbers?: string[];
+    numSeats?: number;
 }) {
-    // イベント詳細取得
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -2513,6 +2514,12 @@ export async function selectSeatOffers(params: {
     });
 
     const event = await eventService.findScreeningEventById({ id: params.eventId });
+
+    const reservedSeatsAvailable = (event.offers !== undefined
+        && event.offers.itemOffered !== undefined
+        && event.offers.itemOffered.serviceOutput !== undefined
+        && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
+        && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
 
     // 販売者情報取得
     const searchSellersResult = await sellerService.search({});
@@ -2573,33 +2580,68 @@ export async function selectSeatOffers(params: {
     const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
 
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
-    debug('creating a seat reservation authorization...');
-    const seatReservationAuthorization =
-        <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
-        await placeOrderService.authorizeSeatReservation({
-            object: {
-                event: { id: event.id },
-                acceptedOffer: params.seatNumbers.map((seatNumber) => {
-                    return {
-                        id: selectedTicketOffer.id,
-                        ticketedSeat: {
-                            typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                            seatNumber: seatNumber,
-                            seatSection: 'Default',
-                            seatRow: '',
-                            seatingType: <any>{}
-                        },
-                        additionalProperty: []
-                    };
-                })
-            },
-            purpose: transaction
-        });
-    debug('seatReservationAuthorization:', seatReservationAuthorization);
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
+    if (reservedSeatsAvailable) {
+        if (params.seatNumbers === undefined) {
+            await LINE.pushMessage(params.user.userId, { type: 'text', text: '座席が指定されていません' });
 
-    await params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
+            return;
+        }
+
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
+        debug('creating a seat reservation authorization...');
+        const seatReservationAuthorization =
+            <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
+            await placeOrderService.authorizeSeatReservation({
+                object: {
+                    event: { id: event.id },
+                    acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                        return {
+                            id: selectedTicketOffer.id,
+                            ticketedSeat: {
+                                typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                                seatNumber: seatNumber,
+                                seatSection: 'Default',
+                                seatRow: '',
+                                seatingType: <any>{}
+                            },
+                            additionalProperty: []
+                        };
+                    })
+                },
+                purpose: transaction
+            });
+        debug('seatReservationAuthorization:', seatReservationAuthorization);
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
+
+        await params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
+    } else {
+        if (params.numSeats === undefined) {
+            await LINE.pushMessage(params.user.userId, { type: 'text', text: '枚数が指定されていません' });
+
+            return;
+        }
+
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${params.numSeats}枚を確保します...` });
+        debug('creating a seat reservation authorization...');
+        const seatReservationAuthorization =
+            <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
+            await placeOrderService.authorizeSeatReservation({
+                object: {
+                    event: { id: event.id },
+                    acceptedOffer: [...Array(params.numSeats)].map(() => {
+                        return {
+                            id: selectedTicketOffer.id,
+                            additionalProperty: []
+                        };
+                    })
+                },
+                purpose: transaction
+            });
+        debug('seatReservationAuthorization:', seatReservationAuthorization);
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${params.numSeats}枚を確保しました` });
+
+        await params.user.saveSeatReservationAuthorization(seatReservationAuthorization);
+    }
 
     const quickReplyItems: QuickReplyItem[] = [
         {

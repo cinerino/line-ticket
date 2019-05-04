@@ -354,6 +354,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     user: user
                 });
                 break;
+
             // 座席選択
             case 'selectSeatOffers':
                 const seatNumbers = (<string>data.seatNumbers).split(',');
@@ -364,6 +365,18 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     seatNumbers: seatNumbers
                 });
                 break;
+
+            // 座席数選択
+            case 'selectNumSeats':
+                const numSeats = Number(<string>data.numSeats);
+                await PostbackController.selectSeatOffers({
+                    replyToken: event.replyToken,
+                    user: user,
+                    eventId: <string>data.eventId,
+                    numSeats: numSeats
+                });
+                break;
+
             // 所有権コード発行
             case 'authorizeOwnershipInfo':
                 await PostbackController.authorizeOwnershipInfo({
