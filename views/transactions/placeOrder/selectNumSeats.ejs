@@ -18,23 +18,23 @@
 
 <body>
     <div class="container">
-        <!-- <h1></h1> -->
+        <h1>枚数選択</h1>
         <form method="post">
             <div class="form-group">
-                <label for="expire">枚数</label>
+                <label for="numSeats"></label>
                 <select name="numSeats" id="numSeats" class="form-control select-cardexpire" required="">
                     <option value="">--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                </select> 枚
+                    <option value="1">1枚</option>
+                    <option value="2">2枚</option>
+                    <option value="3">3枚</option>
+                    <option value="4">4枚</option>
+                    <option value="5">5枚</option>
+                    <option value="6">6枚</option>
+                    <option value="7">7枚</option>
+                    <option value="8">8枚</option>
+                    <option value="9">9枚</option>
+                    <option value="10">10枚</option>
+                </select>
             </div>
 
             <a class="btn btn-primary btn-next" href="javascript:void(0);">
@@ -72,7 +72,6 @@
             var numSeats = $('select[name=numSeats]').val();
 
             var message = 'postback:' + 'action=selectNumSeats&numSeats=' + numSeats + '&eventId=' + '<%= eventId %>';
-            alert(message);
             console.log('sending message...', message);
             liff.sendMessages([
                 {
