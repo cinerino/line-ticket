@@ -191,7 +191,7 @@ function showSeatReservationMenu(params) {
         if ((yield params.user.getCredentials()) !== null) {
             actions.push({
                 type: 'postback',
-                label: '予約を確認する',
+                label: 'My予約',
                 data: `action=searchScreeningEventReservations`
             });
         }
@@ -227,7 +227,7 @@ function showOrderMenu(params) {
         if ((yield params.user.getCredentials()) !== null) {
             actions.push({
                 type: 'postback',
-                label: '注文を確認する',
+                label: 'My注文',
                 data: `action=searchOrders`
             });
         }
@@ -273,12 +273,12 @@ function showCreditCardMenu(params) {
                     actions: [
                         {
                             type: 'uri',
-                            label: 'クレジットカード追加',
+                            label: '登録する',
                             uri: `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`
                         },
                         {
                             type: 'postback',
-                            label: 'クレジットカード検索',
+                            label: 'Myクレジットカード',
                             data: `action=searchCreditCards`
                         }
                     ]
@@ -303,12 +303,12 @@ function showCoinAccountMenu(params) {
                     actions: [
                         {
                             type: 'uri',
-                            label: '口座開設',
+                            label: '開設する',
                             uri: liffUri
                         },
                         {
                             type: 'postback',
-                            label: '口座検索',
+                            label: 'My口座',
                             data: 'action=searchCoinAccounts'
                         }
                     ]

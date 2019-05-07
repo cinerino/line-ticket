@@ -526,10 +526,10 @@ function selectPaymentMethodType(params) {
             {
                 type: 'button',
                 // flex: 2,
-                // style: 'primary',
+                style: 'secondary',
                 action: {
                     type: 'uri',
-                    label: '入力する',
+                    label: '変更する',
                     uri: liffUri
                 }
             }
@@ -537,9 +537,10 @@ function selectPaymentMethodType(params) {
         if (profile !== undefined) {
             footerContets.push({
                 type: 'button',
+                style: 'primary',
                 action: {
                     type: 'postback',
-                    label: 'このまま進む',
+                    label: '注文する',
                     data: qs.stringify({
                         action: 'setCustomerContact',
                         transactionId: params.transactionId,
@@ -3738,7 +3739,7 @@ function order2bubble(order) {
                 {
                     type: 'box',
                     layout: 'vertical',
-                    margin: 'none',
+                    margin: 'xs',
                     spacing: 'sm',
                     contents: [
                         {
