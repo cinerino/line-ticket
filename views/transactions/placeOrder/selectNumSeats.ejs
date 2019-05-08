@@ -71,7 +71,7 @@
 
             var numSeats = $('select[name=numSeats]').val();
 
-            var message = 'postback:' + 'action=selectNumSeats&numSeats=' + numSeats + '&eventId=' + '<%= eventId %>';
+            var message = 'postback:' + 'action=selectSeatOffers&numSeats=' + numSeats + '&eventId=' + '<%= eventId %>';
             console.log('sending message...', message);
             liff.sendMessages([
                 {

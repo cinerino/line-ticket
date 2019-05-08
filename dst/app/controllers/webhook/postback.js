@@ -699,7 +699,7 @@ function selectCreditCard(params) {
             {
                 type: 'button',
                 // flex: 2,
-                // style: 'primary',
+                style: 'secondary',
                 action: {
                     type: 'uri',
                     label: '入力する',
@@ -719,6 +719,7 @@ function selectCreditCard(params) {
                 const creditCard = creditCards[0];
                 footerContets.push({
                     type: 'button',
+                    style: 'primary',
                     action: {
                         type: 'postback',
                         label: creditCard.cardNo,
@@ -2499,14 +2500,17 @@ function selectSeatOffers(params) {
         }
         // 券種未選択であれば、券種選択へ
         if (params.offerId === undefined) {
-            const quickReplyItems4selectOffer = ticketOffers.map((o) => {
+            // tslint:disable-next-line:no-magic-numbers
+            const quickReplyItems4selectOffer = ticketOffers.slice(0, 10).map((o) => {
+                const unitPriceSpec = o.priceSpecification.priceComponent.find((c) => c.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
+                const priceStr = (unitPriceSpec !== undefined) ? `${unitPriceSpec.price} ${unitPriceSpec.priceCurrency}` : '';
                 return {
                     type: 'action',
                     imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
                     action: {
                         type: 'postback',
                         // tslint:disable-next-line:no-magic-numbers
-                        label: `${String(o.name.ja).slice(0, 10)}`,
+                        label: `${String(o.name.ja).slice(0, 8)} ${priceStr}`,
                         data: qs.stringify({
                             action: 'selectSeatOffers',
                             seatNumbers: (params.seatNumbers !== undefined) ? params.seatNumbers.join(',') : undefined,
@@ -2526,9 +2530,11 @@ function selectSeatOffers(params) {
             yield lineClient_1.default.pushMessage(params.user.userId, [message4selectOffer]);
             return;
         }
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
-        // tslint:disable-next-line:insecure-random
-        const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
+        const selectedTicketOffer = ticketOffers.find((o) => o.id === params.offerId);
+        if (selectedTicketOffer === undefined) {
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${params.offerId} が見つかりません` });
+            return;
+        }
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
         if (reservedSeatsAvailable) {
             if (params.seatNumbers === undefined) {

@@ -359,25 +359,17 @@ function postback(event, user) {
                         user: user
                     });
                     break;
-                // 座席選択
+                // 座席選択 or 座席数選択
                 case 'selectSeatOffers':
-                    const seatNumbers = data.seatNumbers.split(',');
+                    const seatNumbers = (typeof data.seatNumbers === 'string') ? data.seatNumbers.split(',') : undefined;
+                    const numSeats = (typeof data.numSeats === 'string') ? Number(data.numSeats) : undefined;
                     yield PostbackController.selectSeatOffers({
                         replyToken: event.replyToken,
                         user: user,
                         eventId: data.eventId,
                         seatNumbers: seatNumbers,
+                        numSeats: numSeats,
                         offerId: data.offerId
-                    });
-                    break;
-                // 座席数選択
-                case 'selectNumSeats':
-                    const numSeats = Number(data.numSeats);
-                    yield PostbackController.selectSeatOffers({
-                        replyToken: event.replyToken,
-                        user: user,
-                        eventId: data.eventId,
-                        numSeats: numSeats
                     });
                     break;
                 // 所有権コード発行

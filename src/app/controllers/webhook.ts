@@ -355,27 +355,20 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 });
                 break;
 
-            // 座席選択
+            // 座席選択 or 座席数選択
             case 'selectSeatOffers':
-                const seatNumbers = (<string>data.seatNumbers).split(',');
+                const seatNumbers = (typeof data.seatNumbers === 'string') ? (<string>data.seatNumbers).split(',') : undefined;
+                const numSeats = (typeof data.numSeats === 'string') ? Number(<string>data.numSeats) : undefined;
+
                 await PostbackController.selectSeatOffers({
                     replyToken: event.replyToken,
                     user: user,
                     eventId: <string>data.eventId,
                     seatNumbers: seatNumbers,
+                    numSeats: numSeats,
                     offerId: data.offerId
                 });
-                break;
 
-            // 座席数選択
-            case 'selectNumSeats':
-                const numSeats = Number(<string>data.numSeats);
-                await PostbackController.selectSeatOffers({
-                    replyToken: event.replyToken,
-                    user: user,
-                    eventId: <string>data.eventId,
-                    numSeats: numSeats
-                });
                 break;
 
             // 所有権コード発行
