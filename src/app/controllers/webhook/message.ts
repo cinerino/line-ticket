@@ -166,29 +166,28 @@ export async function showProfileMenu(params: {
 
     try {
         profile = await personService.getProfile({});
-        await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールが見つかりました ${profile.email}` });
     } catch (error) {
         await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
     }
 
-    // const updateProfileQuery = qs.stringify({ profile: profile });
+    const updateProfileQuery = qs.stringify({ profile: profile });
     // const updateProfileQuery = qs.stringify({});
-    // const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+    const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
     // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
-    // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
 
     const actions: Action[] = [];
     actions.push(
-        {
-            type: 'postback',
-            label: 'プロフィールを確認',
-            data: `action=getProfile`
-        }
         // {
-        //     type: 'uri',
-        //     label: '変更する',
-        //     uri: liffUri
+        //     type: 'postback',
+        //     label: '確認する',
+        //     data: `action=getProfile`
         // }
+        {
+            type: 'uri',
+            label: '変更する',
+            uri: liffUri
+        }
     );
 
     await LINE.replyMessage(params.replyToken, [
