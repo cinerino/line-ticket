@@ -167,7 +167,7 @@ export async function showProfileMenu(params: {
     try {
         profile = await personService.getProfile({});
     } catch (error) {
-        await LINE.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
     }
 
     const updateProfileQuery = qs.stringify({ profile: profile });
@@ -178,11 +178,11 @@ export async function showProfileMenu(params: {
 
     const actions: Action[] = [];
     actions.push(
-        // {
-        //     type: 'postback',
-        //     label: '確認する',
-        //     data: `action=getProfile`
-        // }
+        {
+            type: 'postback',
+            label: '確認する',
+            data: `action=getProfile`
+        },
         {
             type: 'uri',
             label: '変更する',
@@ -190,7 +190,7 @@ export async function showProfileMenu(params: {
         }
     );
 
-    await LINE.replyMessage(params.replyToken, [
+    await LINE.pushMessage(params.user.userId, [
         {
             type: 'template',
             altText: 'プロフィール管理',

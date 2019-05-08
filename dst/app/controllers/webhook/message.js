@@ -154,7 +154,7 @@ function showProfileMenu(params) {
             profile = yield personService.getProfile({});
         }
         catch (error) {
-            yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
         }
         const updateProfileQuery = qs.stringify({ profile: profile });
         // const updateProfileQuery = qs.stringify({});
@@ -162,18 +162,16 @@ function showProfileMenu(params) {
         // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
         const actions = [];
-        actions.push(
-        // {
-        //     type: 'postback',
-        //     label: '確認する',
-        //     data: `action=getProfile`
-        // }
-        {
+        actions.push({
+            type: 'postback',
+            label: '確認する',
+            data: `action=getProfile`
+        }, {
             type: 'uri',
             label: '変更する',
             uri: liffUri
         });
-        yield lineClient_1.default.replyMessage(params.replyToken, [
+        yield lineClient_1.default.pushMessage(params.user.userId, [
             {
                 type: 'template',
                 altText: 'プロフィール管理',
