@@ -2504,6 +2504,7 @@ function selectSeatOffers(params) {
                         data: qs.stringify({
                             action: 'selectSeatOffers',
                             seatNumbers: (params.seatNumbers !== undefined) ? params.seatNumbers.join(',') : undefined,
+                            numSeats: params.numSeats,
                             eventId: params.eventId,
                             offerId: o.id
                         })
