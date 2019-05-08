@@ -157,7 +157,8 @@ function showProfileMenu(params) {
         catch (error) {
             yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
         }
-        const updateProfileQuery = qs.stringify({ profile: profile });
+        // const updateProfileQuery = qs.stringify({ profile: profile });
+        const updateProfileQuery = qs.stringify({});
         const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
         const actions = [];
