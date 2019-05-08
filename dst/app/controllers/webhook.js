@@ -366,7 +366,8 @@ function postback(event, user) {
                         replyToken: event.replyToken,
                         user: user,
                         eventId: data.eventId,
-                        seatNumbers: seatNumbers
+                        seatNumbers: seatNumbers,
+                        offerId: data.offerId
                     });
                     break;
                 // 座席数選択

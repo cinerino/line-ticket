@@ -2497,6 +2497,35 @@ function selectSeatOffers(params) {
         if (ticketOffers.length === 0) {
             throw new Error('ムビチケなしのオファーが見つかりません');
         }
+        // 券種未選択であれば、券種選択へ
+        if (params.offerId === undefined) {
+            const quickReplyItems4selectOffer = ticketOffers.map((o) => {
+                return {
+                    type: 'action',
+                    imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                    action: {
+                        type: 'postback',
+                        // tslint:disable-next-line:no-magic-numbers
+                        label: `${String(o.name.ja).slice(0, 10)}`,
+                        data: qs.stringify({
+                            action: 'selectSeatOffers',
+                            seatNumbers: (params.seatNumbers !== undefined) ? params.seatNumbers.join(',') : undefined,
+                            eventId: params.eventId,
+                            offerId: o.id
+                        })
+                    }
+                };
+            });
+            const message4selectOffer = {
+                type: 'text',
+                text: '券種を選択してください',
+                quickReply: {
+                    items: quickReplyItems4selectOffer
+                }
+            };
+            yield lineClient_1.default.pushMessage(params.user.userId, [message4selectOffer]);
+            return;
+        }
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
         // tslint:disable-next-line:insecure-random
         const selectedTicketOffer = ticketOffers[Math.floor(ticketOffers.length * Math.random())];
@@ -3739,7 +3768,7 @@ function order2bubble(order) {
                 {
                     type: 'box',
                     layout: 'vertical',
-                    margin: 'xs',
+                    margin: 'sm',
                     spacing: 'sm',
                     contents: [
                         {

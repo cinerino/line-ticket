@@ -362,7 +362,8 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     replyToken: event.replyToken,
                     user: user,
                     eventId: <string>data.eventId,
-                    seatNumbers: seatNumbers
+                    seatNumbers: seatNumbers,
+                    offerId: data.offerId
                 });
                 break;
 

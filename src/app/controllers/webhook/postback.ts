@@ -2502,6 +2502,7 @@ export async function selectSeatOffers(params: {
     eventId: string;
     seatNumbers?: string[];
     numSeats?: number;
+    offerId?: string;
 }) {
     const eventService = new cinerinoapi.service.Event({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -2576,6 +2577,38 @@ export async function selectSeatOffers(params: {
     });
     if (ticketOffers.length === 0) {
         throw new Error('ムビチケなしのオファーが見つかりません');
+    }
+
+    // 券種未選択であれば、券種選択へ
+    if (params.offerId === undefined) {
+        const quickReplyItems4selectOffer: QuickReplyItem[] = ticketOffers.map((o) => {
+            return {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'postback',
+                    // tslint:disable-next-line:no-magic-numbers
+                    label: `${String(o.name.ja).slice(0, 10)}`,
+                    data: qs.stringify({
+                        action: 'selectSeatOffers',
+                        seatNumbers: (params.seatNumbers !== undefined) ? params.seatNumbers.join(',') : undefined,
+                        eventId: params.eventId,
+                        offerId: o.id
+                    })
+                }
+            };
+        });
+
+        const message4selectOffer: TextMessage = {
+            type: 'text',
+            text: '券種を選択してください',
+            quickReply: {
+                items: quickReplyItems4selectOffer
+            }
+        };
+        await LINE.pushMessage(params.user.userId, [message4selectOffer]);
+
+        return;
     }
 
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${ticketOffers.length}件からオファーを選択します...` });
@@ -3865,7 +3898,7 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                 {
                     type: 'box',
                     layout: 'vertical',
-                    margin: 'xs',
+                    margin: 'sm',
                     spacing: 'sm',
                     contents: [
                         {
