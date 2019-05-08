@@ -2472,16 +2472,6 @@ function selectSeatOffers(params) {
         //     }
         // ).then((body) => body.token);
         // debug('passportToken published.', passportToken);
-        const TRANSACTION_EXPIRES_IN_MINUTES = 5;
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
-        const transaction = yield placeOrderService.start({
-            expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
-            seller: seller,
-            object: {}
-        });
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
-        debug('transaction started.', transaction.id);
-        yield params.user.saveTransaction(transaction);
         const storeId = params.user.authClient.options.clientId;
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
         let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
@@ -2536,6 +2526,16 @@ function selectSeatOffers(params) {
             return;
         }
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
+        const TRANSACTION_EXPIRES_IN_MINUTES = 5;
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
+        const transaction = yield placeOrderService.start({
+            expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
+            seller: seller,
+            object: {}
+        });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
+        debug('transaction started.', transaction.id);
+        yield params.user.saveTransaction(transaction);
         if (reservedSeatsAvailable) {
             if (params.seatNumbers === undefined) {
                 yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '座席が指定されていません' });

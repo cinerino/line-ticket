@@ -2549,17 +2549,6 @@ export async function selectSeatOffers(params: {
     // ).then((body) => body.token);
     // debug('passportToken published.', passportToken);
 
-    const TRANSACTION_EXPIRES_IN_MINUTES = 5;
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
-    const transaction = await placeOrderService.start({
-        expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
-        seller: seller,
-        object: {}
-    });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
-    debug('transaction started.', transaction.id);
-    await params.user.saveTransaction(transaction);
-
     const storeId = <string>params.user.authClient.options.clientId;
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
     let ticketOffers = await eventService.searchScreeningEventTicketOffers({
@@ -2627,6 +2616,17 @@ export async function selectSeatOffers(params: {
     }
 
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
+
+    const TRANSACTION_EXPIRES_IN_MINUTES = 5;
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
+    const transaction = await placeOrderService.start({
+        expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
+        seller: seller,
+        object: {}
+    });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
+    debug('transaction started.', transaction.id);
+    await params.user.saveTransaction(transaction);
 
     if (reservedSeatsAvailable) {
         if (params.seatNumbers === undefined) {

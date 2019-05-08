@@ -149,18 +149,25 @@ function showProfileMenu(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const profile = yield personService.getProfile({});
-        const actions = [];
+        let profile;
+        try {
+            profile = yield personService.getProfile({});
+            yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールが見つかりました ${profile.email}` });
+        }
+        catch (error) {
+            yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
+        }
         const updateProfileQuery = qs.stringify({ profile: profile });
         const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
+        const actions = [];
         actions.push({
             type: 'postback',
             label: 'プロフィールを確認',
             data: `action=getProfile`
         }, {
             type: 'uri',
-            label: 'プロフィール変更',
+            label: '変更する',
             uri: liffUri
         });
         yield lineClient_1.default.replyMessage(params.replyToken, [
