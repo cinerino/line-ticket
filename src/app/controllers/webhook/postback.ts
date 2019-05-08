@@ -234,6 +234,9 @@ export async function askScreeningEvent(params: {
         // tslint:disable-next-line:no-magic-numbers
         .slice(0, 10);
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
+
+    const MAX_AVAILABILITY_SCORE = 5;
+
     // tslint:disable-next-line:max-func-body-length
     const bubbles: FlexBubble[] = screeningEvents.map<FlexBubble>((event) => {
         const query = qs.stringify({ eventId: event.id, userId: params.user.userId });
@@ -245,7 +248,7 @@ export async function askScreeningEvent(params: {
             availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
         }
         // tslint:disable-next-line:no-magic-numbers
-        const availabilityScore = Math.floor(availability / 20);
+        const availabilityScore = Math.floor(availability / Math.floor(100 / MAX_AVAILABILITY_SCORE));
 
         return {
             type: 'bubble',
@@ -267,21 +270,24 @@ export async function askScreeningEvent(params: {
                         layout: 'baseline',
                         margin: 'md',
                         contents: [
-                            ...[...Array(availabilityScore)].map(() => {
-                                return {
-                                    type: 'icon',
-                                    size: 'sm',
-                                    url: `https://${params.user.host}/img/labels/theater-seat-blue-80.png`
-                                };
-                            }),
-                            // tslint:disable-next-line:no-magic-numbers
-                            ...[...Array(5 - availabilityScore)].map(() => {
-                                return {
-                                    type: 'icon',
-                                    size: 'sm',
-                                    url: `https://${params.user.host}/img/labels/theater-seat-grey-80.png`
-                                };
-                            }),
+                            ...(availabilityScore > 0)
+                                ? [...Array(availabilityScore)].map(() => {
+                                    return {
+                                        type: 'icon',
+                                        size: 'sm',
+                                        url: `https://${params.user.host}/img/labels/theater-seat-blue-80.png`
+                                    };
+                                })
+                                : [],
+                            ...(availabilityScore < MAX_AVAILABILITY_SCORE)
+                                ? [...Array(MAX_AVAILABILITY_SCORE - availabilityScore)].map(() => {
+                                    return {
+                                        type: 'icon',
+                                        size: 'sm',
+                                        url: `https://${params.user.host}/img/labels/theater-seat-grey-80.png`
+                                    };
+                                })
+                                : [],
                             {
                                 type: 'text',
                                 text: `${availability}%`,
@@ -376,7 +382,7 @@ export async function askScreeningEvent(params: {
                         type: 'button',
                         action: {
                             type: 'uri',
-                            label: '座席を選ぶ',
+                            label: '座席選択',
                             uri: liffUri
                         }
                     }
@@ -384,6 +390,7 @@ export async function askScreeningEvent(params: {
             }
         };
     });
+
     await LINE.pushMessage(params.user.userId, [
         {
             type: 'flex',
