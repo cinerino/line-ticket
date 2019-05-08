@@ -178,11 +178,11 @@ export async function showProfileMenu(params: {
 
     const actions: Action[] = [];
     actions.push(
-        {
-            type: 'postback',
-            label: '確認する',
-            data: `action=getProfile`
-        },
+        // {
+        //     type: 'postback',
+        //     label: '確認する',
+        //     data: `action=getProfile`
+        // },
         {
             type: 'uri',
             label: '変更する',
@@ -190,10 +190,10 @@ export async function showProfileMenu(params: {
         }
     );
 
-    await LINE.pushMessage(params.user.userId, [
+    await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
-            altText: 'プロフィール管理',
+            altText: 'プロフィールメニュー',
             template: {
                 type: 'buttons',
                 title: 'プロフィール管理',
