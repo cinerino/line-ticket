@@ -160,18 +160,20 @@ function showProfileMenu(params) {
         // const updateProfileQuery = qs.stringify({ profile: profile });
         // const updateProfileQuery = qs.stringify({});
         // const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
-        const updateProfileUri = `https://${params.user.host}/people/me/profile`;
-        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
+        // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
+        // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
         const actions = [];
         actions.push({
             type: 'postback',
             label: 'プロフィールを確認',
             data: `action=getProfile`
-        }, {
-            type: 'uri',
-            label: '変更する',
-            uri: liffUri
-        });
+        }
+        // {
+        //     type: 'uri',
+        //     label: '変更する',
+        //     uri: liffUri
+        // }
+        );
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
