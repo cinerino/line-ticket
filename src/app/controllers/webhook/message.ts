@@ -175,19 +175,20 @@ export async function showProfileMenu(params: {
     const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
     // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
+    debug(liffUri);
 
     const actions: Action[] = [];
     actions.push(
-        // {
-        //     type: 'postback',
-        //     label: '確認する',
-        //     data: `action=getProfile`
-        // },
         {
-            type: 'uri',
-            label: '変更する',
-            uri: liffUri
+            type: 'postback',
+            label: '確認する',
+            data: `action=getProfile`
         }
+        // {
+        //     type: 'uri',
+        //     label: '変更する',
+        //     uri: liffUri
+        // }
     );
 
     await LINE.replyMessage(params.replyToken, [

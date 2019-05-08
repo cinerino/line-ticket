@@ -161,18 +161,19 @@ function showProfileMenu(params) {
         const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
         // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
+        debug(liffUri);
         const actions = [];
-        actions.push(
+        actions.push({
+            type: 'postback',
+            label: '確認する',
+            data: `action=getProfile`
+        }
         // {
-        //     type: 'postback',
-        //     label: '確認する',
-        //     data: `action=getProfile`
-        // },
-        {
-            type: 'uri',
-            label: '変更する',
-            uri: liffUri
-        });
+        //     type: 'uri',
+        //     label: '変更する',
+        //     uri: liffUri
+        // }
+        );
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
