@@ -172,8 +172,9 @@ export async function showProfileMenu(params: {
     }
 
     // const updateProfileQuery = qs.stringify({ profile: profile });
-    const updateProfileQuery = qs.stringify({});
-    const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+    // const updateProfileQuery = qs.stringify({});
+    // const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+    const updateProfileUri = `https://${params.user.host}/people/me/profile`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
 
     const actions: Action[] = [];
