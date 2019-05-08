@@ -166,12 +166,13 @@ export async function showProfileMenu(params: {
 
     try {
         profile = await personService.getProfile({});
+        debug('profile:', profile);
     } catch (error) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `プロフィールを取得できませんでした ${error.message}` });
     }
 
-    const updateProfileQuery = qs.stringify({ profile: profile });
-    // const updateProfileQuery = qs.stringify({});
+    // const updateProfileQuery = qs.stringify({ profile: profile });
+    const updateProfileQuery = qs.stringify({});
     const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
     // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
@@ -181,14 +182,14 @@ export async function showProfileMenu(params: {
     actions.push(
         {
             type: 'postback',
-            label: '確認する',
+            label: 'プロフィール確認',
             data: `action=getProfile`
+        },
+        {
+            type: 'uri',
+            label: '変更する',
+            uri: liffUri
         }
-        // {
-        //     type: 'uri',
-        //     label: '変更する',
-        //     uri: liffUri
-        // }
     );
 
     await LINE.replyMessage(params.replyToken, [
