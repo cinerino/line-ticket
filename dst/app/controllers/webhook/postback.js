@@ -39,6 +39,7 @@ function searchEventsByDate(params) {
         });
         const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
+            eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
             inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
             inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
         });
@@ -214,6 +215,7 @@ function askScreeningEvent(params) {
         const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
         const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
+            eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
             inSessionFrom: startFrom,
             inSessionThrough: startThrough
         });
@@ -2451,11 +2453,11 @@ function selectSeatOffers(params) {
             auth: params.user.authClient
         });
         const event = yield eventService.findScreeningEventById({ id: params.eventId });
-        const reservedSeatsAvailable = (event.offers !== undefined
+        const reservedSeatsAvailable = !(event.offers !== undefined
             && event.offers.itemOffered !== undefined
             && event.offers.itemOffered.serviceOutput !== undefined
             && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
+            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
         // 販売者情報取得
         const searchSellersResult = yield sellerService.search({});
         const seller = searchSellersResult.data.find((o) => {
@@ -3779,7 +3781,7 @@ function order2bubble(order) {
                 {
                     type: 'box',
                     layout: 'vertical',
-                    margin: 'sm',
+                    margin: 'md',
                     spacing: 'sm',
                     contents: [
                         {

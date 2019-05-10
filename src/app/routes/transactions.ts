@@ -80,11 +80,11 @@ transactionsRouter.get(
 
             const event = await eventService.findScreeningEventById({ id: req.query.eventId });
 
-            const reservedSeatsAvailable = (event.offers !== undefined
+            const reservedSeatsAvailable = !(event.offers !== undefined
                 && event.offers.itemOffered !== undefined
                 && event.offers.itemOffered.serviceOutput !== undefined
                 && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-                && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
+                && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
 
             if (reservedSeatsAvailable) {
                 const eventOffers = await eventService.searchScreeningEventOffers({ eventId: req.query.eventId });

@@ -44,6 +44,7 @@ export async function searchEventsByDate(params: {
     });
     const searchScreeningEventsResult = await eventService.searchScreeningEvents({
         typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
+        eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
         inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
         inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
     });
@@ -224,6 +225,7 @@ export async function askScreeningEvent(params: {
     const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
     const searchScreeningEventsResult = await eventService.searchScreeningEvents({
         typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
+        eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
         inSessionFrom: startFrom,
         inSessionThrough: startThrough
     });
@@ -2528,11 +2530,11 @@ export async function selectSeatOffers(params: {
 
     const event = await eventService.findScreeningEventById({ id: params.eventId });
 
-    const reservedSeatsAvailable = (event.offers !== undefined
+    const reservedSeatsAvailable = !(event.offers !== undefined
         && event.offers.itemOffered !== undefined
         && event.offers.itemOffered.serviceOutput !== undefined
         && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-        && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
+        && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
 
     // 販売者情報取得
     const searchSellersResult = await sellerService.search({});
@@ -3918,7 +3920,7 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                 {
                     type: 'box',
                     layout: 'vertical',
-                    margin: 'sm',
+                    margin: 'md',
                     spacing: 'sm',
                     contents: [
                         {

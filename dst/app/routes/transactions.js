@@ -74,11 +74,11 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
             auth: user.authClient
         });
         const event = yield eventService.findScreeningEventById({ id: req.query.eventId });
-        const reservedSeatsAvailable = (event.offers !== undefined
+        const reservedSeatsAvailable = !(event.offers !== undefined
             && event.offers.itemOffered !== undefined
             && event.offers.itemOffered.serviceOutput !== undefined
             && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat !== undefined);
+            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
         if (reservedSeatsAvailable) {
             const eventOffers = yield eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
             const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
