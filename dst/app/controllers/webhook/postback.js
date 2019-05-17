@@ -500,6 +500,7 @@ function selectPaymentMethodType(params) {
                 yield paymentService.authorizeCreditCard({
                     object: {
                         typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                        name: 'クレカ',
                         amount: price,
                         method: '1',
                         creditCard: params.creditCard
@@ -1104,7 +1105,6 @@ function setCustomerContact(params) {
     });
 }
 exports.setCustomerContact = setCustomerContact;
-// tslint:disable-next-line:max-func-body-length
 function confirmOrder(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
@@ -1115,7 +1115,12 @@ function confirmOrder(params) {
         const { order } = yield placeOrderService.confirm({
             id: params.transactionId,
             options: {
-                sendEmailMessage: true
+                sendEmailMessage: true,
+                email: {
+                    about: 'LINE Ticket 注文配送完了',
+                    sender: { email: 'cinerino-line-ticket@example.com' },
+                    toRecipient: { name: `LINE User ${params.user.userId}` }
+                }
             }
         });
         const flex = {

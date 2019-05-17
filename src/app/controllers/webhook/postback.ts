@@ -524,6 +524,7 @@ export async function selectPaymentMethodType(params: {
             await paymentService.authorizeCreditCard({
                 object: {
                     typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                    name: 'クレカ',
                     amount: price,
                     method: <any>'1',
                     creditCard: params.creditCard
@@ -1141,15 +1142,14 @@ export async function setCustomerContact(params: {
         }
     ]);
 }
-export type IEventReservation =
-    cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>;
-// tslint:disable-next-line:max-func-body-length
+
 export async function confirmOrder(params: {
     replyToken: string;
     user: User;
     transactionId: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
+
     const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1157,9 +1157,15 @@ export async function confirmOrder(params: {
     const { order } = await placeOrderService.confirm({
         id: params.transactionId,
         options: {
-            sendEmailMessage: true
+            sendEmailMessage: true,
+            email: {
+                about: 'LINE Ticket 注文配送完了',
+                sender: { email: 'cinerino-line-ticket@example.com' },
+                toRecipient: { name: `LINE User ${params.user.userId}` }
+            }
         }
     });
+
     const flex: FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
@@ -1167,6 +1173,7 @@ export async function confirmOrder(params: {
     };
     await LINE.pushMessage(params.user.userId, [flex]);
 }
+
 export async function cancelOrder(params: {
     replyToken: string;
     user: User;
