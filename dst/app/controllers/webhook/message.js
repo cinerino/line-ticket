@@ -563,7 +563,7 @@ function askEventStartDate(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const message = {
             type: 'text',
-            text: 'いつ見ますか？',
+            text: 'イベント日を選択してください',
             quickReply: {
                 items: [
                     {
@@ -613,7 +613,7 @@ function askEventStartDate(params) {
                             data: 'action=searchEventsByDate',
                             initial: moment().add(1, 'days').format('YYYY-MM-DD'),
                             // tslint:disable-next-line:no-magic-numbers
-                            max: moment().add(7, 'days').format('YYYY-MM-DD'),
+                            max: moment().add(6, 'months').format('YYYY-MM-DD'),
                             min: moment().add(1, 'days').format('YYYY-MM-DD')
                         }
                     }
