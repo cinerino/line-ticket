@@ -509,6 +509,17 @@ function selectPaymentMethodType(params) {
                 });
                 yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
                 break;
+            case cinerinoapi.factory.paymentMethodType.Others:
+                yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '決済承認を実行します...' });
+                yield paymentService.authorizeAnyPayment({
+                    object: {
+                        typeOf: cinerinoapi.factory.paymentMethodType.Others,
+                        amount: price
+                    },
+                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
+                });
+                yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '決済の承認がとれました' });
+                break;
             default:
                 throw new Error(`Unknown payment method ${params.paymentMethodType}`);
         }
@@ -2636,6 +2647,18 @@ function selectSeatOffers(params) {
                     label: 'Friend Pay',
                     data: qs.stringify({
                         action: 'askPaymentCode',
+                        transactionId: transaction.id
+                    })
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'postback',
+                    label: 'その他',
+                    data: qs.stringify({
+                        action: 'selectPaymentMethodType',
+                        paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
                         transactionId: transaction.id
                     })
                 }
