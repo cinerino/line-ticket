@@ -542,6 +542,7 @@ export async function selectPaymentMethodType(params: {
             await paymentService.authorizeAnyPayment({
                 object: {
                     typeOf: cinerinoapi.factory.paymentMethodType.Others,
+                    name: 'LINE POS その他',
                     amount: price
                 },
                 purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
@@ -3975,7 +3976,11 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                                 },
                                 {
                                     type: 'text',
-                                    text: (order.paymentMethods.length > 0) ? order.paymentMethods[0].paymentMethodId : '---',
+                                    text: (order.paymentMethods.length > 0)
+                                        ? (String(order.paymentMethods[0].paymentMethodId).length > 0)
+                                            ? String(order.paymentMethods[0].paymentMethodId)
+                                            : 'No ID'
+                                        : '---',
                                     color: '#aaaaaa',
                                     size: 'xs',
                                     align: 'end'
@@ -3996,7 +4001,11 @@ function order2bubble(order: cinerinoapi.factory.order.IOrder): FlexBubble {
                                 },
                                 {
                                     type: 'text',
-                                    text: (order.paymentMethods.length > 0) ? String(order.paymentMethods[0].accountId) : '---',
+                                    text: (order.paymentMethods.length > 0)
+                                        ? (String(order.paymentMethods[0].accountId).length > 0)
+                                            ? String(order.paymentMethods[0].accountId)
+                                            : 'No ID'
+                                        : '---',
                                     color: '#aaaaaa',
                                     size: 'xs',
                                     align: 'end'
