@@ -39,6 +39,9 @@ if (REFRESH_TOKEN_EXPIRES_IN_SECONDS_ENV === undefined) {
 }
 // tslint:disable-next-line:no-magic-numbers
 const REFRESH_TOKEN_EXPIRES_IN_SECONDS = parseInt(REFRESH_TOKEN_EXPIRES_IN_SECONDS_ENV, 10);
+if (process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN_AUTHORIZATION_CODE === undefined) {
+    process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN_AUTHORIZATION_CODE = process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN;
+}
 /**
  * LINEユーザー
  * @class
@@ -58,7 +61,7 @@ class User {
             state: ''
         });
         this.authClientOAuth2 = new cinerinoapi.auth.OAuth2({
-            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN_AUTHORIZATION_CODE,
             clientId: process.env.CINERINO_CLIENT_ID_AUTHORIZATION_CODE,
             clientSecret: process.env.CINERINO_CLIENT_SECRET_AUTHORIZATION_CODE,
             redirectUri: `https://${this.host}/signIn`,
