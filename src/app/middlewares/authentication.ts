@@ -56,11 +56,12 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const credentials = await req.user.getCredentials();
-        if (credentials === null) {
+        if (credentials === undefined) {
             if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
                 await sendLoginButton(req.user);
-                res.status(OK).send('ok');
+                res.status(OK)
+                    .send('ok');
             } else {
                 next();
             }
@@ -76,7 +77,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                 unauthorizedHandler: async () => {
                     // ログインボタンを送信
                     await sendLoginButton(req.user);
-                    res.status(OK).send('ok');
+                    res.status(OK)
+                        .send('ok');
                 },
                 tokenDetecter: async () => credentials.access_token
             })(req, res, next);

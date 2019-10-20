@@ -15,9 +15,9 @@ export async function indexFace(user: User, messageId: string) {
 }
 async function streamToBuffer(readable: stream.Readable) {
     return new Promise<Buffer>((resolve, reject) => {
-        const buffers: Uint8Array[] = [];
+        const buffers: Buffer[] = [];
         readable.on('error', reject)
-            .on('data', (data) => buffers.push(data))
+            .on('data', (data) => buffers.push(<Buffer>data))
             .on('end', () => {
                 resolve(Buffer.concat(buffers));
             });

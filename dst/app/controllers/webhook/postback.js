@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -37,16 +38,22 @@ function searchEventsByDate(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
+        const searchScreeningEventsResult = yield eventService.search({
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
             eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
-            inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate(),
-            inSessionThrough: moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate()
+            inSessionFrom: moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`)
+                .unix(), moment()
+                .unix()))
+                .toDate(),
+            inSessionThrough: moment(`${params.date}T00:00:00+09:00`)
+                .add(1, 'day')
+                .toDate()
         });
         const screeningEvents = searchScreeningEventsResult.data;
         // 上映イベントシリーズをユニークに
         let superEvents = screeningEvents.map((e) => e.superEvent);
-        superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id).indexOf(e.id) === index);
+        superEvents = superEvents.filter((e, index, events) => events.map((e2) => e2.id)
+            .indexOf(e.id) === index);
         // tslint:disable-next-line:no-magic-numbers
         superEvents = superEvents.slice(0, 10);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
@@ -57,8 +64,10 @@ function searchEventsByDate(params) {
             contents: {
                 type: 'carousel',
                 contents: [
-                    // tslint:disable-next-line:max-func-body-length no-magic-numbers
-                    ...superEvents.slice(0, 10).map((event) => {
+                    // tslint:disable-next-line:no-magic-numbers
+                    ...superEvents.slice(0, 10)
+                        // tslint:disable-next-line:max-func-body-length
+                        .map((event) => {
                         const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined
                             && event.workPerformed.thumbnailUrl !== null)
                             ? event.workPerformed.thumbnailUrl
@@ -120,7 +129,8 @@ function searchEventsByDate(params) {
                                                 {
                                                     type: 'text',
                                                     text: (Array.isArray(event.videoFormat))
-                                                        ? event.videoFormat.map((f) => f.typeOf).join(',')
+                                                        ? event.videoFormat.map((f) => f.typeOf)
+                                                            .join(',')
                                                         : '---',
                                                     wrap: true,
                                                     size: 'sm',
@@ -144,7 +154,8 @@ function searchEventsByDate(params) {
                                                 {
                                                     type: 'text',
                                                     text: (event.duration !== undefined)
-                                                        ? moment.duration(event.duration).toIsoString()
+                                                        ? moment.duration(event.duration)
+                                                            .toIsoString()
                                                         : '---',
                                                     wrap: true,
                                                     size: 'sm',
@@ -211,9 +222,14 @@ function askScreeningEvent(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`).unix(), moment().unix())).toDate();
-        const startThrough = moment(`${params.date}T00:00:00+09:00`).add(1, 'day').toDate();
-        const searchScreeningEventsResult = yield eventService.searchScreeningEvents({
+        const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`)
+            .unix(), moment()
+            .unix()))
+            .toDate();
+        const startThrough = moment(`${params.date}T00:00:00+09:00`)
+            .add(1, 'day')
+            .toDate();
+        const searchScreeningEventsResult = yield eventService.search({
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
             eventStatuses: [cinerinoapi.factory.chevre.eventStatusType.EventScheduled],
             inSessionFrom: startFrom,
@@ -260,6 +276,7 @@ function askScreeningEvent(params) {
                             margin: 'md',
                             contents: [
                                 ...(availabilityScore > 0)
+                                    // tslint:disable-next-line:prefer-array-literal
                                     ? [...Array(availabilityScore)].map(() => {
                                         return {
                                             type: 'icon',
@@ -269,6 +286,7 @@ function askScreeningEvent(params) {
                                     })
                                     : [],
                                 ...(availabilityScore < MAX_AVAILABILITY_SCORE)
+                                    // tslint:disable-next-line:prefer-array-literal
                                     ? [...Array(MAX_AVAILABILITY_SCORE - availabilityScore)].map(() => {
                                         return {
                                             type: 'icon',
@@ -329,7 +347,8 @@ function askScreeningEvent(params) {
                                         },
                                         {
                                             type: 'text',
-                                            text: moment(event.startDate).format('YYYY-MM-DD'),
+                                            text: moment(event.startDate)
+                                                .format('YYYY-MM-DD'),
                                             wrap: true,
                                             size: 'sm',
                                             color: '#666666',
@@ -351,7 +370,9 @@ function askScreeningEvent(params) {
                                         },
                                         {
                                             type: 'text',
-                                            text: `${moment(event.startDate).format('HH:mm')} - ${moment(event.endDate).format('HH:mm')}`,
+                                            text: `${moment(event.startDate)
+                                                .format('HH:mm')} - ${moment(event.endDate)
+                                                .format('HH:mm')}`,
                                             wrap: true,
                                             size: 'sm',
                                             color: '#666666',
@@ -812,7 +833,9 @@ function setCustomerContact(params) {
             throw new Error('Invalid seat reservation authorization');
         }
         const price = seatReservationAuthorization.result.price;
-        const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
+        const tmpReservations = (Array.isArray(seatReservationAuthorization.result.responseBody.object.reservations))
+            ? seatReservationAuthorization.result.responseBody.object.reservations
+            : [];
         const contact = {
             familyName: params.familyName,
             givenName: params.givenName,
@@ -995,7 +1018,8 @@ function setCustomerContact(params) {
                                                     contents: [
                                                         {
                                                             type: 'text',
-                                                            text: `${event.name.ja} ${moment(event.startDate).format('MM/DD HH:mm')}`,
+                                                            text: `${event.name.ja} ${moment(event.startDate)
+                                                                .format('MM/DD HH:mm')}`,
                                                             size: 'xs',
                                                             color: '#555555',
                                                             wrap: true
@@ -1126,14 +1150,31 @@ function confirmOrder(params) {
         });
         const { order } = yield placeOrderService.confirm({
             id: params.transactionId,
-            options: {
-                sendEmailMessage: true,
-                email: {
-                    about: 'LINE Ticket 注文配送完了',
-                    sender: { email: 'cinerino-line-ticket@example.com' },
-                    toRecipient: { name: `LINE User ${params.user.userId}` }
+            potentialActions: {
+                order: {
+                    potentialActions: {
+                        sendOrder: {
+                            potentialActions: {
+                                sendEmailMessage: [{
+                                        object: {
+                                            about: 'LINE Ticket 注文配送完了',
+                                            sender: { email: 'cinerino-line-ticket@example.com' },
+                                            toRecipient: { name: `LINE User ${params.user.userId}` }
+                                        }
+                                    }]
+                            }
+                        }
+                    }
                 }
             }
+            // options: {
+            //     sendEmailMessage: true,
+            //     email: {
+            //         about: 'LINE Ticket 注文配送完了',
+            //         sender: { email: 'cinerino-line-ticket@example.com' },
+            //         toRecipient: { name: `LINE User ${params.user.userId}` }
+            //     }
+            // }
         });
         const flex = {
             type: 'flex',
@@ -1267,8 +1308,10 @@ function confirmTransferMoney(params) {
         });
         const transaction = yield transferService.start({
             accountType: cinerinoapi.factory.accountType.Coin,
-            // tslint:disable-next-line:no-magic-numbers
-            expires: moment().add(10, 'minutes').toDate(),
+            expires: moment()
+                // tslint:disable-next-line:no-magic-numbers
+                .add(10, 'minutes')
+                .toDate(),
             agent: {
                 typeOf: cinerinoapi.factory.personType.Person,
                 name: params.user.userId
@@ -1381,8 +1424,10 @@ function depositCoinByCreditCard(params) {
             auth: pecorinoAuthClient
         });
         const transaction = yield depositTransaction.start({
-            // tslint:disable-next-line:no-magic-numbers
-            expires: moment().add(10, 'minutes').toDate(),
+            expires: moment()
+                // tslint:disable-next-line:no-magic-numbers
+                .add(10, 'minutes')
+                .toDate(),
             agent: {
                 typeOf: 'Person',
                 id: params.user.userId,
@@ -1812,7 +1857,8 @@ function searchCoinAccounts(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: moment(account.openDate).format('lll'),
+                                                        text: moment(account.openDate)
+                                                            .format('lll'),
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2009,7 +2055,8 @@ function searchAccountMoneyTransferActions(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: moment(a.endDate).format('YY.MM.DD HH:mm'),
+                                                        text: moment(a.endDate)
+                                                            .format('YY.MM.DD HH:mm'),
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -2188,7 +2235,9 @@ function searchScreeningEventReservations(params) {
             typeOfGood: {
                 typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
             },
-            ownedFrom: moment(now).add(-1, 'month').toDate(),
+            ownedFrom: moment(now)
+                .add(-1, 'month')
+                .toDate(),
             ownedThrough: now,
             limit: 10,
             page: 1,
@@ -2273,7 +2322,8 @@ function searchScreeningEventReservations(params) {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: moment(event.startDate).format('llll'),
+                                                            text: moment(event.startDate)
+                                                                .format('llll'),
                                                             wrap: true,
                                                             size: 'sm',
                                                             color: '#666666',
@@ -2469,7 +2519,7 @@ function selectSeatOffers(params) {
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
-        const event = yield eventService.findScreeningEventById({ id: params.eventId });
+        const event = yield eventService.findById({ id: params.eventId });
         const reservedSeatsAvailable = !(event.offers !== undefined
             && event.offers.itemOffered !== undefined
             && event.offers.itemOffered.serviceOutput !== undefined
@@ -2497,7 +2547,7 @@ function selectSeatOffers(params) {
         // debug('passportToken published.', passportToken);
         const storeId = params.user.authClient.options.clientId;
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
-        let ticketOffers = yield eventService.searchScreeningEventTicketOffers({
+        let ticketOffers = yield eventService.searchTicketOffers({
             event: { id: params.eventId },
             seller: seller,
             store: { id: storeId }
@@ -2514,7 +2564,8 @@ function selectSeatOffers(params) {
         // 券種未選択であれば、券種選択へ
         if (params.offerId === undefined) {
             // tslint:disable-next-line:no-magic-numbers
-            const quickReplyItems4selectOffer = ticketOffers.slice(0, 10).map((o) => {
+            const quickReplyItems4selectOffer = ticketOffers.slice(0, 10)
+                .map((o) => {
                 const unitPriceSpec = o.priceSpecification.priceComponent.find((c) => c.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
                 const priceStr = (unitPriceSpec !== undefined) ? `${unitPriceSpec.price} ${unitPriceSpec.priceCurrency}` : '';
                 return {
@@ -2522,8 +2573,9 @@ function selectSeatOffers(params) {
                     imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
                     action: {
                         type: 'postback',
-                        // tslint:disable-next-line:no-magic-numbers
-                        label: `${String(o.name.ja).slice(0, 8)} ${priceStr}`,
+                        label: `${String(o.name.ja)
+                            // tslint:disable-next-line:no-magic-numbers
+                            .slice(0, 8)} ${priceStr}`,
                         data: qs.stringify({
                             action: 'selectSeatOffers',
                             seatNumbers: (params.seatNumbers !== undefined) ? params.seatNumbers.join(',') : undefined,
@@ -2553,7 +2605,9 @@ function selectSeatOffers(params) {
         const TRANSACTION_EXPIRES_IN_MINUTES = 5;
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
         const transaction = yield placeOrderService.start({
-            expires: moment().add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes').toDate(),
+            expires: moment()
+                .add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes')
+                .toDate(),
             seller: seller,
             object: {}
         });
@@ -2600,6 +2654,7 @@ function selectSeatOffers(params) {
             const seatReservationAuthorization = yield placeOrderService.authorizeSeatReservation({
                 object: {
                     event: { id: event.id },
+                    // tslint:disable-next-line:prefer-array-literal
                     acceptedOffer: [...Array(params.numSeats)].map(() => {
                         return {
                             id: selectedTicketOffer.id,
@@ -2709,7 +2764,9 @@ function authorizeOwnershipInfo(params) {
                     throw new Error('Reservation not found');
                 }
                 const itemOffered = reservation.typeOfGood;
-                const event = yield eventService.findScreeningEventById({ id: itemOffered.reservationFor.id });
+                const event = yield eventService.findById({
+                    id: itemOffered.reservationFor.id
+                });
                 const thumbnailImageUrl = (event.workPerformed !== undefined
                     && event.workPerformed.thumbnailUrl !== undefined
                     && event.workPerformed.thumbnailUrl !== null)
@@ -2770,7 +2827,8 @@ function authorizeOwnershipInfo(params) {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: moment(event.startDate).format('llll'),
+                                                            text: moment(event.startDate)
+                                                                .format('llll'),
                                                             wrap: true,
                                                             size: 'sm',
                                                             color: '#666666',
@@ -3121,7 +3179,8 @@ function authorizeOwnershipInfo(params) {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: moment(account.openDate).format('lll'),
+                                                            text: moment(account.openDate)
+                                                                .format('lll'),
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -3185,7 +3244,9 @@ function searchOrders(params) {
             auth: params.user.authClient
         });
         const searchOrdersResult = yield personService.searchOrders({
-            orderDateFrom: moment(now).add(-1, 'month').toDate(),
+            orderDateFrom: moment(now)
+                .add(-1, 'month')
+                .toDate(),
             orderDateThrough: now,
             limit: 10,
             page: 1,
@@ -3293,7 +3354,9 @@ function authorizeOwnershipInfosByOrder(params) {
         const reservations = order.acceptedOffers
             .filter((o) => o.itemOffered.typeOf === cinerinoapi.factory.chevre.reservationType.EventReservation)
             .map((o) => o.itemOffered);
-        const event = yield eventService.findScreeningEventById({ id: reservations[0].reservationFor.id });
+        const event = yield eventService.findById({
+            id: reservations[0].reservationFor.id
+        });
         const thumbnailImageUrl = (event.workPerformed !== undefined
             && event.workPerformed.thumbnailUrl !== undefined
             && event.workPerformed.thumbnailUrl !== null)
@@ -3350,7 +3413,8 @@ function authorizeOwnershipInfosByOrder(params) {
                                         },
                                         {
                                             type: 'text',
-                                            text: moment(event.startDate).format('llll'),
+                                            text: moment(event.startDate)
+                                                .format('llll'),
                                             wrap: true,
                                             size: 'sm',
                                             color: '#666666',
@@ -3620,7 +3684,8 @@ function order2bubble(order) {
                                 },
                                 {
                                     type: 'text',
-                                    text: `${moment(order.orderDate).format('llll')}`,
+                                    text: moment(order.orderDate)
+                                        .format('llll'),
                                     size: 'sm',
                                     color: '#666666',
                                     flex: 5
@@ -3689,7 +3754,8 @@ function order2bubble(order) {
                                 case cinerinoapi.factory.chevre.reservationType.EventReservation:
                                     const item = orderItem.itemOffered;
                                     const event = item.reservationFor;
-                                    itemName = util_1.format('%s %s', event.name.ja, moment(event.startDate).format('MM/DD HH:mm'));
+                                    itemName = util_1.format('%s %s', event.name.ja, moment(event.startDate)
+                                        .format('MM/DD HH:mm'));
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     if (item.reservedTicket !== undefined) {
                                         if (item.reservedTicket.ticketedSeat !== undefined) {
@@ -3893,7 +3959,9 @@ function findScreeningEventReservationById(params) {
             const ownershipInfo = yield reservationService.findScreeningEventReservationByToken({ token: token });
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '予約が見つかりました' });
             const reservation = ownershipInfo.typeOfGood;
-            const event = yield eventService.findScreeningEventById({ id: reservation.reservationFor.id });
+            const event = yield eventService.findById({
+                id: reservation.reservationFor.id
+            });
             const thumbnailImageUrl = (event.workPerformed !== undefined
                 && event.workPerformed.thumbnailUrl !== undefined
                 && event.workPerformed.thumbnailUrl !== null)
@@ -3954,7 +4022,8 @@ function findScreeningEventReservationById(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: moment(event.startDate).format('llll'),
+                                                        text: moment(event.startDate)
+                                                            .format('llll'),
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -3998,7 +4067,8 @@ function findScreeningEventReservationById(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (reservation.reservedTicket.ticketedSeat !== undefined)
+                                                        text: (reservation.reservedTicket !== undefined
+                                                            && reservation.reservedTicket.ticketedSeat !== undefined)
                                                             ? reservation.reservedTicket.ticketedSeat.seatNumber
                                                             : 'No ticketedSeat',
                                                         wrap: true,
@@ -4022,7 +4092,9 @@ function findScreeningEventReservationById(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: reservation.reservedTicket.ticketType.name.ja,
+                                                        text: (reservation.reservedTicket !== undefined)
+                                                            ? reservation.reservedTicket.ticketType.name.ja
+                                                            : 'No reserved ticket',
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -4044,7 +4116,8 @@ function findScreeningEventReservationById(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (reservation.reservedTicket.issuedBy !== undefined)
+                                                        text: (reservation.reservedTicket !== undefined
+                                                            && reservation.reservedTicket.issuedBy !== undefined)
                                                             ? reservation.reservedTicket.issuedBy.name
                                                             : 'No issuedBy',
                                                         wrap: true,
@@ -4068,7 +4141,8 @@ function findScreeningEventReservationById(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (reservation.reservedTicket.underName !== undefined)
+                                                        text: (reservation.reservedTicket !== undefined
+                                                            && reservation.reservedTicket.underName !== undefined)
                                                             ? reservation.reservedTicket.underName.name
                                                             : 'No underName',
                                                         wrap: true,

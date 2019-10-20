@@ -99,7 +99,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                                                         'Content-Type': 'application/json'
                                                     },
                                                     form: callbackState
-                                                }).promise();
+                                                })
+                                                    .promise();
                                             }
                                         } catch (error) {
                                             await LINE.pushMessage(userId, { type: 'text', text: error.message });
@@ -112,7 +113,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                         await LINE.pushMessage(userId, { type: 'text', text: error.message });
                     }
 
-                    res.status(OK).send('ok');
+                    res.status(OK)
+                        .send('ok');
 
                     return;
                 }
@@ -125,7 +127,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                     // ログイン前のstateを保管
                     await req.user.saveCallbackState(<string>data.state);
                     await LINE.pushMessage(userId, { type: 'text', text: '顔写真を送信してください' });
-                    res.status(OK).send('ok');
+                    res.status(OK)
+                        .send('ok');
 
                     return;
                 }
@@ -141,9 +144,9 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 };
 async function streamToBuffer(readable: stream.Readable) {
     return new Promise<Buffer>((resolve, reject) => {
-        const buffers: Uint8Array[] = [];
+        const buffers: Buffer[] = [];
         readable.on('error', reject)
-            .on('data', (data) => buffers.push(data))
+            .on('data', (data) => buffers.push(<Buffer>data))
             .on('end', () => {
                 resolve(Buffer.concat(buffers));
             });

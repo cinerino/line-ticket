@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -19,12 +20,13 @@ const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:router');
 webhookRouter.post('', faceLogin_1.default, authentication_1.default, 
 // line.middleware(config),
-(req, res) => __awaiter(this, void 0, void 0, function* () {
+(req, res) => __awaiter(void 0, void 0, void 0, function* () {
     debug('body:', req.body);
-    yield Promise.all(req.body.events.map((e) => __awaiter(this, void 0, void 0, function* () {
+    yield Promise.all(req.body.events.map((e) => __awaiter(void 0, void 0, void 0, function* () {
         yield handleEvent(e, req.user);
     })));
-    res.status(http_status_1.OK).send('ok');
+    res.status(http_status_1.OK)
+        .send('ok');
 }));
 function handleEvent(event, user) {
     return __awaiter(this, void 0, void 0, function* () {

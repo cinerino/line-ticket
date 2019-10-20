@@ -162,14 +162,14 @@ export default class User {
         return this.authClientOAuth2.generateLogoutUrl();
     }
 
-    public async getCredentials(): Promise<ICredentials | null> {
+    public async getCredentials(): Promise<ICredentials | undefined> {
         return redisClient.get(`line-ticket:credentials:${this.userId}`)
-            .then((value) => (value === null) ? null : JSON.parse(value));
+            .then((value) => (value === null) ? undefined : JSON.parse(value));
     }
 
-    public async getRefreshToken(): Promise<string | null> {
+    public async getRefreshToken(): Promise<string | undefined> {
         return redisClient.get(`line-ticket:refreshToken:${this.userId}`)
-            .then((value) => (value === null) ? null : value);
+            .then((value) => (value === null) ? undefined : value);
     }
 
     public setCredentials(credentials: ICredentials) {
@@ -253,9 +253,10 @@ export default class User {
     }
 
     public async findTransaction(): Promise<cinerinoapi.factory.transaction.placeOrder.ITransaction> {
-        return redisClient.get(`line-ticket:transaction:${this.userId}`).then((value) => {
-            return (value !== null) ? JSON.parse(value) : null;
-        });
+        return redisClient.get(`line-ticket:transaction:${this.userId}`)
+            .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
     }
     public async saveTransaction(transaction: cinerinoapi.factory.transaction.placeOrder.ITransaction) {
         await redisClient.multi()
@@ -265,9 +266,10 @@ export default class User {
     }
     public async findSeatReservationAuthorization(
     ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>> {
-        return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`).then((value) => {
-            return (value !== null) ? JSON.parse(value) : null;
-        });
+        return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
+            .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
     }
     public async saveSeatReservationAuthorization(
         // tslint:disable-next-line:max-line-length
@@ -286,10 +288,11 @@ export default class User {
             .exec();
     }
 
-    public async findCallbackState(): Promise<Object | null> {
-        return redisClient.get(`line-ticket:callbackState:${this.userId}`).then((value) => {
-            return (value !== null) ? JSON.parse(value) : null;
-        });
+    public async findCallbackState(): Promise<Object | undefined> {
+        return redisClient.get(`line-ticket:callbackState:${this.userId}`)
+            .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
     }
 
     public async deleteCallbackState() {

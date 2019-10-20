@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -498,37 +499,38 @@ exports.selectWhomAskForMoney = selectWhomAskForMoney;
 /**
  * 予約番号or電話番号のボタンを送信する
  */
-function pushButtonsReserveNumOrTel(params) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const datas = params.message.split('-');
-        const theater = datas[0];
-        const reserveNumOrTel = datas[1];
-        // キュー実行のボタン表示
-        yield lineClient_1.default.replyMessage(params.replyToken, [
-            {
-                type: 'template',
-                altText: 'aaa',
-                template: {
-                    type: 'buttons',
-                    text: 'どちらで検索する？',
-                    actions: [
-                        {
-                            type: 'postback',
-                            label: '予約番号',
-                            data: `action=searchTransactionByReserveNum&theater=${theater}&reserveNum=${reserveNumOrTel}`
-                        },
-                        {
-                            type: 'postback',
-                            label: '電話番号',
-                            data: `action=searchTransactionByTel&theater=${theater}&tel=${reserveNumOrTel}`
-                        }
-                    ]
-                }
-            }
-        ]);
-    });
-}
-exports.pushButtonsReserveNumOrTel = pushButtonsReserveNumOrTel;
+// export async function pushButtonsReserveNumOrTel(params: {
+//     replyToken: string;
+//     user: User;
+//     message: string;
+// }) {
+//     const datas = params.message.split('-');
+//     const theater = datas[0];
+//     const reserveNumOrTel = datas[1];
+//     // キュー実行のボタン表示
+//     await LINE.replyMessage(params.replyToken, [
+//         {
+//             type: 'template',
+//             altText: 'aaa',
+//             template: {
+//                 type: 'buttons',
+//                 text: 'どちらで検索する？',
+//                 actions: [
+//                     {
+//                         type: 'postback',
+//                         label: '予約番号',
+//                         data: `action=searchTransactionByReserveNum&theater=${theater}&reserveNum=${reserveNumOrTel}`
+//                     },
+//                     {
+//                         type: 'postback',
+//                         label: '電話番号',
+//                         data: `action=searchTransactionByTel&theater=${theater}&tel=${reserveNumOrTel}`
+//                     }
+//                 ]
+//             }
+//         }
+//     ]);
+// }
 /**
  * 予約のイベント日選択を求める
  */
@@ -547,7 +549,8 @@ function askReservationEventDate(params) {
                             label: '日付選択',
                             mode: 'date',
                             data: `action=searchTransactionByPaymentNo&paymentNo=${params.paymentNo}`,
-                            initial: moment().format('YYYY-MM-DD')
+                            initial: moment()
+                                .format('YYYY-MM-DD')
                         }
                     ]
                 }
@@ -574,7 +577,9 @@ function askEventStartDate(params) {
                             label: '今日',
                             data: qs.stringify({
                                 action: 'searchEventsByDate',
-                                date: moment().add(0, 'days').format('YYYY-MM-DD')
+                                date: moment()
+                                    .add(0, 'days')
+                                    .format('YYYY-MM-DD')
                             })
                         }
                     },
@@ -586,7 +591,9 @@ function askEventStartDate(params) {
                             label: '明日',
                             data: qs.stringify({
                                 action: 'searchEventsByDate',
-                                date: moment().add(1, 'days').format('YYYY-MM-DD')
+                                date: moment()
+                                    .add(1, 'days')
+                                    .format('YYYY-MM-DD')
                             })
                         }
                     },
@@ -598,8 +605,10 @@ function askEventStartDate(params) {
                             label: '明後日',
                             data: qs.stringify({
                                 action: 'searchEventsByDate',
-                                // tslint:disable-next-line:no-magic-numbers
-                                date: moment().add(2, 'days').format('YYYY-MM-DD')
+                                date: moment()
+                                    // tslint:disable-next-line:no-magic-numbers
+                                    .add(2, 'days')
+                                    .format('YYYY-MM-DD')
                             })
                         }
                     },
@@ -611,10 +620,16 @@ function askEventStartDate(params) {
                             label: '選ぶ',
                             mode: 'date',
                             data: 'action=searchEventsByDate',
-                            initial: moment().add(1, 'days').format('YYYY-MM-DD'),
-                            // tslint:disable-next-line:no-magic-numbers
-                            max: moment().add(6, 'months').format('YYYY-MM-DD'),
-                            min: moment().add(1, 'days').format('YYYY-MM-DD')
+                            initial: moment()
+                                .add(1, 'days')
+                                .format('YYYY-MM-DD'),
+                            max: moment()
+                                // tslint:disable-next-line:no-magic-numbers
+                                .add(6, 'months')
+                                .format('YYYY-MM-DD'),
+                            min: moment()
+                                .add(1, 'days')
+                                .format('YYYY-MM-DD')
                         }
                     }
                 ]
@@ -642,7 +657,8 @@ function askFromWhenAndToWhen(params) {
                             label: '日付選択',
                             mode: 'date',
                             data: 'action=searchTransactionsByDate',
-                            initial: moment().format('YYYY-MM-DD')
+                            initial: moment()
+                                .format('YYYY-MM-DD')
                         }
                     ]
                 }

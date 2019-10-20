@@ -17,22 +17,24 @@ export default async (err: any, _: Request, res: Response, next: NextFunction) =
 
     // エラーオブジェクトの場合は、キャッチされた例外でクライント依存のエラーの可能性が高い
     if (err instanceof Error) {
-        res.status(BAD_REQUEST).json({
-            errors: [
-                {
-                    title: err.name,
-                    detail: err.message
-                }
-            ]
-        });
+        res.status(BAD_REQUEST)
+            .json({
+                errors: [
+                    {
+                        title: err.name,
+                        detail: err.message
+                    }
+                ]
+            });
     } else {
-        res.status(INTERNAL_SERVER_ERROR).json({
-            errors: [
-                {
-                    title: 'internal server error',
-                    detail: 'an unexpected error occurred.'
-                }
-            ]
-        });
+        res.status(INTERNAL_SERVER_ERROR)
+            .json({
+                errors: [
+                    {
+                        title: 'internal server error',
+                        detail: 'an unexpected error occurred.'
+                    }
+                ]
+            });
     }
 };

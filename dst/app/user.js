@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -81,13 +82,13 @@ class User {
     getCredentials() {
         return __awaiter(this, void 0, void 0, function* () {
             return redisClient.get(`line-ticket:credentials:${this.userId}`)
-                .then((value) => (value === null) ? null : JSON.parse(value));
+                .then((value) => (value === null) ? undefined : JSON.parse(value));
         });
     }
     getRefreshToken() {
         return __awaiter(this, void 0, void 0, function* () {
             return redisClient.get(`line-ticket:refreshToken:${this.userId}`)
-                .then((value) => (value === null) ? null : value);
+                .then((value) => (value === null) ? undefined : value);
         });
     }
     setCredentials(credentials) {
@@ -141,7 +142,7 @@ class User {
                 .expire(`line-ticket:refreshToken:${this.userId}`, REFRESH_TOKEN_EXPIRES_IN_SECONDS, debug)
                 .exec();
             debug('refresh token saved.');
-            this.setCredentials(Object.assign({}, credentials, { access_token: credentials.access_token }));
+            this.setCredentials(Object.assign(Object.assign({}, credentials), { access_token: credentials.access_token }));
             return this;
         });
     }
@@ -153,7 +154,7 @@ class User {
                 .expire(`line-ticket:credentials:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
             debug('results:', results);
-            this.setCredentials(Object.assign({}, credentials, { access_token: credentials.access_token }));
+            this.setCredentials(Object.assign(Object.assign({}, credentials), { access_token: credentials.access_token }));
             return this;
         });
     }
@@ -164,8 +165,9 @@ class User {
     }
     findTransaction() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket:transaction:${this.userId}`).then((value) => {
-                return (value !== null) ? JSON.parse(value) : null;
+            return redisClient.get(`line-ticket:transaction:${this.userId}`)
+                .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
             });
         });
     }
@@ -179,8 +181,9 @@ class User {
     }
     findSeatReservationAuthorization() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`).then((value) => {
-                return (value !== null) ? JSON.parse(value) : null;
+            return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
+                .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
             });
         });
     }
@@ -204,8 +207,9 @@ class User {
     }
     findCallbackState() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket:callbackState:${this.userId}`).then((value) => {
-                return (value !== null) ? JSON.parse(value) : null;
+            return redisClient.get(`line-ticket:callbackState:${this.userId}`)
+                .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
             });
         });
     }

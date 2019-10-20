@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -20,7 +21,7 @@ const url_1 = require("url");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
 const LOGIN_REQUIRED = process.env.LOGIN_REQUIRED === '1';
-exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const events = req.body.events;
         const event = events[0];
@@ -56,11 +57,12 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
             return;
         }
         const credentials = yield req.user.getCredentials();
-        if (credentials === null) {
+        if (credentials === undefined) {
             if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
                 yield sendLoginButton(req.user);
-                res.status(http_status_1.OK).send('ok');
+                res.status(http_status_1.OK)
+                    .send('ok');
             }
             else {
                 next();
@@ -70,17 +72,18 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
             // RedisからBearerトークンを取り出す
             yield express_middleware_1.cognitoAuth({
                 issuers: [process.env.CINERINO_TOKEN_ISSUER],
-                authorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
+                authorizedHandler: () => __awaiter(void 0, void 0, void 0, function* () {
                     // ログイン状態をセットしてnext
                     req.user.setCredentials(credentials);
                     next();
                 }),
-                unauthorizedHandler: () => __awaiter(this, void 0, void 0, function* () {
+                unauthorizedHandler: () => __awaiter(void 0, void 0, void 0, function* () {
                     // ログインボタンを送信
                     yield sendLoginButton(req.user);
-                    res.status(http_status_1.OK).send('ok');
+                    res.status(http_status_1.OK)
+                        .send('ok');
                 }),
-                tokenDetecter: () => __awaiter(this, void 0, void 0, function* () { return credentials.access_token; })
+                tokenDetecter: () => __awaiter(void 0, void 0, void 0, function* () { return credentials.access_token; })
             })(req, res, next);
         }
     }

@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -18,7 +19,7 @@ const transactionsRouter = express.Router();
 /**
  * クレジットカード情報入力フォーム
  */
-transactionsRouter.get('/inputCreditCard', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/inputCreditCard', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/inputCreditCard', {
@@ -32,7 +33,7 @@ transactionsRouter.get('/inputCreditCard', (req, res, next) => __awaiter(this, v
 /**
  * 購入者情報入力フォーム
  */
-transactionsRouter.get('/placeOrder/:transactionId/setCustomerContact', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/:transactionId/setCustomerContact', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/placeOrder/setCustomerContact', {
@@ -47,7 +48,7 @@ transactionsRouter.get('/placeOrder/:transactionId/setCustomerContact', (req, re
 /**
  * クレジットカード入力フォーム
  */
-transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/placeOrder/inputCreditCard', {
@@ -62,7 +63,7 @@ transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, 
 /**
  * 座席選択フォーム
  */
-transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = new user_1.default({
             host: req.hostname,
@@ -73,14 +74,14 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient
         });
-        const event = yield eventService.findScreeningEventById({ id: req.query.eventId });
+        const event = yield eventService.findById({ id: req.query.eventId });
         const reservedSeatsAvailable = !(event.offers !== undefined
             && event.offers.itemOffered !== undefined
             && event.offers.itemOffered.serviceOutput !== undefined
             && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
             && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
         if (reservedSeatsAvailable) {
-            const eventOffers = yield eventService.searchScreeningEventOffers({ eventId: req.query.eventId });
+            const eventOffers = yield eventService.searchOffers({ event: { id: req.query.eventId } });
             const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
             const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
             res.render('transactions/placeOrder/selectSeatOffers', {
@@ -101,7 +102,7 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
 /**
  * QRスキャン
  */
-transactionsRouter.get('/placeOrder/scanQRCode', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+transactionsRouter.get('/placeOrder/scanQRCode', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // フォーム
         res.render('transactions/placeOrder/scanQRCode', {

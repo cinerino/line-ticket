@@ -25,7 +25,8 @@ webhookRouter.post(
         await Promise.all(req.body.events.map(async (e: WebhookEvent) => {
             await handleEvent(e, req.user);
         }));
-        res.status(OK).send('ok');
+        res.status(OK)
+            .send('ok');
     });
 
 async function handleEvent(event: WebhookEvent, user: User) {

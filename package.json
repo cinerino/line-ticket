@@ -10,7 +10,7 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/api-nodejs-client": "2.0.0-alpha.8",
+    "@cinerino/api-nodejs-client": "2.0.0-alpha.31",
     "@line/bot-sdk": "^6.7.0",
     "@motionpicture/express-middleware": "^0.1.1",
     "@pecorino/api-nodejs-client": "^1.2.0",
@@ -36,6 +36,7 @@
     "@types/ioredis": "^3.2.19",
     "@types/jsonwebtoken": "^7.2.7",
     "@types/mocha": "^5.2.6",
+    "@types/node": "^8.10.55",
     "@types/qs": "^6.5.3",
     "@types/request": "^2.48.1",
     "@types/request-promise-native": "^1.0.16",
@@ -44,10 +45,10 @@
     "nyc": "^11.9.0",
     "rimraf": "^2.6.3",
     "supertest": "^3.4.2",
-    "ts-node": "^6.2.0",
-    "tslint": "^5.16.0",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.4.5"
+    "ts-node": "^8.4.1",
+    "tslint": "^5.20.0",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^3.6.4"
   },
   "engines": {
     "node": ">=8.0.0",

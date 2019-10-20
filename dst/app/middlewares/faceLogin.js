@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -20,7 +21,7 @@ const user_1 = require("../user");
 const FACE_MATCH_THRESHOLD_ENV = process.env.FACE_MATCH_THRESHOLD;
 const FACE_MATCH_THRESHOLD = parseInt((FACE_MATCH_THRESHOLD_ENV !== undefined) ? FACE_MATCH_THRESHOLD_ENV : '70', 10);
 // tslint:disable-next-line:max-func-body-length
-exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const events = req.body.events;
         const event = events[0];
@@ -102,7 +103,8 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                                                         'Content-Type': 'application/json'
                                                     },
                                                     form: callbackState
-                                                }).promise();
+                                                })
+                                                    .promise();
                                             }
                                         }
                                         catch (error) {
@@ -116,7 +118,8 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                     catch (error) {
                         yield lineClient_1.default.pushMessage(userId, { type: 'text', text: error.message });
                     }
-                    res.status(http_status_1.OK).send('ok');
+                    res.status(http_status_1.OK)
+                        .send('ok');
                     return;
                 }
                 break;
@@ -127,7 +130,8 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
                     // ログイン前のstateを保管
                     yield req.user.saveCallbackState(data.state);
                     yield lineClient_1.default.pushMessage(userId, { type: 'text', text: '顔写真を送信してください' });
-                    res.status(http_status_1.OK).send('ok');
+                    res.status(http_status_1.OK)
+                        .send('ok');
                     return;
                 }
                 break;
