@@ -25,7 +25,7 @@ const debug = createDebug('cinerino-line-ticket:controllers');
 function pushHowToUse(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const quickReplyItems = [];
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             quickReplyItems.push({
                 type: 'action',
                 imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
@@ -143,7 +143,7 @@ exports.pushHowToUse = pushHowToUse;
  */
 function showProfileMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        if ((yield params.user.getCredentials()) === null) {
+        if ((yield params.user.getCredentials()) === undefined) {
             throw new Error('Login required');
         }
         const personService = new cinerinoapi.service.Person({
@@ -199,7 +199,7 @@ function showSeatReservationMenu(params) {
                 label: '座席を予約する',
                 data: `action=askEventStartDate`
             }];
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             actions.push({
                 type: 'postback',
                 label: 'My予約',
@@ -235,7 +235,7 @@ function showOrderMenu(params) {
                 uri: liffUri
             }
         ];
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             actions.push({
                 type: 'postback',
                 label: 'My注文',
@@ -340,7 +340,7 @@ function showCodeMenu(params) {
                 uri: liffUri
             }
         ];
-        // if (await params.user.getCredentials() !== null) {
+        // if (await params.user.getCredentials() !== undefined) {
         // }
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {

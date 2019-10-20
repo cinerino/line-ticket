@@ -40,7 +40,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         });
         // ログイン済であれば次へ
         const credentials = yield req.user.getCredentials();
-        if (credentials !== null) {
+        if (credentials !== undefined) {
             next();
             return;
         }
@@ -83,7 +83,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                                     });
                                     // 一致結果があれば、リフレッシュトークンでアクセストークンを手動更新して、ログイン
                                     const refreshToken = yield req.user.getRefreshToken();
-                                    if (refreshToken === null) {
+                                    if (refreshToken === undefined) {
                                         yield lineClient_1.default.pushMessage(userId, { type: 'text', text: 'LINEと会員が結合されていません。一度、IDとパスワードでログインしてください。' });
                                     }
                                     else {
@@ -96,7 +96,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                                         // ログイン前のイベントを強制的に再送信
                                         try {
                                             const callbackState = yield req.user.findCallbackState();
-                                            if (callbackState !== null) {
+                                            if (callbackState !== undefined) {
                                                 yield req.user.deleteCallbackState();
                                                 yield request.post(`https://${req.hostname}/webhook`, {
                                                     headers: {

@@ -21,7 +21,7 @@ export async function pushHowToUse(params: {
     user: User;
 }) {
     const quickReplyItems: QuickReplyItem[] = [];
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         quickReplyItems.push(
             {
                 type: 'action',
@@ -153,7 +153,7 @@ export async function showProfileMenu(params: {
     replyToken: string;
     user: User;
 }) {
-    if (await params.user.getCredentials() === null) {
+    if (await params.user.getCredentials() === undefined) {
         throw new Error('Login required');
     }
 
@@ -218,7 +218,7 @@ export async function showSeatReservationMenu(params: {
         label: '座席を予約する',
         data: `action=askEventStartDate`
     }];
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         actions.push({
             type: 'postback',
             label: 'My予約',
@@ -255,7 +255,7 @@ export async function showOrderMenu(params: {
             uri: liffUri
         }
     ];
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         actions.push({
             type: 'postback',
             label: 'My注文',
@@ -364,7 +364,7 @@ export async function showCodeMenu(params: {
             uri: liffUri
         }
     ];
-    // if (await params.user.getCredentials() !== null) {
+    // if (await params.user.getCredentials() !== undefined) {
     // }
     await LINE.replyMessage(params.replyToken, [
         {

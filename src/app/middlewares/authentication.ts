@@ -113,7 +113,7 @@ export async function sendLoginButton(user: User) {
     const refreshToken = await user.getRefreshToken();
     const faces = await user.searchFaces();
     // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
-    if (refreshToken !== null && faces.length > 0) {
+    if (refreshToken !== undefined && faces.length > 0) {
         text = 'ログインしてください';
         // actions.push({
         //     type: 'postback',
@@ -128,7 +128,7 @@ export async function sendLoginButton(user: User) {
     }
 
     // 会員として未使用であれば会員登録ボタン表示
-    if (refreshToken === null) {
+    if (refreshToken === undefined) {
         const signUpUrl = new URL(signInUrl.href);
         signUpUrl.pathname = 'signup';
         const signUpUri = signUpUrl.href;

@@ -38,7 +38,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
         // ログイン済であれば次へ
         const credentials = await req.user.getCredentials();
-        if (credentials !== null) {
+        if (credentials !== undefined) {
             next();
 
             return;
@@ -79,7 +79,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
                                     // 一致結果があれば、リフレッシュトークンでアクセストークンを手動更新して、ログイン
                                     const refreshToken = await req.user.getRefreshToken();
-                                    if (refreshToken === null) {
+                                    if (refreshToken === undefined) {
                                         await LINE.pushMessage(userId, { type: 'text', text: 'LINEと会員が結合されていません。一度、IDとパスワードでログインしてください。' });
                                     } else {
                                         req.user.authClient.setCredentials({
@@ -92,7 +92,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                                         // ログイン前のイベントを強制的に再送信
                                         try {
                                             const callbackState = await req.user.findCallbackState();
-                                            if (callbackState !== null) {
+                                            if (callbackState !== undefined) {
                                                 await req.user.deleteCallbackState();
                                                 await request.post(`https://${req.hostname}/webhook`, {
                                                     headers: {

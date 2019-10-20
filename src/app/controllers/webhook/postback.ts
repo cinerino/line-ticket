@@ -583,7 +583,7 @@ export async function selectPaymentMethodType(params: {
 
     // 購入者情報確認
     let profile: cinerinoapi.factory.person.IProfile | undefined;
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
         // const loginTicket = params.user.authClient.verifyIdToken({});
         profile = await personService.getProfile({});
@@ -789,7 +789,7 @@ export async function selectCreditCard(params: {
         }
     ];
     // ログイン状態の場合、会員カードを選択肢に追加
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
@@ -2801,7 +2801,7 @@ export async function selectSeatOffers(params: {
         }
     ];
 
-    if (await params.user.getCredentials() !== null) {
+    if (await params.user.getCredentials() !== undefined) {
         quickReplyItems.push(
             {
                 type: 'action',

@@ -547,7 +547,7 @@ function selectPaymentMethodType(params) {
         }
         // 購入者情報確認
         let profile;
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを検索しています...' });
             // const loginTicket = params.user.authClient.verifyIdToken({});
             profile = yield personService.getProfile({});
@@ -748,7 +748,7 @@ function selectCreditCard(params) {
             }
         ];
         // ログイン状態の場合、会員カードを選択肢に追加
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: params.user.authClient
@@ -2682,7 +2682,7 @@ function selectSeatOffers(params) {
                 }
             }
         ];
-        if ((yield params.user.getCredentials()) !== null) {
+        if ((yield params.user.getCredentials()) !== undefined) {
             quickReplyItems.push({
                 type: 'action',
                 imageUrl: `https://${params.user.host}/img/labels/coin-64.png`,

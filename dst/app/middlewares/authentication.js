@@ -116,7 +116,7 @@ function sendLoginButton(user) {
         const refreshToken = yield user.getRefreshToken();
         const faces = yield user.searchFaces();
         // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
-        if (refreshToken !== null && faces.length > 0) {
+        if (refreshToken !== undefined && faces.length > 0) {
             text = 'ログインしてください';
             // actions.push({
             //     type: 'postback',
@@ -130,7 +130,7 @@ function sendLoginButton(user) {
             // });
         }
         // 会員として未使用であれば会員登録ボタン表示
-        if (refreshToken === null) {
+        if (refreshToken === undefined) {
             const signUpUrl = new url_1.URL(signInUrl.href);
             signUpUrl.pathname = 'signup';
             const signUpUri = signUpUrl.href;
