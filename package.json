@@ -13,7 +13,7 @@
     "@cinerino/api-nodejs-client": "2.0.0-alpha.31",
     "@line/bot-sdk": "^6.7.0",
     "@motionpicture/express-middleware": "^0.1.1",
-    "@pecorino/api-nodejs-client": "^1.2.0",
+    "@pecorino/api-nodejs-client": "^4.0.0",
     "aws-sdk": "^2.458.0",
     "body-parser": "^1.19.0",
     "debug": "^3.2.6",

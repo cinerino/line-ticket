@@ -1307,7 +1307,8 @@ function confirmTransferMoney(params) {
             auth: pecorinoAuthClient
         });
         const transaction = yield transferService.start({
-            accountType: cinerinoapi.factory.accountType.Coin,
+            typeOf: pecorino.factory.transactionType.Transfer,
+            project: { typeOf: 'Project', id: account.project.id },
             expires: moment()
                 // tslint:disable-next-line:no-magic-numbers
                 .add(10, 'minutes')
@@ -1322,16 +1323,26 @@ function confirmTransferMoney(params) {
                 name: transferMoneyInfo.name,
                 url: ''
             },
-            amount: params.price,
-            notes: 'LINEチケットおこづかい',
-            fromAccountNumber: account.accountNumber,
-            toAccountNumber: transferMoneyInfo.accountNumber
+            object: {
+                amount: params.price,
+                description: 'LINEチケットおこづかい',
+                fromLocation: {
+                    typeOf: pecorino.factory.account.TypeOf.Account,
+                    accountType: cinerinoapi.factory.accountType.Coin,
+                    accountNumber: account.accountNumber
+                },
+                toLocation: {
+                    typeOf: pecorino.factory.account.TypeOf.Account,
+                    accountType: cinerinoapi.factory.accountType.Coin,
+                    accountNumber: transferMoneyInfo.accountNumber
+                }
+            }
         });
         debug('transaction started.', transaction.id);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
         // バックエンドで確定
         yield transferService.confirm({
-            transactionId: transaction.id
+            id: transaction.id
         });
         debug('transaction confirmed.');
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
@@ -1419,11 +1430,25 @@ function depositCoinByCreditCard(params) {
         }
         const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
         // 入金取引開始
+        const accountService = new pecorino.service.Account({
+            endpoint: process.env.PECORINO_ENDPOINT,
+            auth: pecorinoAuthClient
+        });
         const depositTransaction = new pecorino.service.transaction.Deposit({
             endpoint: process.env.PECORINO_ENDPOINT,
             auth: pecorinoAuthClient
         });
+        const searchAccountResult = yield accountService.search({
+            accountType: params.accountType,
+            accountNumbers: [params.toAccountNumber]
+        });
+        const toAccount = searchAccountResult.data.shift();
+        if (toAccount === undefined) {
+            throw new Error(`口座 ${params.toAccountNumber} が見つかりません`);
+        }
         const transaction = yield depositTransaction.start({
+            typeOf: pecorino.factory.transactionType.Deposit,
+            project: { typeOf: 'Project', id: toAccount.project.id },
             expires: moment()
                 // tslint:disable-next-line:no-magic-numbers
                 .add(10, 'minutes')
@@ -1440,13 +1465,18 @@ function depositCoinByCreditCard(params) {
                 name: lineProfile.displayName,
                 url: ''
             },
-            amount: params.amount,
-            notes: 'LINEチケット入金',
-            accountType: params.accountType,
-            toAccountNumber: params.toAccountNumber
+            object: {
+                amount: params.amount,
+                description: 'LINEチケット入金',
+                toLocation: {
+                    typeOf: toAccount.typeOf,
+                    accountType: toAccount.accountType,
+                    accountNumber: toAccount.accountNumber
+                }
+            }
         });
         yield depositTransaction.confirm({
-            transactionId: transaction.id
+            id: transaction.id
         });
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
     });
