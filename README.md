@@ -30,10 +30,6 @@
 | `CINERINO_CLIENT_SECRET`                    | true     |                        |                                 |
 | `CINERINO_CODE_VERIFIER`                    | true     |                        |                                 |
 | `CINERINO_TOKEN_ISSUER`                     | true     |                        |                                 |
-| `PECORINO_ENDPOINT`                         | true     |                        |                                 |
-| `PECORINO_CLIENT_ID`                        | true     |                        |                                 |
-| `PECORINO_CLIENT_SECRET`                    | true     |                        |                                 |
-| `PECORINO_AUTHORIZE_SERVER_DOMAIN`          | true     |                        |                                 |
 | `AWS_ACCESS_KEY_ID`                         | true     |                        |                                 |
 | `AWS_SECRET_ACCESS_KEY`                     | true     |                        |                                 |
 | `FACE_MATCH_THRESHOLD`                      | true     |                        | Face match threshold            |

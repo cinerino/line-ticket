@@ -844,6 +844,7 @@ export async function selectCreditCard(params: {
         }
     ]);
 }
+
 /**
  * 購入者情報決定
  */
@@ -876,7 +877,7 @@ export async function setCustomerContact(params: {
         ? seatReservationAuthorization.result.responseBody.object.reservations
         : [];
 
-    const contact = {
+    const profile = {
         familyName: params.familyName,
         givenName: params.givenName,
         email: params.email,
@@ -885,7 +886,7 @@ export async function setCustomerContact(params: {
     await placeOrderService.setCustomerContact({
         id: params.transactionId,
         object: {
-            customerContact: contact
+            customerContact: profile
         }
     });
     debug('customer contact set.');
@@ -958,7 +959,7 @@ export async function setCustomerContact(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: `${contact.givenName} ${contact.familyName}`,
+                                                    text: `${profile.givenName} ${profile.familyName}`,
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -980,7 +981,7 @@ export async function setCustomerContact(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: contact.email,
+                                                    text: profile.email,
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -1002,7 +1003,7 @@ export async function setCustomerContact(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: contact.telephone,
+                                                    text: profile.telephone,
                                                     wrap: true,
                                                     size: 'sm',
                                                     color: '#666666',
@@ -1499,10 +1500,19 @@ export async function depositCoinByCreditCard(params: {
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
 
+    const personService = new cinerinoapi.service.Person({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
+    const sellerService = new cinerinoapi.service.Seller({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+
     const creditCards = await personOwnershipInfoService.searchCreditCards({});
     const creditCard = creditCards.shift();
     if (creditCard === undefined) {
@@ -1512,17 +1522,43 @@ export async function depositCoinByCreditCard(params: {
     const lineProfile = await LINE.getProfile(params.user.userId);
 
     // 取引に販売者を指定する必要があるので、適当に検索
-    const sellerService = new cinerinoapi.service.Seller({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-
     const searchSellersResult = await sellerService.search({ limit: 1 });
     const seller = searchSellersResult.data.shift();
     if (seller === undefined) {
         throw new Error('販売者が見つかりませんでした');
     }
 
+    const profile = await personService.getProfile({});
+
+    // 入金取引
+    await processOrderCoin({
+        replyToken: params.replyToken,
+        user: params.user,
+        amount: params.amount,
+        toAccountNumber: params.toAccountNumber,
+        creditCard: {
+            memberId: 'me',
+            cardSeq: Number(creditCard.cardSeq)
+        },
+        profile: {
+            givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
+            familyName: (profile.familyName === '') ? 'LINE' : profile.familyName,
+            email: profile.email,
+            telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
+        },
+        seller: seller
+    });
+}
+
+async function processOrderCoin(params: {
+    replyToken: string;
+    user: User;
+    amount: number;
+    toAccountNumber: string;
+    creditCard: cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
+    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
+    seller: cinerinoapi.factory.seller.IOrganization<any>;
+}) {
     const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1541,17 +1577,24 @@ export async function depositCoinByCreditCard(params: {
         agent: {
             identifier: [{ name: 'lineUserId', value: params.user.userId }]
         },
-        seller: { typeOf: seller.typeOf, id: seller.id },
+        seller: { typeOf: params.seller.typeOf, id: params.seller.id },
         expires: moment()
             .add(1, 'minutes')
             .toDate()
+    });
+
+    await placeOrderService.setCustomerContact({
+        id: placeOrderTransaction.id,
+        object: {
+            customerContact: params.profile
+        }
     });
 
     await offerService.authorizeMoneyTransfer({
         recipient: {
             typeOf: cinerinoapi.factory.personType.Person,
             id: params.user.userId,
-            name: lineProfile.displayName
+            name: `${params.profile.givenName} ${params.profile.familyName}`
         },
         object: {
             typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
@@ -1570,10 +1613,7 @@ export async function depositCoinByCreditCard(params: {
             typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
             amount: Number(params.amount),
             method: <any>'1',
-            creditCard: {
-                memberId: 'me',
-                cardSeq: Number(creditCard.cardSeq)
-            }
+            creditCard: params.creditCard
         },
         purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
     });

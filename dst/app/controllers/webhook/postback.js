@@ -828,7 +828,7 @@ function setCustomerContact(params) {
         const tmpReservations = (Array.isArray(seatReservationAuthorization.result.responseBody.object.reservations))
             ? seatReservationAuthorization.result.responseBody.object.reservations
             : [];
-        const contact = {
+        const profile = {
             familyName: params.familyName,
             givenName: params.givenName,
             email: params.email,
@@ -837,7 +837,7 @@ function setCustomerContact(params) {
         yield placeOrderService.setCustomerContact({
             id: params.transactionId,
             object: {
-                customerContact: contact
+                customerContact: profile
             }
         });
         debug('customer contact set.');
@@ -910,7 +910,7 @@ function setCustomerContact(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: `${contact.givenName} ${contact.familyName}`,
+                                                        text: `${profile.givenName} ${profile.familyName}`,
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -932,7 +932,7 @@ function setCustomerContact(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: contact.email,
+                                                        text: profile.email,
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -954,7 +954,7 @@ function setCustomerContact(params) {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: contact.telephone,
+                                                        text: profile.telephone,
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -1421,7 +1421,15 @@ exports.selectDepositAmount = selectDepositAmount;
 function depositCoinByCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
+        const personService = new cinerinoapi.service.Person({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: params.user.authClient
+        });
+        const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
         });
@@ -1432,15 +1440,35 @@ function depositCoinByCreditCard(params) {
         }
         const lineProfile = yield lineClient_1.default.getProfile(params.user.userId);
         // 取引に販売者を指定する必要があるので、適当に検索
-        const sellerService = new cinerinoapi.service.Seller({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
-        });
         const searchSellersResult = yield sellerService.search({ limit: 1 });
         const seller = searchSellersResult.data.shift();
         if (seller === undefined) {
             throw new Error('販売者が見つかりませんでした');
         }
+        const profile = yield personService.getProfile({});
+        // 入金取引
+        yield processOrderCoin({
+            replyToken: params.replyToken,
+            user: params.user,
+            amount: params.amount,
+            toAccountNumber: params.toAccountNumber,
+            creditCard: {
+                memberId: 'me',
+                cardSeq: Number(creditCard.cardSeq)
+            },
+            profile: {
+                givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
+                familyName: (profile.familyName === '') ? 'LINE' : profile.familyName,
+                email: profile.email,
+                telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
+            },
+            seller: seller
+        });
+    });
+}
+exports.depositCoinByCreditCard = depositCoinByCreditCard;
+function processOrderCoin(params) {
+    return __awaiter(this, void 0, void 0, function* () {
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
@@ -1458,16 +1486,22 @@ function depositCoinByCreditCard(params) {
             agent: {
                 identifier: [{ name: 'lineUserId', value: params.user.userId }]
             },
-            seller: { typeOf: seller.typeOf, id: seller.id },
+            seller: { typeOf: params.seller.typeOf, id: params.seller.id },
             expires: moment()
                 .add(1, 'minutes')
                 .toDate()
+        });
+        yield placeOrderService.setCustomerContact({
+            id: placeOrderTransaction.id,
+            object: {
+                customerContact: params.profile
+            }
         });
         yield offerService.authorizeMoneyTransfer({
             recipient: {
                 typeOf: cinerinoapi.factory.personType.Person,
                 id: params.user.userId,
-                name: lineProfile.displayName
+                name: `${params.profile.givenName} ${params.profile.familyName}`
             },
             object: {
                 typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
@@ -1485,10 +1519,7 @@ function depositCoinByCreditCard(params) {
                 typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
                 amount: Number(params.amount),
                 method: '1',
-                creditCard: {
-                    memberId: 'me',
-                    cardSeq: Number(creditCard.cardSeq)
-                }
+                creditCard: params.creditCard
             },
             purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
         });
@@ -1498,7 +1529,6 @@ function depositCoinByCreditCard(params) {
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
     });
 }
-exports.depositCoinByCreditCard = depositCoinByCreditCard;
 /**
  * クレジットカード検索
  */
