@@ -338,7 +338,6 @@ export async function postback(event: line.PostbackEvent, user: User) {
                     replyToken: event.replyToken,
                     user: user,
                     amount: Number(data.amount),
-                    accountType: data.accountType,
                     toAccountNumber: data.toAccountNumber
                 });
                 break;

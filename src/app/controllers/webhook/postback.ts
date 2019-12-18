@@ -3,7 +3,6 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import { FlexBox, FlexBubble, FlexComponent, FlexMessage, QuickReplyItem, TextMessage } from '@line/bot-sdk';
-import * as pecorino from '@pecorino/api-nodejs-client';
 import * as createDebug from 'debug';
 import * as moment from 'moment';
 import * as qs from 'qs';
@@ -13,13 +12,6 @@ import LINE from '../../../lineClient';
 import User from '../../user';
 
 const debug = createDebug('cinerino-line-ticket:controllers');
-const pecorinoAuthClient = new pecorino.auth.ClientCredentials({
-    domain: <string>process.env.PECORINO_AUTHORIZE_SERVER_DOMAIN,
-    clientId: <string>process.env.PECORINO_CLIENT_ID,
-    clientSecret: <string>process.env.PECORINO_CLIENT_SECRET,
-    scopes: [],
-    state: ''
-});
 
 export type PaymentMethodType =
     cinerinoapi.factory.paymentMethodType.Account
@@ -1331,6 +1323,7 @@ export async function confirmFriendPay(params: {
     // };
     // await LINE.pushMessage(params.user.userId, [template]);
 }
+
 /**
  * おこづかい承認確定
  */
@@ -1342,6 +1335,7 @@ export async function confirmTransferMoney(params: {
 }) {
     const transferMoneyInfo = await params.user.verifyTransferMoneyToken(params.token);
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${transferMoneyInfo.name}に${params.price}円の振込を実行します...` });
+
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -1350,6 +1344,11 @@ export async function confirmTransferMoney(params: {
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
+    const sellerService = new cinerinoapi.service.Seller({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+
     const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
         typeOfGood: {
             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
@@ -1359,53 +1358,61 @@ export async function confirmTransferMoney(params: {
     const accounts = searchAccountsResult.data
         .map((o) => o.typeOfGood)
         .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-    debug('accounts:', accounts);
-    if (accounts.length === 0) {
-        throw new Error('口座未開設です');
+    const account = accounts.shift();
+    if (account === undefined) {
+        throw new Error('コイン口座未開設なので振込を実行できません');
     }
-    const account = accounts[0];
-    const transferService = new pecorino.service.transaction.Transfer({
-        endpoint: <string>process.env.PECORINO_ENDPOINT,
-        auth: pecorinoAuthClient
+
+    // 取引に販売者を指定する必要があるので、適当に検索
+    const searchSellersResult = await sellerService.search({ limit: 1 });
+    const seller = searchSellersResult.data.shift();
+    if (seller === undefined) {
+        throw new Error('販売者が見つかりませんでした');
+    }
+
+    const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
     });
-    const transaction = await transferService.start({
-        typeOf: pecorino.factory.transactionType.Transfer,
-        project: { typeOf: 'Project', id: (<any>account).project.id },
-        expires: moment()
-            // tslint:disable-next-line:no-magic-numbers
-            .add(10, 'minutes')
-            .toDate(),
-        agent: {
-            typeOf: cinerinoapi.factory.personType.Person,
-            name: params.user.userId
-        },
-        recipient: {
-            typeOf: 'Person',
-            id: transferMoneyInfo.userId,
-            name: transferMoneyInfo.name,
-            url: ''
-        },
-        object: {
-            amount: params.price,
-            description: 'LINEチケットおこづかい',
-            fromLocation: {
-                typeOf: pecorino.factory.account.TypeOf.Account,
-                accountType: cinerinoapi.factory.accountType.Coin,
-                accountNumber: account.accountNumber
+    // 通貨転送取引開始
+    const moneyTransferTransaction =
+        await moneyTransferService.start<cinerinoapi.factory.accountType.Coin, cinerinoapi.factory.pecorino.account.TypeOf.Account>({
+            project: { typeOf: 'Project', id: (<any>account).project.id },
+            expires: moment()
+                .add(1, 'minutes')
+                .toDate(),
+            agent: {
+                typeOf: cinerinoapi.factory.personType.Person,
+                id: <string>params.user.authClient.options.clientId
             },
-            toLocation: {
-                typeOf: pecorino.factory.account.TypeOf.Account,
-                accountType: cinerinoapi.factory.accountType.Coin,
-                accountNumber: transferMoneyInfo.accountNumber
+            recipient: {
+                typeOf: cinerinoapi.factory.personType.Person,
+                id: transferMoneyInfo.userId,
+                name: transferMoneyInfo.name,
+                url: ''
+            },
+            seller: { typeOf: seller.typeOf, id: seller.id },
+            object: {
+                amount: params.price,
+                authorizeActions: [],
+                description: 'Cinerino LINE Ticket Pocket Money',
+                fromLocation: {
+                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
+                    accountType: cinerinoapi.factory.accountType.Coin,
+                    accountNumber: account.accountNumber
+                },
+                toLocation: {
+                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
+                    accountType: cinerinoapi.factory.accountType.Coin,
+                    accountNumber: transferMoneyInfo.accountNumber
+                }
             }
-        }
-    });
-    debug('transaction started.', transaction.id);
+        });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
 
-    // バックエンドで確定
-    await transferService.confirm({
-        id: transaction.id
+    // 取引確定
+    await moneyTransferService.confirm({
+        id: moneyTransferTransaction.id
     });
     debug('transaction confirmed.');
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
@@ -1415,11 +1422,12 @@ export async function confirmTransferMoney(params: {
     // 振込先に通知
     await LINE.pushMessage(params.user.userId, {
         type: 'text',
-        text: `${profile.familyName} ${profile.givenName}から${params.price}円おこづかいが振り込まれました`
+        text: `${profile.familyName} ${profile.givenName}から${params.price}円のおこづかいが振り込まれました`
     });
 }
+
 /**
- * クレジットから口座へ入金する
+ * コイン口座入金金額選択
  */
 export async function selectDepositAmount(params: {
     replyToken: string;
@@ -1479,80 +1487,103 @@ export async function selectDepositAmount(params: {
     };
     await LINE.pushMessage(params.user.userId, [message]);
 }
+
 /**
- * クレジットから口座へ入金する
+ * クレジット決済でコイン入金
  */
 export async function depositCoinByCreditCard(params: {
     replyToken: string;
     user: User;
     amount: number;
-    accountType: cinerinoapi.factory.accountType;
     toAccountNumber: string;
 }) {
     await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
+
     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
     });
     const creditCards = await personOwnershipInfoService.searchCreditCards({});
-    if (creditCards.length === 0) {
-        throw new Error('クレジットカード未登録です');
+    const creditCard = creditCards.shift();
+    if (creditCard === undefined) {
+        throw new Error('クレジットカードが登録されていません');
     }
+
     const lineProfile = await LINE.getProfile(params.user.userId);
 
-    // 入金取引開始
-    const accountService = new pecorino.service.Account({
-        endpoint: <string>process.env.PECORINO_ENDPOINT,
-        auth: pecorinoAuthClient
-    });
-    const depositTransaction = new pecorino.service.transaction.Deposit({
-        endpoint: <string>process.env.PECORINO_ENDPOINT,
-        auth: pecorinoAuthClient
+    // 取引に販売者を指定する必要があるので、適当に検索
+    const sellerService = new cinerinoapi.service.Seller({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
     });
 
-    const searchAccountResult = await accountService.search({
-        accountType: params.accountType,
-        accountNumbers: [params.toAccountNumber]
-    });
-    const toAccount = searchAccountResult.data.shift();
-    if (toAccount === undefined) {
-        throw new Error(`口座 ${params.toAccountNumber} が見つかりません`);
+    const searchSellersResult = await sellerService.search({ limit: 1 });
+    const seller = searchSellersResult.data.shift();
+    if (seller === undefined) {
+        throw new Error('販売者が見つかりませんでした');
     }
 
-    const transaction = await depositTransaction.start({
-        typeOf: pecorino.factory.transactionType.Deposit,
-        project: { typeOf: 'Project', id: toAccount.project.id },
-        expires: moment()
-            // tslint:disable-next-line:no-magic-numbers
-            .add(10, 'minutes')
-            .toDate(),
+    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const offerService = new cinerinoapi.service.Offer({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+    const paymentService = new cinerinoapi.service.Payment({
+        endpoint: <string>process.env.CINERINO_ENDPOINT,
+        auth: params.user.authClient
+    });
+
+    // 入金取引開始
+    const placeOrderTransaction = await placeOrderService.start({
         agent: {
-            typeOf: 'Person',
-            id: params.user.userId,
-            name: lineProfile.displayName,
-            url: ''
+            identifier: [{ name: 'lineUserId', value: params.user.userId }]
         },
+        seller: { typeOf: seller.typeOf, id: seller.id },
+        expires: moment()
+            .add(1, 'minutes')
+            .toDate()
+    });
+
+    await offerService.authorizeMoneyTransfer({
         recipient: {
-            typeOf: 'Person',
+            typeOf: cinerinoapi.factory.personType.Person,
             id: params.user.userId,
-            name: lineProfile.displayName,
-            url: ''
+            name: lineProfile.displayName
         },
         object: {
-            amount: params.amount,
-            description: 'LINEチケット入金',
+            typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
+            amount: Number(params.amount),
             toLocation: {
-                typeOf: toAccount.typeOf,
-                accountType: toAccount.accountType,
-                accountNumber: toAccount.accountNumber
+                typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
+                accountType: cinerinoapi.factory.accountType.Coin,
+                accountNumber: params.toAccountNumber
             }
-        }
+        },
+        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
     });
-    await depositTransaction.confirm({
-        id: transaction.id
+
+    await paymentService.authorizeCreditCard({
+        object: {
+            typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+            amount: Number(params.amount),
+            method: <any>'1',
+            creditCard: {
+                memberId: 'me',
+                cardSeq: Number(creditCard.cardSeq)
+            }
+        },
+        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
+    });
+
+    await placeOrderService.confirm({
+        id: placeOrderTransaction.id
     });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
 }
+
 /**
  * クレジットカード検索
  */
@@ -2079,7 +2110,7 @@ export async function searchAccountMoneyTransferActions(params: {
         limit: 10,
         page: 1,
         sort: {
-            endDate: cinerinoapi.factory.pecorino.sortType.Descending
+            startDate: cinerinoapi.factory.pecorino.sortType.Descending
         },
         accountType: params.accountType,
         accountNumber: params.accountNumber

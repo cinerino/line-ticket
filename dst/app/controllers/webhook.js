@@ -344,7 +344,6 @@ function postback(event, user) {
                         replyToken: event.replyToken,
                         user: user,
                         amount: Number(data.amount),
-                        accountType: data.accountType,
                         toAccountNumber: data.toAccountNumber
                     });
                     break;
