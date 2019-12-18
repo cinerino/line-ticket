@@ -3,7 +3,7 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 // import { FlexBox, FlexBubble, FlexComponent, FlexMessage, QuickReplyItem, TextMessage } from '@line/bot-sdk';
-import { FlexBox, FlexBubble } from '@line/bot-sdk';
+import { FlexBox, FlexBubble, FlexComponent, FlexMessage } from '@line/bot-sdk';
 import * as moment from 'moment';
 import * as qs from 'qs';
 import { format } from 'util';
@@ -11,10 +11,632 @@ import { format } from 'util';
 import User from './user';
 
 export type IAccountGoodWithDetail = cinerinoapi.factory.ownershipInfo.IGoodWithDetail<cinerinoapi.factory.ownershipInfo.AccountGoodType>;
+export type IReservationGoodWithDetail
+    = cinerinoapi.factory.ownershipInfo.IGoodWithDetail<cinerinoapi.factory.chevre.reservationType.EventReservation>;
 export type IAccountOwnershipInfoWithDetail = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<IAccountGoodWithDetail>;
+export type IReservationOwnershipInfoWithDetail = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<IReservationGoodWithDetail>;
 
 export type IReservationPriceSpec =
     cinerinoapi.factory.chevre.reservation.IPriceSpecification<cinerinoapi.factory.chevre.reservationType.EventReservation>;
+
+// tslint:disable-next-line:max-func-body-length
+export function createConfirmOrderFlexBubble(params: {
+    id: string;
+    seller: cinerinoapi.factory.seller.IOrganization<any>;
+    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
+    tmpReservations: cinerinoapi.factory.chevre.transaction.reserve.ISubReservation[];
+    price: number;
+}): FlexMessage {
+    const seller = params.seller;
+    const profile = params.profile;
+    const tmpReservations = params.tmpReservations;
+    const price = params.price;
+
+    const bodyContents: FlexComponent[] = [
+        {
+            type: 'text',
+            text: '注文をご確認ください',
+            weight: 'bold',
+            color: '#1DB446',
+            size: 'sm'
+        },
+        {
+            type: 'text',
+            text: seller.name.ja,
+            weight: 'bold',
+            size: 'xxl',
+            margin: 'md',
+            maxLines: 0,
+            wrap: true
+        },
+        {
+            type: 'text',
+            text: (seller.telephone !== undefined) ? seller.telephone : 'Unknown telephone',
+            size: 'xs',
+            color: '#aaaaaa',
+            wrap: true
+        },
+        {
+            type: 'separator',
+            margin: 'xxl'
+        },
+        {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xxl',
+            spacing: 'sm',
+            contents: [
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Name',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${profile.givenName} ${profile.familyName}`,
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Email',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(profile.email),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Tel',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(profile.telephone),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            type: 'separator',
+            margin: 'xxl'
+        },
+        {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xxl',
+            spacing: 'sm',
+            contents: [
+                ...tmpReservations.map<FlexBox>((tmpReservation) => {
+                    const item = tmpReservation;
+                    const event = item.reservationFor;
+                    // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
+                    const str = (item.reservedTicket.ticketedSeat !== undefined)
+                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
+                        : '座席なし';
+                    let priceStr = String(item.priceCurrency);
+                    if (item.price !== undefined) {
+                        if (typeof item.price === 'number') {
+                            priceStr = `${item.price} ${item.priceCurrency}`;
+                        } else {
+                            // tslint:disable-next-line:max-line-length
+                            const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                                item.price.priceComponent.find(
+                                    // tslint:disable-next-line:max-line-length
+                                    (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                                );
+                            if (unitPriceSpec !== undefined) {
+                                // tslint:disable-next-line:max-line-length
+                                priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${item.priceCurrency}`;
+                            }
+                        }
+                    }
+
+                    return {
+                        type: 'box',
+                        layout: 'horizontal',
+                        contents: [
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                flex: 2,
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: `${event.name.ja} ${moment(event.startDate)
+                                            .format('MM/DD HH:mm')}`,
+                                        size: 'xs',
+                                        color: '#555555',
+                                        wrap: true
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: str,
+                                        size: 'xs',
+                                        color: '#aaaaaa'
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'text',
+                                text: priceStr,
+                                size: 'xs',
+                                color: '#111111',
+                                align: 'end',
+                                flex: 1,
+                                gravity: 'top'
+                            }
+                        ]
+                    };
+                }),
+                {
+                    type: 'separator',
+                    margin: 'xxl'
+                },
+                {
+                    type: 'box',
+                    layout: 'horizontal',
+                    margin: 'xxl',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: 'ITEMS',
+                            size: 'sm',
+                            color: '#555555'
+                        },
+                        {
+                            type: 'text',
+                            text: `${tmpReservations.length}`,
+                            size: 'sm',
+                            color: '#111111',
+                            align: 'end'
+                        }
+                    ]
+                },
+                {
+                    type: 'box',
+                    layout: 'horizontal',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: 'TOTAL',
+                            size: 'sm',
+                            color: '#555555'
+                        },
+                        {
+                            type: 'text',
+                            text: `${price} ${cinerinoapi.factory.priceCurrency.JPY}`,
+                            size: 'sm',
+                            color: '#111111',
+                            align: 'end'
+                        }
+                    ]
+                }
+                // {
+                //     type: 'box',
+                //     layout: 'horizontal',
+                //     contents: [
+                //         {
+                //             type: 'text',
+                //             text: '決済方法',
+                //             size: 'sm',
+                //             color: '#555555'
+                //         },
+                //         {
+                //             type: 'text',
+                //             text: params.paymentMethodType,
+                //             size: 'sm',
+                //             color: '#111111',
+                //             align: 'end'
+                //         }
+                //     ]
+                // }
+            ]
+        }
+    ];
+    const body: FlexBox = {
+        type: 'box',
+        layout: 'vertical',
+        contents: bodyContents
+    };
+    const contents: FlexBubble = {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: body,
+        footer: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            contents: [
+                {
+                    type: 'button',
+                    // flex: 2,
+                    style: 'primary',
+                    action: {
+                        type: 'postback',
+                        label: '注文確定',
+                        data: `action=confirmOrder&transactionId=${params.id}`
+                    }
+                },
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: 'キャンセル',
+                        data: `action=cancelOrder&transactionId=${params.id}`
+                    }
+                }
+            ]
+        }
+    };
+
+    return {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: contents
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
+export function screeningEventSeries2flexBubble(params: {
+    date: string;
+    event: cinerinoapi.factory.chevre.event.IEvent<cinerinoapi.factory.chevre.eventType.ScreeningEventSeries>;
+}): FlexBubble {
+    const event = params.event;
+
+    const thumbnailImageUrl = (event.workPerformed.thumbnailUrl !== undefined
+        && event.workPerformed.thumbnailUrl !== null)
+        ? event.workPerformed.thumbnailUrl
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+
+    const body: FlexBox = {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+            {
+                type: 'text',
+                text: event.name.ja,
+                wrap: true,
+                weight: 'bold',
+                gravity: 'center',
+                size: 'xl'
+            },
+            {
+                type: 'box',
+                layout: 'vertical',
+                margin: 'lg',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'Place',
+                                color: '#aaaaaa',
+                                size: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'text',
+                                text: event.location.name.ja,
+                                wrap: true,
+                                color: '#666666',
+                                size: 'sm',
+                                flex: 4
+                            }
+                        ]
+                    },
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'VideoFormat',
+                                color: '#aaaaaa',
+                                size: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'text',
+                                text: (Array.isArray(event.videoFormat))
+                                    ? event.videoFormat.map((f) => f.typeOf)
+                                        .join(',')
+                                    : '---',
+                                wrap: true,
+                                size: 'sm',
+                                color: '#666666',
+                                flex: 4
+                            }
+                        ]
+                    },
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'Duration',
+                                color: '#aaaaaa',
+                                size: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'text',
+                                text: (event.duration !== undefined)
+                                    ? moment.duration(event.duration)
+                                        .toIsoString()
+                                    : '---',
+                                wrap: true,
+                                size: 'sm',
+                                color: '#666666',
+                                flex: 4
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    return {
+        type: 'bubble',
+        hero: {
+            type: 'image',
+            url: thumbnailImageUrl,
+            size: 'full',
+            aspectRatio: '20:13',
+            aspectMode: 'cover',
+            action: {
+                type: 'uri',
+                label: 'event',
+                // tslint:disable-next-line:no-http-string
+                uri: 'http://linecorp.com/'
+            }
+        },
+        body: body,
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: 'スケジュール選択',
+                        data: qs.stringify({
+                            action: 'askScreeningEvent',
+                            screeningEventSeriesId: event.id,
+                            date: params.date
+                        })
+                    }
+                }
+            ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
+export function screeningEvent2flexBubble(params: {
+    event: cinerinoapi.factory.chevre.event.IEvent<cinerinoapi.factory.chevre.eventType.ScreeningEvent>;
+    user: User;
+}): FlexBubble {
+    const event = params.event;
+
+    const MAX_AVAILABILITY_SCORE = 5;
+
+    const query = qs.stringify({ eventId: event.id, userId: params.user.userId });
+    const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: selectSeatsUri })}`;
+    let availability = 100;
+    if (event.maximumAttendeeCapacity !== undefined && event.remainingAttendeeCapacity !== undefined) {
+        // tslint:disable-next-line:no-magic-numbers
+        availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
+    }
+    // tslint:disable-next-line:no-magic-numbers
+    const availabilityScore = Math.floor(availability / Math.floor(100 / MAX_AVAILABILITY_SCORE));
+
+    return {
+        type: 'bubble',
+        body: <any>{
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+                {
+                    type: 'text',
+                    text: event.name.ja,
+                    wrap: true,
+                    weight: 'bold',
+                    gravity: 'center',
+                    size: 'xl'
+                },
+                {
+                    type: 'box',
+                    layout: 'baseline',
+                    margin: 'md',
+                    contents: [
+                        ...(availabilityScore > 0)
+                            // tslint:disable-next-line:prefer-array-literal
+                            ? [...Array(availabilityScore)].map(() => {
+                                return {
+                                    type: 'icon',
+                                    size: 'sm',
+                                    url: `https://${params.user.host}/img/labels/theater-seat-blue-80.png`
+                                };
+                            })
+                            : [],
+                        ...(availabilityScore < MAX_AVAILABILITY_SCORE)
+                            // tslint:disable-next-line:prefer-array-literal
+                            ? [...Array(MAX_AVAILABILITY_SCORE - availabilityScore)].map(() => {
+                                return {
+                                    type: 'icon',
+                                    size: 'sm',
+                                    url: `https://${params.user.host}/img/labels/theater-seat-grey-80.png`
+                                };
+                            })
+                            : [],
+                        {
+                            type: 'text',
+                            text: `${availability}%`,
+                            size: 'sm',
+                            color: '#999999',
+                            margin: 'md',
+                            flex: 0
+                        }
+                    ]
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Place',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: event.location.name.ja,
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Date',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: moment(event.startDate)
+                                        .format('YYYY-MM-DD'),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Time',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${moment(event.startDate)
+                                        .format('HH:mm')} - ${moment(event.endDate)
+                                            .format('HH:mm')}`,
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'uri',
+                        label: '座席選択',
+                        uri: liffUri
+                    }
+                }
+            ]
+        }
+    };
+}
 
 // tslint:disable-next-line:max-func-body-length
 export function order2flexBubble(params: {
@@ -991,6 +1613,241 @@ export function moneyTransferAction2flexBubble(params: {
                             ]
                         }
                     ]
+                }
+            ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
+export function reservation2flexBubble(params: {
+    ownershipInfo: IReservationOwnershipInfoWithDetail;
+}): FlexBubble {
+    const ownershipInfo = params.ownershipInfo;
+
+    const itemOffered = ownershipInfo.typeOfGood;
+    const event = itemOffered.reservationFor;
+    const thumbnailImageUrl = (event.workPerformed !== undefined
+        && event.workPerformed.thumbnailUrl !== undefined
+        && event.workPerformed.thumbnailUrl !== null)
+        ? event.workPerformed.thumbnailUrl
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+
+    return {
+        type: 'bubble',
+        hero: {
+            type: 'image',
+            url: thumbnailImageUrl,
+            size: 'full',
+            aspectRatio: '20:13',
+            aspectMode: 'cover',
+            action: {
+                type: 'uri',
+                label: 'event',
+                // tslint:disable-next-line:no-http-string
+                uri: 'http://linecorp.com/'
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+                {
+                    type: 'text',
+                    text: event.name.ja,
+                    wrap: true,
+                    weight: 'bold',
+                    gravity: 'center',
+                    size: 'xl'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '日時',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: moment(event.startDate)
+                                        .format('llll'),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '場所',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '座席',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
+                                        ? itemOffered.reservedTicket.ticketedSeat.seatNumber
+                                        : '座席なし',
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '券種',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: itemOffered.reservedTicket.ticketType.name.ja,
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '発行者',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: (itemOffered.reservedTicket.issuedBy !== undefined)
+                                        ? itemOffered.reservedTicket.issuedBy.name
+                                        : 'No reservedTicket.issuedBy',
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '予約者',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: (itemOffered.reservedTicket.underName !== undefined)
+                                        ? itemOffered.reservedTicket.underName.name
+                                        : 'No reservedTicket.underName',
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Status',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(itemOffered.reservationStatus),
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: 'コード発行',
+                        data: qs.stringify({
+                            action: 'authorizeOwnershipInfo',
+                            goodType: ownershipInfo.typeOfGood.typeOf,
+                            id: ownershipInfo.id
+                        })
+                    }
                 }
             ]
         }
