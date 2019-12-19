@@ -18,6 +18,7 @@ const moment = require("moment");
 const qs = require("qs");
 const util_1 = require("util");
 const lineClient_1 = require("../../../lineClient");
+const coin_1 = require("../account/coin");
 const contentsBuilder_1 = require("../../contentsBuilder");
 const debug = createDebug('cinerino-line-ticket:controllers');
 /**
@@ -101,7 +102,6 @@ function askScreeningEvent(params) {
             // tslint:disable-next-line:no-magic-numbers
             .slice(0, 10);
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
-        // tslint:disable-next-line:max-func-body-length
         const bubbles = screeningEvents.map((event) => {
             return contentsBuilder_1.screeningEvent2flexBubble({ event: event, user: params.user });
         });
@@ -520,7 +520,6 @@ exports.selectCreditCard = selectCreditCard;
 /**
  * 購入者情報決定
  */
-// tslint:disable-next-line:max-func-body-length
 function setCustomerContact(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const sellerService = new cinerinoapi.service.Seller({
@@ -742,57 +741,15 @@ function confirmTransferMoney(params) {
             throw new Error('販売者が見つかりませんでした');
         }
         const profile = yield personService.getProfile({});
-        const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
-        });
-        // 通貨転送取引開始
-        const moneyTransferTransaction = yield moneyTransferService.start({
-            project: { typeOf: 'Project', id: account.project.id },
-            expires: moment()
-                .add(1, 'minutes')
-                .toDate(),
-            agent: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: params.user.authClient.options.clientId
+        yield coin_1.processTransferCoin({
+            user: params.user,
+            amount: params.price,
+            fromLocation: {
+                accountNumber: account.accountNumber
             },
-            recipient: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: transferMoneyInfo.userId,
-                name: transferMoneyInfo.name,
-                url: ''
-            },
-            seller: { typeOf: seller.typeOf, id: seller.id },
-            object: {
-                amount: params.price,
-                authorizeActions: [],
-                description: 'Cinerino LINE Ticket Pocket Money',
-                fromLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
-                    accountNumber: account.accountNumber
-                },
-                toLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
-                    accountNumber: transferMoneyInfo.accountNumber
-                }
-            }
-        });
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
-        yield moneyTransferService.setProfile({
-            id: moneyTransferTransaction.id,
-            agent: Object.assign({}, Object.assign(Object.assign({}, profile), { name: `${profile.givenName} ${profile.familyName}` }))
-        });
-        // 取引確定
-        yield moneyTransferService.confirm({
-            id: moneyTransferTransaction.id
-        });
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-        // 振込先に通知
-        yield lineClient_1.default.pushMessage(params.user.userId, {
-            type: 'text',
-            text: `${profile.familyName} ${profile.givenName}から${params.price}円のおこづかいが振り込まれました`
+            transferMoneyInfo: transferMoneyInfo,
+            profile: profile,
+            seller: seller
         });
     });
 }
@@ -888,11 +845,13 @@ function depositCoinByCreditCard(params) {
         }
         const profile = yield personService.getProfile({});
         // 入金取引
-        yield processOrderCoin({
+        yield coin_1.processOrderCoin({
             replyToken: params.replyToken,
             user: params.user,
             amount: params.amount,
-            toAccountNumber: params.toAccountNumber,
+            toLocation: {
+                accountNumber: params.toAccountNumber
+            },
             creditCard: {
                 memberId: 'me',
                 cardSeq: Number(creditCard.cardSeq)
@@ -908,74 +867,6 @@ function depositCoinByCreditCard(params) {
     });
 }
 exports.depositCoinByCreditCard = depositCoinByCreditCard;
-function processOrderCoin(params) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
-        });
-        const offerService = new cinerinoapi.service.Offer({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
-        });
-        const paymentService = new cinerinoapi.service.Payment({
-            endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
-        });
-        // 入金取引開始
-        const placeOrderTransaction = yield placeOrderService.start({
-            agent: {
-                identifier: [{ name: 'lineUserId', value: params.user.userId }]
-            },
-            seller: { typeOf: params.seller.typeOf, id: params.seller.id },
-            expires: moment()
-                .add(1, 'minutes')
-                .toDate()
-        });
-        yield placeOrderService.setProfile({
-            id: placeOrderTransaction.id,
-            agent: Object.assign(Object.assign({}, params.profile), {
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            })
-        });
-        yield offerService.authorizeMoneyTransfer({
-            recipient: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: params.user.userId,
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            },
-            object: {
-                typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
-                amount: Number(params.amount),
-                toLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
-                    accountNumber: params.toAccountNumber
-                }
-            },
-            purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
-        });
-        yield paymentService.authorizeCreditCard({
-            object: {
-                typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
-                amount: Number(params.amount),
-                method: '1',
-                creditCard: params.creditCard
-            },
-            purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
-        });
-        const { order } = yield placeOrderService.confirm({
-            id: placeOrderTransaction.id
-        });
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
-        const flex = {
-            type: 'flex',
-            altText: 'This is a Flex Message',
-            contents: contentsBuilder_1.order2flexBubble({ order })
-        };
-        yield lineClient_1.default.pushMessage(params.user.userId, [flex]);
-    });
-}
 /**
  * クレジットカード検索
  */
@@ -1156,7 +1047,6 @@ exports.searchAccountMoneyTransferActions = searchAccountMoneyTransferActions;
 /**
  * ユーザーのチケット(座席予約)を検索する
  */
-// tslint:disable-next-line:max-func-body-length
 function searchScreeningEventReservations(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const now = new Date();
@@ -1942,7 +1832,6 @@ exports.authorizeOwnershipInfo = authorizeOwnershipInfo;
 /**
  * 注文を検索する
  */
-// tslint:disable-next-line:max-func-body-length
 function searchOrders(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const now = new Date();
@@ -2573,7 +2462,6 @@ exports.findScreeningEventReservationById = findScreeningEventReservationById;
 /**
  * プロフィール検索
  */
-// tslint:disable-next-line:max-func-body-length
 function getProfile(params) {
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを検索しています...` });
@@ -2583,7 +2471,7 @@ function getProfile(params) {
         });
         const profile = yield personService.getProfile({});
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールが見つかりました' });
-        const contents = [profile2bubble(profile)];
+        const contents = [contentsBuilder_1.profile2bubble(profile)];
         const flex = {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -2608,7 +2496,7 @@ function updateProfile(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
         yield personService.updateProfile(Object.assign({}, params.profile));
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールを更新しました' });
-        const contents = [profile2bubble(params.profile)];
+        const contents = [contentsBuilder_1.profile2bubble(params.profile)];
         const flex = {
             type: 'flex',
             altText: 'This is a Flex Message',
@@ -2621,115 +2509,3 @@ function updateProfile(params) {
     });
 }
 exports.updateProfile = updateProfile;
-// tslint:disable-next-line:max-func-body-length
-function profile2bubble(params) {
-    return {
-        type: 'bubble',
-        styles: {
-            footer: {
-                separator: true
-            }
-        },
-        body: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-                {
-                    type: 'text',
-                    text: 'PROFILE',
-                    weight: 'bold',
-                    color: '#1DB446',
-                    size: 'sm'
-                },
-                {
-                    type: 'box',
-                    layout: 'vertical',
-                    margin: 'xxl',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: '姓',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.familyName !== '') ? String(params.familyName) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: '名',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.givenName !== '') ? String(params.givenName) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'Eメール',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.email !== '') ? String(params.email) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'TEL',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.telephone !== '') ? String(params.telephone) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    };
-}

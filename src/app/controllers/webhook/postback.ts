@@ -11,12 +11,15 @@ import { format } from 'util';
 import LINE from '../../../lineClient';
 import User from '../../user';
 
+import { processOrderCoin, processTransferCoin } from '../account/coin';
+
 import {
     account2flexBubble,
     createConfirmOrderFlexBubble,
     creditCard2flexBubble,
     moneyTransferAction2flexBubble,
     order2flexBubble,
+    profile2bubble,
     reservation2flexBubble,
     screeningEvent2flexBubble,
     screeningEventSeries2flexBubble
@@ -127,7 +130,6 @@ export async function askScreeningEvent(params: {
         .slice(0, 10);
     await LINE.pushMessage(params.user.userId, { type: 'text', text: `${screeningEvents.length}件のスケジュールがみつかりました` });
 
-    // tslint:disable-next-line:max-func-body-length
     const bubbles: FlexBubble[] = screeningEvents.map<FlexBubble>((event) => {
         return screeningEvent2flexBubble({ event: event, user: params.user });
     });
@@ -569,7 +571,6 @@ export async function selectCreditCard(params: {
 /**
  * 購入者情報決定
  */
-// tslint:disable-next-line:max-func-body-length
 export async function setCustomerContact(params: {
     replyToken: string;
     user: User;
@@ -824,61 +825,15 @@ export async function confirmTransferMoney(params: {
 
     const profile = await personService.getProfile({});
 
-    const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-    // 通貨転送取引開始
-    const moneyTransferTransaction =
-        await moneyTransferService.start<cinerinoapi.factory.accountType.Coin, cinerinoapi.factory.pecorino.account.TypeOf.Account>({
-            project: { typeOf: 'Project', id: (<any>account).project.id },
-            expires: moment()
-                .add(1, 'minutes')
-                .toDate(),
-            agent: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: <string>params.user.authClient.options.clientId
-            },
-            recipient: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: transferMoneyInfo.userId,
-                name: transferMoneyInfo.name,
-                url: ''
-            },
-            seller: { typeOf: seller.typeOf, id: seller.id },
-            object: {
-                amount: params.price,
-                authorizeActions: [],
-                description: 'Cinerino LINE Ticket Pocket Money',
-                fromLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
-                    accountNumber: account.accountNumber
-                },
-                toLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
-                    accountNumber: transferMoneyInfo.accountNumber
-                }
-            }
-        });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
-
-    await moneyTransferService.setProfile({
-        id: moneyTransferTransaction.id,
-        agent: { ...{ ...profile, name: `${profile.givenName} ${profile.familyName}` } }
-    });
-
-    // 取引確定
-    await moneyTransferService.confirm({
-        id: moneyTransferTransaction.id
-    });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-
-    // 振込先に通知
-    await LINE.pushMessage(params.user.userId, {
-        type: 'text',
-        text: `${profile.familyName} ${profile.givenName}から${params.price}円のおこづかいが振り込まれました`
+    await processTransferCoin({
+        user: params.user,
+        amount: params.price,
+        fromLocation: {
+            accountNumber: account.accountNumber
+        },
+        transferMoneyInfo: transferMoneyInfo,
+        profile: profile,
+        seller: seller
     });
 }
 
@@ -990,7 +945,9 @@ export async function depositCoinByCreditCard(params: {
         replyToken: params.replyToken,
         user: params.user,
         amount: params.amount,
-        toAccountNumber: params.toAccountNumber,
+        toLocation: {
+            accountNumber: params.toAccountNumber
+        },
         creditCard: {
             memberId: 'me',
             cardSeq: Number(creditCard.cardSeq)
@@ -1003,90 +960,6 @@ export async function depositCoinByCreditCard(params: {
         },
         seller: seller
     });
-}
-
-async function processOrderCoin(params: {
-    replyToken: string;
-    user: User;
-    amount: number;
-    toAccountNumber: string;
-    creditCard: cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
-    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
-    seller: cinerinoapi.factory.seller.IOrganization<any>;
-}) {
-    const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-    const offerService = new cinerinoapi.service.Offer({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-    const paymentService = new cinerinoapi.service.Payment({
-        endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
-    });
-
-    // 入金取引開始
-    const placeOrderTransaction = await placeOrderService.start({
-        agent: {
-            identifier: [{ name: 'lineUserId', value: params.user.userId }]
-        },
-        seller: { typeOf: params.seller.typeOf, id: params.seller.id },
-        expires: moment()
-            .add(1, 'minutes')
-            .toDate()
-    });
-
-    await placeOrderService.setProfile({
-        id: placeOrderTransaction.id,
-        agent: {
-            ...params.profile,
-            ...{
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            }
-        }
-    });
-
-    await offerService.authorizeMoneyTransfer({
-        recipient: {
-            typeOf: cinerinoapi.factory.personType.Person,
-            id: params.user.userId,
-            name: `${params.profile.givenName} ${params.profile.familyName}`
-        },
-        object: {
-            typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
-            amount: Number(params.amount),
-            toLocation: {
-                typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                accountType: cinerinoapi.factory.accountType.Coin,
-                accountNumber: params.toAccountNumber
-            }
-        },
-        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
-    });
-
-    await paymentService.authorizeCreditCard({
-        object: {
-            typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
-            amount: Number(params.amount),
-            method: <any>'1',
-            creditCard: params.creditCard
-        },
-        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
-    });
-
-    const { order } = await placeOrderService.confirm({
-        id: placeOrderTransaction.id
-    });
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: '入金処理が完了しました' });
-
-    const flex: FlexMessage = {
-        type: 'flex',
-        altText: 'This is a Flex Message',
-        contents: order2flexBubble({ order })
-    };
-    await LINE.pushMessage(params.user.userId, [flex]);
 }
 
 /**
@@ -1169,6 +1042,7 @@ export async function openAccount(params: {
         text: `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`
     });
 }
+
 /**
  * 口座解約
  */
@@ -1289,7 +1163,6 @@ export async function searchAccountMoneyTransferActions(params: {
 /**
  * ユーザーのチケット(座席予約)を検索する
  */
-// tslint:disable-next-line:max-func-body-length
 export async function searchScreeningEventReservations(params: {
     replyToken: string;
     user: User;
@@ -2126,7 +1999,6 @@ export async function authorizeOwnershipInfo(params: {
 /**
  * 注文を検索する
  */
-// tslint:disable-next-line:max-func-body-length
 export async function searchOrders(params: {
     replyToken: string;
     user: User;
@@ -2769,7 +2641,6 @@ export async function findScreeningEventReservationById(params: {
 /**
  * プロフィール検索
  */
-// tslint:disable-next-line:max-func-body-length
 export async function getProfile(params: {
     replyToken: string;
     user: User;
@@ -2792,6 +2663,7 @@ export async function getProfile(params: {
     };
     await LINE.pushMessage(params.user.userId, [flex]);
 }
+
 /**
  * プロフィール更新
  */
@@ -2817,116 +2689,4 @@ export async function updateProfile(params: {
         }
     };
     await LINE.pushMessage(params.user.userId, [flex]);
-}
-// tslint:disable-next-line:max-func-body-length
-function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble {
-    return {
-        type: 'bubble',
-        styles: {
-            footer: {
-                separator: true
-            }
-        },
-        body: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-                {
-                    type: 'text',
-                    text: 'PROFILE',
-                    weight: 'bold',
-                    color: '#1DB446',
-                    size: 'sm'
-                },
-                {
-                    type: 'box',
-                    layout: 'vertical',
-                    margin: 'xxl',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: '姓',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.familyName !== '') ? String(params.familyName) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: '名',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.givenName !== '') ? String(params.givenName) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'Eメール',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.email !== '') ? String(params.email) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        },
-                        {
-                            type: 'box',
-                            layout: 'horizontal',
-                            contents: [
-                                {
-                                    type: 'text',
-                                    text: 'TEL',
-                                    size: 'sm',
-                                    color: '#aaaaaa',
-                                    flex: 2
-                                },
-                                {
-                                    type: 'text',
-                                    text: (params.telephone !== '') ? String(params.telephone) : 'Unknown',
-                                    size: 'sm',
-                                    color: '#666666',
-                                    flex: 5
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    };
 }

@@ -1853,3 +1853,116 @@ export function reservation2flexBubble(params: {
         }
     };
 }
+
+// tslint:disable-next-line:max-func-body-length
+export function profile2bubble(params: cinerinoapi.factory.person.IProfile): FlexBubble {
+    return {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+                {
+                    type: 'text',
+                    text: 'PROFILE',
+                    weight: 'bold',
+                    color: '#1DB446',
+                    size: 'sm'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'xxl',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '姓',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.familyName !== '') ? String(params.familyName) : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: '名',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.givenName !== '') ? String(params.givenName) : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Eメール',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.email !== '') ? String(params.email) : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'TEL',
+                                    size: 'sm',
+                                    color: '#aaaaaa',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: (params.telephone !== '') ? String(params.telephone) : 'Unknown',
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+}
