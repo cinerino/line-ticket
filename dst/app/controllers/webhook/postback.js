@@ -552,6 +552,12 @@ function setCustomerContact(params) {
                 customerContact: profile
             }
         });
+        yield placeOrderService.setProfile({
+            id: params.transactionId,
+            agent: Object.assign(Object.assign({}, profile), {
+                name: `${profile.givenName} ${profile.familyName}`
+            })
+        });
         // 注文内容確認
         yield lineClient_1.default.pushMessage(params.user.userId, [
             contentsBuilder_1.createConfirmOrderFlexBubble({
@@ -735,6 +741,7 @@ function confirmTransferMoney(params) {
         if (seller === undefined) {
             throw new Error('販売者が見つかりませんでした');
         }
+        const profile = yield personService.getProfile({});
         const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: params.user.authClient
@@ -773,13 +780,15 @@ function confirmTransferMoney(params) {
             }
         });
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
+        yield moneyTransferService.setProfile({
+            id: moneyTransferTransaction.id,
+            agent: Object.assign({}, Object.assign(Object.assign({}, profile), { name: `${profile.givenName} ${profile.familyName}` }))
+        });
         // 取引確定
         yield moneyTransferService.confirm({
             id: moneyTransferTransaction.id
         });
-        debug('transaction confirmed.');
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-        const profile = yield personService.getProfile({});
         // 振込先に通知
         yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
@@ -923,11 +932,11 @@ function processOrderCoin(params) {
                 .add(1, 'minutes')
                 .toDate()
         });
-        yield placeOrderService.setCustomerContact({
+        yield placeOrderService.setProfile({
             id: placeOrderTransaction.id,
-            object: {
-                customerContact: params.profile
-            }
+            agent: Object.assign(Object.assign({}, params.profile), {
+                name: `${params.profile.givenName} ${params.profile.familyName}`
+            })
         });
         yield offerService.authorizeMoneyTransfer({
             recipient: {

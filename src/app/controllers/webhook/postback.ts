@@ -612,6 +612,16 @@ export async function setCustomerContact(params: {
         }
     });
 
+    await placeOrderService.setProfile({
+        id: params.transactionId,
+        agent: {
+            ...profile,
+            ...{
+                name: `${profile.givenName} ${profile.familyName}`
+            }
+        }
+    });
+
     // 注文内容確認
     await LINE.pushMessage(params.user.userId, [
         createConfirmOrderFlexBubble({
@@ -812,6 +822,8 @@ export async function confirmTransferMoney(params: {
         throw new Error('販売者が見つかりませんでした');
     }
 
+    const profile = await personService.getProfile({});
+
     const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
         auth: params.user.authClient
@@ -852,14 +864,16 @@ export async function confirmTransferMoney(params: {
         });
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
 
+    await moneyTransferService.setProfile({
+        id: moneyTransferTransaction.id,
+        agent: { ...{ ...profile, name: `${profile.givenName} ${profile.familyName}` } }
+    });
+
     // 取引確定
     await moneyTransferService.confirm({
         id: moneyTransferTransaction.id
     });
-    debug('transaction confirmed.');
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '転送が完了しました' });
-
-    const profile = await personService.getProfile({});
 
     // 振込先に通知
     await LINE.pushMessage(params.user.userId, {
@@ -1024,10 +1038,13 @@ async function processOrderCoin(params: {
             .toDate()
     });
 
-    await placeOrderService.setCustomerContact({
+    await placeOrderService.setProfile({
         id: placeOrderTransaction.id,
-        object: {
-            customerContact: params.profile
+        agent: {
+            ...params.profile,
+            ...{
+                name: `${params.profile.givenName} ${params.profile.familyName}`
+            }
         }
     });
 
