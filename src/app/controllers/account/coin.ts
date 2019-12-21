@@ -132,22 +132,30 @@ export async function processOrderCoin(params: {
         }
     });
 
-    await offerService.authorizeMoneyTransfer({
-        recipient: {
-            typeOf: cinerinoapi.factory.personType.Person,
-            id: params.user.userId,
-            name: `${params.profile.givenName} ${params.profile.familyName}`
-        },
+    await offerService.authorizeMonetaryAmount({
         object: {
-            typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
-            amount: Number(params.amount),
+            typeOf: 'Offer',
+            itemOffered: {
+                typeOf: 'MonetaryAmount',
+                value: Number(params.amount),
+                currency: cinerinoapi.factory.accountType.Coin
+            },
+            priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
+            seller: { typeOf: params.seller.typeOf, name: params.seller.name },
             toLocation: {
                 typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
                 accountType: cinerinoapi.factory.accountType.Coin,
                 accountNumber: params.toLocation.accountNumber
             }
         },
-        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
+        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id },
+        ...{
+            recipient: {
+                typeOf: cinerinoapi.factory.personType.Person,
+                id: params.user.userId,
+                name: `${params.profile.givenName} ${params.profile.familyName}`
+            }
+        }
     });
 
     await paymentService.authorizeCreditCard({

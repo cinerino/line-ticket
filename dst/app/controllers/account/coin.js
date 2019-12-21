@@ -109,23 +109,27 @@ function processOrderCoin(params) {
                 name: `${params.profile.givenName} ${params.profile.familyName}`
             })
         });
-        yield offerService.authorizeMoneyTransfer({
-            recipient: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: params.user.userId,
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            },
-            object: {
-                typeOf: cinerinoapi.factory.actionType.MoneyTransfer,
-                amount: Number(params.amount),
+        yield offerService.authorizeMonetaryAmount(Object.assign({ object: {
+                typeOf: 'Offer',
+                itemOffered: {
+                    typeOf: 'MonetaryAmount',
+                    value: Number(params.amount),
+                    currency: cinerinoapi.factory.accountType.Coin
+                },
+                priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
+                seller: { typeOf: params.seller.typeOf, name: params.seller.name },
                 toLocation: {
                     typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
                     accountType: cinerinoapi.factory.accountType.Coin,
                     accountNumber: params.toLocation.accountNumber
                 }
-            },
-            purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
-        });
+            }, purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id } }, {
+            recipient: {
+                typeOf: cinerinoapi.factory.personType.Person,
+                id: params.user.userId,
+                name: `${params.profile.givenName} ${params.profile.familyName}`
+            }
+        }));
         yield paymentService.authorizeCreditCard({
             object: {
                 typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
