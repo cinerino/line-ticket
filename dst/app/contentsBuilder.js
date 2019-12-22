@@ -745,12 +745,10 @@ function order2flexBubble(params) {
                     spacing: 'sm',
                     contents: [
                         ...order.acceptedOffers.map((orderItem) => {
-                            let itemName = String(orderItem.itemOffered.typeOf);
-                            let itemDescription = 'no description';
+                            let itemName;
+                            let itemDescription;
                             let priceStr = orderItem.priceCurrency.toString();
                             switch (orderItem.itemOffered.typeOf) {
-                                case 'ProgramMembership':
-                                    break;
                                 case cinerinoapi.factory.chevre.reservationType.EventReservation:
                                     const item = orderItem.itemOffered;
                                     const event = item.reservationFor;
@@ -787,6 +785,12 @@ function order2flexBubble(params) {
                                     }
                                     break;
                                 default:
+                                    itemName = (typeof orderItem.itemOffered.name === 'string')
+                                        ? String(orderItem.itemOffered.name)
+                                        : String(orderItem.itemOffered.typeOf);
+                                    itemDescription = (typeof orderItem.itemOffered.description === 'string')
+                                        ? String(orderItem.itemOffered.description)
+                                        : 'no description';
                             }
                             return {
                                 type: 'box',
