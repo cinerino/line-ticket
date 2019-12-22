@@ -148,14 +148,7 @@ export async function processOrderCoin(params: {
                 accountNumber: params.toLocation.accountNumber
             }
         },
-        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id },
-        ...{
-            recipient: {
-                typeOf: cinerinoapi.factory.personType.Person,
-                id: params.user.userId,
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            }
-        }
+        purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
     });
 
     await paymentService.authorizeCreditCard({
