@@ -599,10 +599,11 @@ export async function setCustomerContact(params: {
         ? seatReservationAuthorization.result.responseBody.object.reservations
         : [];
 
-    const profile = {
+    const profile: cinerinoapi.factory.person.IProfile = {
         familyName: params.familyName,
         givenName: params.givenName,
         email: params.email,
+        name: `${params.givenName} ${params.familyName}`,
         telephone: params.telephone
     };
 
@@ -615,12 +616,7 @@ export async function setCustomerContact(params: {
 
     await placeOrderService.setProfile({
         id: params.transactionId,
-        agent: {
-            ...profile,
-            ...{
-                name: `${profile.givenName} ${profile.familyName}`
-            }
-        }
+        agent: profile
     });
 
     // 注文内容確認

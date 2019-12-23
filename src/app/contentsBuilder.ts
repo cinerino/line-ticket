@@ -23,7 +23,7 @@ export type IReservationPriceSpec =
 export function createConfirmOrderFlexBubble(params: {
     id: string;
     seller: cinerinoapi.factory.seller.IOrganization<any>;
-    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
+    profile: cinerinoapi.factory.person.IProfile;
     tmpReservations: cinerinoapi.factory.chevre.transaction.reserve.ISubReservation[];
     price: number;
 }): FlexMessage {

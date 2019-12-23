@@ -61,7 +61,7 @@ function processTransferCoin(params) {
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '残高の確認がとれました' });
         yield moneyTransferService.setProfile({
             id: moneyTransferTransaction.id,
-            agent: Object.assign({}, Object.assign(Object.assign({}, params.profile), { name: `${params.profile.givenName} ${params.profile.familyName}` }))
+            agent: Object.assign(Object.assign({}, params.profile), { name: `${params.profile.givenName} ${params.profile.familyName}` })
         });
         // 取引確定
         yield moneyTransferService.confirm({
@@ -105,9 +105,7 @@ function processOrderCoin(params) {
         });
         yield placeOrderService.setProfile({
             id: placeOrderTransaction.id,
-            agent: Object.assign(Object.assign({}, params.profile), {
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            })
+            agent: Object.assign(Object.assign({}, params.profile), { name: `${params.profile.givenName} ${params.profile.familyName}` })
         });
         yield offerService.authorizeMonetaryAmount({
             object: {

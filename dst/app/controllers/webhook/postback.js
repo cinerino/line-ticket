@@ -543,6 +543,7 @@ function setCustomerContact(params) {
             familyName: params.familyName,
             givenName: params.givenName,
             email: params.email,
+            name: `${params.givenName} ${params.familyName}`,
             telephone: params.telephone
         };
         yield placeOrderService.setCustomerContact({
@@ -553,9 +554,7 @@ function setCustomerContact(params) {
         });
         yield placeOrderService.setProfile({
             id: params.transactionId,
-            agent: Object.assign(Object.assign({}, profile), {
-                name: `${profile.givenName} ${profile.familyName}`
-            })
+            agent: profile
         });
         // 注文内容確認
         yield lineClient_1.default.pushMessage(params.user.userId, [

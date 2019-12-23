@@ -22,7 +22,7 @@ export async function processTransferCoin(params: {
         accountNumber: string;
     };
     transferMoneyInfo: ITransferMoneyInfo;
-    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
+    profile: cinerinoapi.factory.person.IProfile;
     seller: cinerinoapi.factory.seller.IOrganization<any>;
 }) {
     const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
@@ -68,7 +68,7 @@ export async function processTransferCoin(params: {
 
     await moneyTransferService.setProfile({
         id: moneyTransferTransaction.id,
-        agent: { ...{ ...params.profile, name: `${params.profile.givenName} ${params.profile.familyName}` } }
+        agent: { ...params.profile, name: `${params.profile.givenName} ${params.profile.familyName}` }
     });
 
     // 取引確定
@@ -95,7 +95,7 @@ export async function processOrderCoin(params: {
         accountNumber: string;
     };
     creditCard: cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
-    profile: cinerinoapi.factory.transaction.placeOrder.ICustomerProfile;
+    profile: cinerinoapi.factory.person.IProfile;
     seller: cinerinoapi.factory.seller.IOrganization<any>;
 }) {
     const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
@@ -126,9 +126,7 @@ export async function processOrderCoin(params: {
         id: placeOrderTransaction.id,
         agent: {
             ...params.profile,
-            ...{
-                name: `${params.profile.givenName} ${params.profile.familyName}`
-            }
+            name: `${params.profile.givenName} ${params.profile.familyName}`
         }
     });
 
