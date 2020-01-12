@@ -17,7 +17,6 @@ const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express_middleware_1 = require("@motionpicture/express-middleware");
 const http_status_1 = require("http-status");
 const qs = require("qs");
-const url_1 = require("url");
 const lineClient_1 = require("../../lineClient");
 const user_1 = require("../user");
 const LOGIN_REQUIRED = process.env.LOGIN_REQUIRED === '1';
@@ -95,10 +94,7 @@ function sendLoginButton(user) {
     return __awaiter(this, void 0, void 0, function* () {
         // tslint:disable-next-line:no-multiline-string
         let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
-        const signInUrl = new url_1.URL(user.generateAuthUrl());
-        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `signInUrl:${signInUrl}` });
         const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
-        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `cb:${cb}` });
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
         // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
         // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
@@ -134,17 +130,13 @@ function sendLoginButton(user) {
         }
         // 会員として未使用であれば会員登録ボタン表示
         if (refreshToken === undefined) {
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: '会員未登録です' });
-            const signUpUrl = new url_1.URL(signInUrl.href);
-            signUpUrl.pathname = 'signup';
-            const signUpUri = signUpUrl.href;
-            const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `signUpLiffUri:${signUpLiffUri}` });
-            // actions.push({
-            //     type: 'uri',
-            //     label: '会員登録',
-            //     uri: signUpLiffUri
-            // });
+            const signUpCb = `https://${user.host}/liff/signUp?${qs.stringify({ userId: user.userId, state: user.state })}`;
+            const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
+            actions.push({
+                type: 'uri',
+                label: '会員登録',
+                uri: signUpLiffUri
+            });
         }
         const template = {
             type: 'template',

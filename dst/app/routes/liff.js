@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * LIFFルーター
  */
 const express = require("express");
+const url_1 = require("url");
 const user_1 = require("../user");
 const liffRouter = express.Router();
 /**
@@ -37,6 +38,26 @@ liffRouter.get('/signIn', (req, res, next) => __awaiter(void 0, void 0, void 0, 
             state: req.query.state
         });
         res.redirect(user.generateAuthUrl());
+    }
+    catch (error) {
+        next(error);
+    }
+}));
+/**
+ * LIFF上でのサインアップ
+ */
+liffRouter.get('/signUp', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = new user_1.default({
+            host: req.hostname,
+            userId: req.query.userId,
+            state: req.query.state
+        });
+        const signInUrl = new url_1.URL(user.generateAuthUrl());
+        const signUpUrl = new url_1.URL(signInUrl.href);
+        signUpUrl.pathname = 'signup';
+        const signUpUri = signUpUrl.href;
+        res.redirect(signUpUri);
     }
     catch (error) {
         next(error);

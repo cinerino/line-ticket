@@ -2,6 +2,7 @@
  * LIFFルーター
  */
 import * as express from 'express';
+import { URL } from 'url';
 
 import User from '../user';
 
@@ -35,6 +36,31 @@ liffRouter.get(
             });
 
             res.redirect(user.generateAuthUrl());
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+/**
+ * LIFF上でのサインアップ
+ */
+liffRouter.get(
+    '/signUp',
+    async (req, res, next) => {
+        try {
+            const user = new User({
+                host: req.hostname,
+                userId: req.query.userId,
+                state: req.query.state
+            });
+
+            const signInUrl = new URL(user.generateAuthUrl());
+            const signUpUrl = new URL(signInUrl.href);
+            signUpUrl.pathname = 'signup';
+            const signUpUri = signUpUrl.href;
+
+            res.redirect(signUpUri);
         } catch (error) {
             next(error);
         }

@@ -8,7 +8,6 @@ import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
 import * as qs from 'qs';
-import { URL } from 'url';
 
 import LINE from '../../lineClient';
 import User from '../user';
@@ -91,12 +90,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 export async function sendLoginButton(user: User) {
     // tslint:disable-next-line:no-multiline-string
     let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
-    const signInUrl = new URL(user.generateAuthUrl());
-    await LINE.pushMessage(user.userId, { type: 'text', text: `signInUrl:${signInUrl}` });
 
     const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
-    await LINE.pushMessage(user.userId, { type: 'text', text: `cb:${cb}` });
-
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
     // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
     // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
@@ -134,19 +129,14 @@ export async function sendLoginButton(user: User) {
 
     // 会員として未使用であれば会員登録ボタン表示
     if (refreshToken === undefined) {
-        await LINE.pushMessage(user.userId, { type: 'text', text: '会員未登録です' });
+        const signUpCb = `https://${user.host}/liff/signUp?${qs.stringify({ userId: user.userId, state: user.state })}`;
+        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
 
-        const signUpUrl = new URL(signInUrl.href);
-        signUpUrl.pathname = 'signup';
-        const signUpUri = signUpUrl.href;
-        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
-        await LINE.pushMessage(user.userId, { type: 'text', text: `signUpLiffUri:${signUpLiffUri}` });
-
-        // actions.push({
-        //     type: 'uri',
-        //     label: '会員登録',
-        //     uri: signUpLiffUri
-        // });
+        actions.push({
+            type: 'uri',
+            label: '会員登録',
+            uri: signUpLiffUri
+        });
     }
 
     const template: TemplateMessage = {
