@@ -92,6 +92,8 @@ export async function sendLoginButton(user: User) {
     // tslint:disable-next-line:no-multiline-string
     let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
     const signInUrl = new URL(user.generateAuthUrl());
+    await LINE.pushMessage(user.userId, { type: 'text', text: `signInUrl:${signInUrl}` });
+
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
     const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
     const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
@@ -109,6 +111,8 @@ export async function sendLoginButton(user: User) {
             // uri: liffUri
         }
     ];
+    await LINE.pushMessage(user.userId, { type: 'text', text: `liffUri:${liffUri}` });
+    await LINE.pushMessage(user.userId, { type: 'text', text: `googleLiffUri:${googleLiffUri}` });
 
     const refreshToken = await user.getRefreshToken();
     const faces = await user.searchFaces();
@@ -129,16 +133,21 @@ export async function sendLoginButton(user: User) {
 
     // 会員として未使用であれば会員登録ボタン表示
     if (refreshToken === undefined) {
+        await LINE.pushMessage(user.userId, { type: 'text', text: '会員未登録です' });
+
         const signUpUrl = new URL(signInUrl.href);
         signUpUrl.pathname = 'signup';
         const signUpUri = signUpUrl.href;
         const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
+        await LINE.pushMessage(user.userId, { type: 'text', text: `signUpLiffUri:${signUpLiffUri}` });
+
         actions.push({
             type: 'uri',
             label: '会員登録',
             uri: signUpLiffUri
         });
     }
+
     const template: TemplateMessage = {
         type: 'template',
         altText: 'ログインボタン',
