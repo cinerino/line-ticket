@@ -97,25 +97,25 @@ function sendLoginButton(user) {
         let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
         const signInUrl = new url_1.URL(user.generateAuthUrl());
         yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `signInUrl:${signInUrl}` });
-        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
-        const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
+        const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
+        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `cb:${cb}` });
+        const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
+        // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
+        // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+        // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
         const actions = [
             {
                 type: 'uri',
                 label: 'Sign In',
                 uri: liffUri
                 // uri: liffUri
-            },
-            {
-                type: 'uri',
-                label: 'Sign In with Google',
-                uri: googleLiffUri
-                // uri: liffUri
             }
+            // {
+            //     type: 'uri',
+            //     label: 'Sign In with Google',
+            //     uri: googleLiffUri
+            // }
         ];
-        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `liffUri:${liffUri}` });
-        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `googleLiffUri:${googleLiffUri}` });
         const refreshToken = yield user.getRefreshToken();
         const faces = yield user.searchFaces();
         // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
@@ -140,11 +140,11 @@ function sendLoginButton(user) {
             const signUpUri = signUpUrl.href;
             const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
             yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `signUpLiffUri:${signUpLiffUri}` });
-            actions.push({
-                type: 'uri',
-                label: '会員登録',
-                uri: signUpLiffUri
-            });
+            // actions.push({
+            //     type: 'uri',
+            //     label: '会員登録',
+            //     uri: signUpLiffUri
+            // });
         }
         const template = {
             type: 'template',

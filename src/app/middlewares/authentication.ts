@@ -94,25 +94,26 @@ export async function sendLoginButton(user: User) {
     const signInUrl = new URL(user.generateAuthUrl());
     await LINE.pushMessage(user.userId, { type: 'text', text: `signInUrl:${signInUrl}` });
 
-    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
-    const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-    const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
+    const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
+    await LINE.pushMessage(user.userId, { type: 'text', text: `cb:${cb}` });
+
+    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
+    // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
+    // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+    // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
     const actions: any[] = [
         {
             type: 'uri',
             label: 'Sign In',
             uri: liffUri
             // uri: liffUri
-        },
-        {
-            type: 'uri',
-            label: 'Sign In with Google',
-            uri: googleLiffUri
-            // uri: liffUri
         }
+        // {
+        //     type: 'uri',
+        //     label: 'Sign In with Google',
+        //     uri: googleLiffUri
+        // }
     ];
-    await LINE.pushMessage(user.userId, { type: 'text', text: `liffUri:${liffUri}` });
-    await LINE.pushMessage(user.userId, { type: 'text', text: `googleLiffUri:${googleLiffUri}` });
 
     const refreshToken = await user.getRefreshToken();
     const faces = await user.searchFaces();
@@ -141,11 +142,11 @@ export async function sendLoginButton(user: User) {
         const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpUri })}`;
         await LINE.pushMessage(user.userId, { type: 'text', text: `signUpLiffUri:${signUpLiffUri}` });
 
-        actions.push({
-            type: 'uri',
-            label: '会員登録',
-            uri: signUpLiffUri
-        });
+        // actions.push({
+        //     type: 'uri',
+        //     label: '会員登録',
+        //     uri: signUpLiffUri
+        // });
     }
 
     const template: TemplateMessage = {

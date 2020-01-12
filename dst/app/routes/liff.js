@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * LIFFルーター
  */
 const express = require("express");
+const user_1 = require("../user");
 const liffRouter = express.Router();
 /**
  * LIFFアプリケーション初期エンドポイント
@@ -20,6 +21,22 @@ const liffRouter = express.Router();
 liffRouter.get('', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         res.redirect(req.query.cb);
+    }
+    catch (error) {
+        next(error);
+    }
+}));
+/**
+ * LIFF上でのサインイン
+ */
+liffRouter.get('/signIn', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = new user_1.default({
+            host: req.hostname,
+            userId: req.query.userId,
+            state: req.query.state
+        });
+        res.redirect(user.generateAuthUrl());
     }
     catch (error) {
         next(error);
