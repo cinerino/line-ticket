@@ -159,7 +159,8 @@ export async function showProfileMenu(params: {
 
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
+        auth: params.user.authClient,
+        project: { id: <string>process.env.PROJECT_ID }
     });
 
     let profile: cinerinoapi.factory.person.IProfile | undefined;
@@ -282,7 +283,8 @@ export async function showCreditCardMenu(params: {
 }) {
     const sellerService = new cinerinoapi.service.Seller({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
+        auth: params.user.authClient,
+        project: { id: <string>process.env.PROJECT_ID }
     });
     const searchSellersResult = await sellerService.search({ limit: 1 });
     const seller = searchSellersResult.data[0];
@@ -475,11 +477,13 @@ export async function selectWhomAskForMoney(params: {
     const LINE_ID = process.env.LINE_ID;
     const personService = new cinerinoapi.service.Person({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
+        auth: params.user.authClient,
+        project: { id: <string>process.env.PROJECT_ID }
     });
     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
         endpoint: <string>process.env.CINERINO_ENDPOINT,
-        auth: params.user.authClient
+        auth: params.user.authClient,
+        project: { id: <string>process.env.PROJECT_ID }
     });
     const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
         typeOfGood: {

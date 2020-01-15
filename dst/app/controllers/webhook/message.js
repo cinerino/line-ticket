@@ -148,7 +148,8 @@ function showProfileMenu(params) {
         }
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         let profile;
         try {
@@ -261,7 +262,8 @@ function showCreditCardMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchSellersResult = yield sellerService.search({ limit: 1 });
         const seller = searchSellersResult.data[0];
@@ -445,11 +447,13 @@ function selectWhomAskForMoney(params) {
         const LINE_ID = process.env.LINE_ID;
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
             typeOfGood: {

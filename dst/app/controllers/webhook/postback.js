@@ -30,7 +30,8 @@ function searchEventsByDate(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchScreeningEventsResult = yield eventService.search({
             typeOf: cinerinoapi.factory.chevre.eventType.ScreeningEvent,
@@ -80,7 +81,8 @@ function askScreeningEvent(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.date}のイベントを検索しています...` });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const startFrom = moment.unix(Math.max(moment(`${params.date}T00:00:00+09:00`)
             .unix(), moment()
@@ -163,19 +165,23 @@ function selectPaymentMethodType(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const paymentService = new cinerinoapi.service.Payment({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const seatReservationAuthorization = yield params.user.findSeatReservationAuthorization();
         if (seatReservationAuthorization.result === undefined) {
@@ -427,7 +433,8 @@ function selectCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchOrganizationsResult = yield sellerService.search({ limit: 1 });
         const seller = searchOrganizationsResult.data[0];
@@ -456,7 +463,8 @@ function selectCreditCard(params) {
         if ((yield params.user.getCredentials()) !== undefined) {
             const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
                 endpoint: process.env.CINERINO_ENDPOINT,
-                auth: params.user.authClient
+                auth: params.user.authClient,
+                project: { id: process.env.PROJECT_ID }
             });
             const creditCards = yield personOwnershipInfoService.searchCreditCards({});
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
@@ -524,11 +532,13 @@ function setCustomerContact(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const transaction = yield params.user.findTransaction();
         const seller = yield sellerService.findById({ id: transaction.seller.id });
@@ -574,7 +584,8 @@ function confirmOrder(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文を確定しています...' });
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const { order } = yield placeOrderService.confirm({
             id: params.transactionId,
@@ -618,7 +629,8 @@ function cancelOrder(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '注文取引をキャンセルしています...' });
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         yield placeOrderService.cancel({
             id: params.transactionId
@@ -710,15 +722,18 @@ function confirmTransferMoney(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${transferMoneyInfo.name}に${params.price}円の振込を実行します...` });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
             typeOfGood: {
@@ -820,15 +835,18 @@ function depositCoinByCreditCard(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const creditCards = yield personOwnershipInfoService.searchCreditCards({});
         const creditCard = creditCards.shift();
@@ -874,7 +892,8 @@ function searchCreditCards(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを検索しています...' });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const creditCards = yield personOwnershipInfoService.searchCreditCards({});
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードがみつかりました` });
@@ -900,7 +919,8 @@ function addCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const creditCard = yield personOwnershipInfoService.addCreditCard({ creditCard: { token: params.token } });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `クレジットカード ${creditCard.cardNo} が追加されました` });
@@ -911,7 +931,8 @@ function deleteCreditCard(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         yield personOwnershipInfoService.deleteCreditCard({ cardSeq: params.cardSeq });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードが削除されました' });
@@ -925,7 +946,8 @@ function openAccount(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const accountOwnershipInfo = yield personOwnershipInfoService.openAccount({
             name: params.name,
@@ -945,7 +967,8 @@ function closeAccount(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         yield personOwnershipInfoService.closeAccount({ accountType: params.accountType, accountNumber: params.accountNumber });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
@@ -956,7 +979,8 @@ function searchCoinAccounts(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
             typeOfGood: {
@@ -992,7 +1016,8 @@ function searchAccountMoneyTransferActions(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchAccountsResult = yield personOwnershipInfoService.search({
             typeOfGood: {
@@ -1052,7 +1077,8 @@ function searchScreeningEventReservations(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'ここ一カ月の座席予約を検索しています...' });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchScreeningEventReservationsResult = yield personOwnershipInfoService.search({
             typeOfGood: {
@@ -1106,15 +1132,18 @@ function selectSeatOffers(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const sellerService = new cinerinoapi.service.Seller({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const event = yield eventService.findById({ id: params.eventId });
         const reservedSeatsAvailable = !(event.offers !== undefined
@@ -1337,11 +1366,13 @@ function authorizeOwnershipInfo(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const { code } = yield personOwnershipInfoService.authorize({
             ownershipInfoId: params.id
@@ -1837,7 +1868,8 @@ function searchOrders(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `ここ一カ月の注文を検索しています...` });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const searchOrdersResult = yield personService.searchOrders({
             orderDateFrom: moment(now)
@@ -1881,7 +1913,8 @@ function findOrderByConfirmationNumber(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.confirmationNumber}で注文を検索しています...` });
         const orderService = new cinerinoapi.service.Order({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const order = yield orderService.findByConfirmationNumber({
             confirmationNumber: params.confirmationNumber,
@@ -1936,11 +1969,13 @@ function authorizeOwnershipInfosByOrder(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.orderNumber}に対して発券処理を実行します...` });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const orderService = new cinerinoapi.service.Order({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const order = yield orderService.authorizeOwnershipInfos({
             orderNumber: params.orderNumber,
@@ -2212,15 +2247,18 @@ function findScreeningEventReservationById(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
         const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const reservationService = new cinerinoapi.service.Reservation({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         try {
             const { token } = yield ownershipInfoService.getToken({ code: params.code });
@@ -2466,7 +2504,8 @@ function getProfile(params) {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを検索しています...` });
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const profile = yield personService.getProfile({});
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'プロフィールが見つかりました' });
@@ -2490,7 +2529,8 @@ function updateProfile(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const personService = new cinerinoapi.service.Person({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `プロフィールを更新しています...` });
         yield personService.updateProfile(Object.assign({}, params.profile));

@@ -72,7 +72,8 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
         });
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: user.authClient
+            auth: user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const event = yield eventService.findById({ id: req.query.eventId });
         const reservedSeatsAvailable = !(event.offers !== undefined

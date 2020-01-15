@@ -23,11 +23,12 @@ function processTransferCoin(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         // 通貨転送取引開始
         const moneyTransferTransaction = yield moneyTransferService.start({
-            project: { typeOf: 'Project', id: params.seller.project.id },
+            project: { typeOf: cinerinoapi.factory.organizationType.Project, id: params.seller.project.id },
             expires: moment()
                 .add(1, 'minutes')
                 .toDate(),
@@ -83,15 +84,18 @@ function processOrderCoin(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const offerService = new cinerinoapi.service.Offer({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         const paymentService = new cinerinoapi.service.Payment({
             endpoint: process.env.CINERINO_ENDPOINT,
-            auth: params.user.authClient
+            auth: params.user.authClient,
+            project: { id: process.env.PROJECT_ID }
         });
         // 入金取引開始
         const placeOrderTransaction = yield placeOrderService.start({
