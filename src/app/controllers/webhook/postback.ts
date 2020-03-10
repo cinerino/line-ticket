@@ -1152,14 +1152,14 @@ export async function searchAccountMoneyTransferActions(params: {
         accountNumber: params.accountNumber
     });
     const transferActions = searchActions.data;
-    if (searchActions.totalCount === 0) {
+    if (searchActions.data.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
 
         return;
     }
     await LINE.pushMessage(params.user.userId, {
         type: 'text',
-        text: `${searchActions.totalCount}件の取引履歴が見つかりました`
+        text: '取引履歴が見つかりました'
     });
 
     if (transferActions.length > 0) {
@@ -1211,14 +1211,13 @@ export async function searchScreeningEventReservations(params: {
             }
         });
     const ownershipInfos = searchScreeningEventReservationsResult.data;
-    debug(searchScreeningEventReservationsResult.totalCount, 'ownershipInfos found.');
     // 未来の予約
-    if (searchScreeningEventReservationsResult.totalCount === 0) {
+    if (searchScreeningEventReservationsResult.data.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
     } else {
         await LINE.pushMessage(params.user.userId, {
             type: 'text',
-            text: `${searchScreeningEventReservationsResult.totalCount}件の座席予約が見つかりました`
+            text: '座席予約が見つかりました'
         });
 
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `直近の${ownershipInfos.length}件は以下の通りです` });
@@ -1590,7 +1589,7 @@ export async function authorizeOwnershipInfo(params: {
                                 contents: [
                                     {
                                         type: 'text',
-                                        text: event.name.ja,
+                                        text: String(event.name.ja),
                                         wrap: true,
                                         weight: 'bold',
                                         gravity: 'center',
@@ -1639,7 +1638,8 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                                        // tslint:disable-next-line:max-line-length
+                                                        text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -1685,7 +1685,7 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                        text: String(itemOffered.reservedTicket.ticketType.name.ja),
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2049,10 +2049,10 @@ export async function searchOrders(params: {
         }
     });
     const orders = searchOrdersResult.data;
-    if (searchOrdersResult.totalCount === 0) {
+    if (searchOrdersResult.data.length === 0) {
         await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
     } else {
-        await LINE.pushMessage(params.user.userId, { type: 'text', text: `${searchOrdersResult.totalCount}件の注文が見つかりました` });
+        await LINE.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりました' });
         await LINE.pushMessage(params.user.userId, { type: 'text', text: `直近の${orders.length}件は以下の通りです` });
         const contents: FlexBubble[] = orders.map<FlexBubble>((order) => {
             return order2flexBubble({ order });
@@ -2168,240 +2168,242 @@ export async function authorizeOwnershipInfosByOrder(params: {
         ? event.workPerformed.thumbnailUrl
         // tslint:disable-next-line:max-line-length
         : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-    // tslint:disable-next-line:max-func-body-length
-    const bubbles: FlexBubble[] = reservations.map<FlexBubble>((r) => {
-        return {
-            type: 'bubble',
-            hero: {
-                type: 'image',
-                url: thumbnailImageUrl,
-                size: 'full',
-                aspectRatio: '20:13',
-                aspectMode: 'cover',
-                action: {
-                    type: 'uri',
-                    label: 'event',
-                    // tslint:disable-next-line:no-http-string
-                    uri: 'http://linecorp.com/'
-                }
-            },
-            body: {
-                type: 'box',
-                layout: 'vertical',
-                spacing: 'md',
-                contents: [
-                    {
-                        type: 'text',
-                        text: event.name.ja,
-                        wrap: true,
-                        weight: 'bold',
-                        gravity: 'center',
-                        size: 'xl'
-                    },
-                    {
-                        type: 'box',
-                        layout: 'vertical',
-                        margin: 'lg',
-                        spacing: 'sm',
-                        contents: [
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '日時',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: moment(event.startDate)
-                                            .format('llll'),
-                                        wrap: true,
-                                        size: 'sm',
-                                        color: '#666666',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '場所',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '座席',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: (r.reservedTicket.ticketedSeat !== undefined)
-                                            ? r.reservedTicket.ticketedSeat.seatNumber
-                                            : '座席なし',
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '券種',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: r.reservedTicket.ticketType.name.ja,
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '発行者',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: (r.reservedTicket.issuedBy !== undefined)
-                                            ? r.reservedTicket.issuedBy.name
-                                            : 'No Issued By',
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '予約者',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
-                                            ? r.reservedTicket.underName.name
-                                            : 'No Under Name',
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'baseline',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: 'Status',
-                                        color: '#aaaaaa',
-                                        size: 'sm',
-                                        flex: 1
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: String(r.reservationStatus),
-                                        wrap: true,
-                                        color: '#666666',
-                                        size: 'sm',
-                                        flex: 4
-                                    }
-                                ]
-                            },
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                margin: 'xxl',
-                                contents: [
-                                    {
-                                        type: 'spacer',
-                                        size: 'md'
-                                    },
-                                    {
-                                        type: 'image',
-                                        // tslint:disable-next-line:max-line-length
-                                        url: format(
-                                            '%s%s',
-                                            `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=`,
-                                            (r.reservedTicket !== undefined) ? r.reservedTicket.ticketToken : 'notickettoken'
-                                        ),
-                                        aspectMode: 'cover',
-                                        size: 'xl'
-                                    },
-                                    {
-                                        type: 'text',
-                                        // tslint:disable-next-line:max-line-length
-                                        text: 'You can enter the theater by using this code instead of a ticket',
-                                        color: '#aaaaaa',
-                                        wrap: true,
-                                        margin: 'xxl',
-                                        size: 'xs'
-                                    }
-                                ]
-                            }
-                        ]
+    const bubbles: FlexBubble[] = reservations.map(
+        // tslint:disable-next-line:max-func-body-length
+        (r) => {
+            return {
+                type: 'bubble',
+                hero: {
+                    type: 'image',
+                    url: thumbnailImageUrl,
+                    size: 'full',
+                    aspectRatio: '20:13',
+                    aspectMode: 'cover',
+                    action: {
+                        type: 'uri',
+                        label: 'event',
+                        // tslint:disable-next-line:no-http-string
+                        uri: 'http://linecorp.com/'
                     }
-                ]
-            }
-        };
-    });
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'md',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: String(event.name.ja),
+                            wrap: true,
+                            weight: 'bold',
+                            gravity: 'center',
+                            size: 'xl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'lg',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '日時',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: moment(event.startDate)
+                                                .format('llll'),
+                                            wrap: true,
+                                            size: 'sm',
+                                            color: '#666666',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '場所',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '座席',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket.ticketedSeat !== undefined)
+                                                ? r.reservedTicket.ticketedSeat.seatNumber
+                                                : '座席なし',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '券種',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: String(r.reservedTicket.ticketType.name.ja),
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '発行者',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket.issuedBy !== undefined)
+                                                ? r.reservedTicket.issuedBy.name
+                                                : 'No Issued By',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '予約者',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
+                                                ? r.reservedTicket.underName.name
+                                                : 'No Under Name',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'Status',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: String(r.reservationStatus),
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'xxl',
+                                    contents: [
+                                        {
+                                            type: 'spacer',
+                                            size: 'md'
+                                        },
+                                        {
+                                            type: 'image',
+                                            // tslint:disable-next-line:max-line-length
+                                            url: format(
+                                                '%s%s',
+                                                `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=`,
+                                                (r.reservedTicket !== undefined) ? r.reservedTicket.ticketToken : 'notickettoken'
+                                            ),
+                                            aspectMode: 'cover',
+                                            size: 'xl'
+                                        },
+                                        {
+                                            type: 'text',
+                                            // tslint:disable-next-line:max-line-length
+                                            text: 'You can enter the theater by using this code instead of a ticket',
+                                            color: '#aaaaaa',
+                                            wrap: true,
+                                            margin: 'xxl',
+                                            size: 'xs'
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            };
+        }
+    );
     const flex: FlexMessage = {
         type: 'flex',
         altText: 'This is a Flex Message',
@@ -2480,7 +2482,7 @@ export async function findScreeningEventReservationById(params: {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: event.name.ja,
+                                    text: String(event.name.ja),
                                     wrap: true,
                                     weight: 'bold',
                                     gravity: 'center',
@@ -2529,7 +2531,7 @@ export async function findScreeningEventReservationById(params: {
                                                 },
                                                 {
                                                     type: 'text',
-                                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                                    text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
                                                     wrap: true,
                                                     color: '#666666',
                                                     size: 'sm',
@@ -2577,7 +2579,7 @@ export async function findScreeningEventReservationById(params: {
                                                 {
                                                     type: 'text',
                                                     text: (reservation.reservedTicket !== undefined)
-                                                        ? reservation.reservedTicket.ticketType.name.ja
+                                                        ? String(reservation.reservedTicket.ticketType.name.ja)
                                                         : 'No reserved ticket',
                                                     wrap: true,
                                                     color: '#666666',

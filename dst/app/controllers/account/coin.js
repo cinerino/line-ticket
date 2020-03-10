@@ -113,7 +113,8 @@ function processOrderCoin(params) {
         });
         yield offerService.authorizeMonetaryAmount({
             object: {
-                typeOf: 'Offer',
+                project: { typeOf: 'Project', id: placeOrderTransaction.project.id },
+                typeOf: cinerinoapi.factory.chevre.offerType.Offer,
                 itemOffered: {
                     typeOf: 'MonetaryAmount',
                     value: Number(params.amount),

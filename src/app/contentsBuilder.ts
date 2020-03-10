@@ -346,7 +346,7 @@ export function screeningEventSeries2flexBubble(params: {
         contents: [
             {
                 type: 'text',
-                text: event.name.ja,
+                text: String(event.name.ja),
                 wrap: true,
                 weight: 'bold',
                 gravity: 'center',
@@ -372,7 +372,7 @@ export function screeningEventSeries2flexBubble(params: {
                             },
                             {
                                 type: 'text',
-                                text: event.location.name.ja,
+                                text: String((<any>event.location.name).ja),
                                 wrap: true,
                                 color: '#666666',
                                 size: 'sm',
@@ -562,7 +562,7 @@ export function screeningEvent2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: event.location.name.ja,
+                                    text: String((<any>event.location.name).ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
@@ -1659,7 +1659,7 @@ export function reservation2flexBubble(params: {
             contents: [
                 {
                     type: 'text',
-                    text: event.name.ja,
+                    text: String(event.name.ja),
                     wrap: true,
                     weight: 'bold',
                     gravity: 'center',
@@ -1708,7 +1708,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
+                                    text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
@@ -1754,7 +1754,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: itemOffered.reservedTicket.ticketType.name.ja,
+                                    text: String(itemOffered.reservedTicket.ticketType.name.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',

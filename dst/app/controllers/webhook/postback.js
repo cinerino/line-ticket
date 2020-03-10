@@ -1041,13 +1041,13 @@ function searchAccountMoneyTransferActions(params) {
             accountNumber: params.accountNumber
         });
         const transferActions = searchActions.data;
-        if (searchActions.totalCount === 0) {
+        if (searchActions.data.length === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: 'まだ取引履歴はありません' });
             return;
         }
         yield lineClient_1.default.pushMessage(params.user.userId, {
             type: 'text',
-            text: `${searchActions.totalCount}件の取引履歴が見つかりました`
+            text: '取引履歴が見つかりました'
         });
         if (transferActions.length > 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `直近の${transferActions.length}件は以下の通りです` });
@@ -1095,15 +1095,14 @@ function searchScreeningEventReservations(params) {
             }
         });
         const ownershipInfos = searchScreeningEventReservationsResult.data;
-        debug(searchScreeningEventReservationsResult.totalCount, 'ownershipInfos found.');
         // 未来の予約
-        if (searchScreeningEventReservationsResult.totalCount === 0) {
+        if (searchScreeningEventReservationsResult.data.length === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
         }
         else {
             yield lineClient_1.default.pushMessage(params.user.userId, {
                 type: 'text',
-                text: `${searchScreeningEventReservationsResult.totalCount}件の座席予約が見つかりました`
+                text: '座席予約が見つかりました'
             });
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `直近の${ownershipInfos.length}件は以下の通りです` });
             const flex = {
@@ -1429,7 +1428,7 @@ function authorizeOwnershipInfo(params) {
                                     contents: [
                                         {
                                             type: 'text',
-                                            text: event.name.ja,
+                                            text: String(event.name.ja),
                                             wrap: true,
                                             weight: 'bold',
                                             gravity: 'center',
@@ -1478,6 +1477,7 @@ function authorizeOwnershipInfo(params) {
                                                         },
                                                         {
                                                             type: 'text',
+                                                            // tslint:disable-next-line:max-line-length
                                                             text: `${event.superEvent.location.name.ja} ${event.location.name.ja}`,
                                                             wrap: true,
                                                             color: '#666666',
@@ -1524,7 +1524,7 @@ function authorizeOwnershipInfo(params) {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: itemOffered.reservedTicket.ticketType.name.ja,
+                                                            text: String(itemOffered.reservedTicket.ticketType.name.ja),
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -1883,11 +1883,11 @@ function searchOrders(params) {
             }
         });
         const orders = searchOrdersResult.data;
-        if (searchOrdersResult.totalCount === 0) {
+        if (searchOrdersResult.data.length === 0) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
         }
         else {
-            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `${searchOrdersResult.totalCount}件の注文が見つかりました` });
+            yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '注文が見つかりました' });
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `直近の${orders.length}件は以下の通りです` });
             const contents = orders.map((order) => {
                 return contentsBuilder_1.order2flexBubble({ order });
@@ -1996,8 +1996,9 @@ function authorizeOwnershipInfosByOrder(params) {
             ? event.workPerformed.thumbnailUrl
             // tslint:disable-next-line:max-line-length
             : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+        const bubbles = reservations.map(
         // tslint:disable-next-line:max-func-body-length
-        const bubbles = reservations.map((r) => {
+        (r) => {
             return {
                 type: 'bubble',
                 hero: {
@@ -2020,7 +2021,7 @@ function authorizeOwnershipInfosByOrder(params) {
                     contents: [
                         {
                             type: 'text',
-                            text: event.name.ja,
+                            text: String(event.name.ja),
                             wrap: true,
                             weight: 'bold',
                             gravity: 'center',
@@ -2115,7 +2116,7 @@ function authorizeOwnershipInfosByOrder(params) {
                                         },
                                         {
                                             type: 'text',
-                                            text: r.reservedTicket.ticketType.name.ja,
+                                            text: String(r.reservedTicket.ticketType.name.ja),
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -2302,7 +2303,7 @@ function findScreeningEventReservationById(params) {
                                 contents: [
                                     {
                                         type: 'text',
-                                        text: event.name.ja,
+                                        text: String(event.name.ja),
                                         wrap: true,
                                         weight: 'bold',
                                         gravity: 'center',
@@ -2399,7 +2400,7 @@ function findScreeningEventReservationById(params) {
                                                     {
                                                         type: 'text',
                                                         text: (reservation.reservedTicket !== undefined)
-                                                            ? reservation.reservedTicket.ticketType.name.ja
+                                                            ? String(reservation.reservedTicket.ticketType.name.ja)
                                                             : 'No reserved ticket',
                                                         wrap: true,
                                                         color: '#666666',

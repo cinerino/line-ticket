@@ -319,7 +319,7 @@ function screeningEventSeries2flexBubble(params) {
         contents: [
             {
                 type: 'text',
-                text: event.name.ja,
+                text: String(event.name.ja),
                 wrap: true,
                 weight: 'bold',
                 gravity: 'center',
@@ -345,7 +345,7 @@ function screeningEventSeries2flexBubble(params) {
                             },
                             {
                                 type: 'text',
-                                text: event.location.name.ja,
+                                text: String(event.location.name.ja),
                                 wrap: true,
                                 color: '#666666',
                                 size: 'sm',
@@ -528,7 +528,7 @@ function screeningEvent2flexBubble(params) {
                                 },
                                 {
                                     type: 'text',
-                                    text: event.location.name.ja,
+                                    text: String(event.location.name.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
@@ -1586,7 +1586,7 @@ function reservation2flexBubble(params) {
             contents: [
                 {
                     type: 'text',
-                    text: event.name.ja,
+                    text: String(event.name.ja),
                     wrap: true,
                     weight: 'bold',
                     gravity: 'center',
@@ -1681,7 +1681,7 @@ function reservation2flexBubble(params) {
                                 },
                                 {
                                     type: 'text',
-                                    text: itemOffered.reservedTicket.ticketType.name.ja,
+                                    text: String(itemOffered.reservedTicket.ticketType.name.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
