@@ -71,6 +71,7 @@ export async function message(event: line.MessageEvent, req: Request) {
                         break;
                     case /^クレジットカード$/.test(messageText):
                         await MessageController.showCreditCardMenu({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
@@ -108,6 +109,7 @@ export async function message(event: line.MessageEvent, req: Request) {
                     // おこづかいをもらう
                     case /^おこづかい$/.test(messageText):
                         await MessageController.selectWhomAskForMoney({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
@@ -184,6 +186,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
                     date = <string>data.date;
                 }
                 await PostbackController.searchEventsByDate({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     date: date
@@ -191,6 +194,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
                 break;
             case 'askScreeningEvent':
                 await PostbackController.askScreeningEvent({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     screeningEventSeriesId: <string>data.screeningEventSeriesId,
@@ -208,6 +212,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
                 break;
             case 'selectCreditCard':
                 await PostbackController.selectCreditCard({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     transactionId: <string>data.transactionId
@@ -228,6 +233,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 購入者情報決定
             case 'setCustomerContact':
                 await PostbackController.setCustomerContact({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     transactionId: <string>data.transactionId,
@@ -240,6 +246,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 注文確定
             case 'confirmOrder':
                 await PostbackController.confirmOrder({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     transactionId: <string>data.transactionId
@@ -248,6 +255,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 注文確定
             case 'cancelOrder':
                 await PostbackController.cancelOrder({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     transactionId: <string>data.transactionId
@@ -264,6 +272,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // おこづかい承認確定
             case 'confirmTransferMoney':
                 await PostbackController.confirmTransferMoney({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     token: <string>data.token,
@@ -278,6 +287,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // クレジットカード検索
             case 'searchCreditCards':
                 await PostbackController.searchCreditCards({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user
                 });
@@ -285,6 +295,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // クレジットカード追加
             case 'addCreditCard':
                 await PostbackController.addCreditCard({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     token: <string>data.token
@@ -293,6 +304,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // クレジットカード削除
             case 'deleteCreditCard':
                 await PostbackController.deleteCreditCard({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     cardSeq: <string>data.cardSeq
@@ -301,6 +313,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 口座開設
             case 'openAccount':
                 await PostbackController.openAccount({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     name: data.name,
@@ -310,6 +323,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 口座解約
             case 'closeAccount':
                 await PostbackController.closeAccount({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     accountType: data.accountType,
@@ -319,12 +333,14 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // コイン口座検索
             case 'searchCoinAccounts':
                 await PostbackController.searchCoinAccounts({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user
                 });
                 break;
             case 'searchAccountMoneyTransferActions':
                 await PostbackController.searchAccountMoneyTransferActions({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     accountType: data.accountType,
@@ -343,6 +359,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 口座入金金額選択
             case 'depositCoinByCreditCard':
                 await PostbackController.depositCoinByCreditCard({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     amount: Number(data.amount),
@@ -357,6 +374,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
                 break;
             case 'searchScreeningEventReservations':
                 await PostbackController.searchScreeningEventReservations({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user
                 });
@@ -368,6 +386,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
                 const numSeats = (typeof data.numSeats === 'string') ? Number(<string>data.numSeats) : undefined;
 
                 await PostbackController.selectSeatOffers({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     eventId: <string>data.eventId,
@@ -381,6 +400,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 所有権コード発行
             case 'authorizeOwnershipInfo':
                 await PostbackController.authorizeOwnershipInfo({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     goodType: data.goodType,
@@ -390,6 +410,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 注文照会
             case 'findOrderByConfirmationNumber':
                 await PostbackController.findOrderByConfirmationNumber({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     confirmationNumber: Number(data.confirmationNumber),
@@ -399,6 +420,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 注文に対して発券
             case 'authorizeOwnershipInfosByOrder':
                 await PostbackController.authorizeOwnershipInfosByOrder({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     orderNumber: data.orderNumber,
@@ -408,6 +430,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 注文検索
             case 'searchOrders':
                 await PostbackController.searchOrders({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user
                 });
@@ -415,6 +438,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // 座席予約コード読み込み
             case 'findScreeningEventReservationById':
                 await PostbackController.findScreeningEventReservationById({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     code: <string>data.code
@@ -423,6 +447,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // プロフィール検索
             case 'getProfile':
                 await PostbackController.getProfile({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user
                 });
@@ -430,6 +455,7 @@ export async function postback(event: line.PostbackEvent, req: Request) {
             // プロフィール更新
             case 'updateProfile':
                 await PostbackController.updateProfile({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
                     user: req.user,
                     profile: data.profile

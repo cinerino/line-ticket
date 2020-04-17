@@ -22,7 +22,7 @@ const debug = createDebug('cinerino-line-ticket:controllers');
  */
 // tslint:disable-next-line:max-func-body-length
 function message(event, req) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         const user = req.user;
         // const userId = <string>event.source.userId;
@@ -74,20 +74,21 @@ function message(event, req) {
                             break;
                         case /^クレジットカード$/.test(messageText):
                             yield MessageController.showCreditCardMenu({
+                                project: { id: (_c = req.project) === null || _c === void 0 ? void 0 : _c.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
                             break;
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu({
-                                project: { id: (_c = req.project) === null || _c === void 0 ? void 0 : _c.id },
+                                project: { id: (_d = req.project) === null || _d === void 0 ? void 0 : _d.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
                             break;
                         case /^コード$/.test(messageText):
                             yield MessageController.showCodeMenu({
-                                project: { id: (_d = req.project) === null || _d === void 0 ? void 0 : _d.id },
+                                project: { id: (_e = req.project) === null || _e === void 0 ? void 0 : _e.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
@@ -111,6 +112,7 @@ function message(event, req) {
                         // おこづかいをもらう
                         case /^おこづかい$/.test(messageText):
                             yield MessageController.selectWhomAskForMoney({
+                                project: { id: (_f = req.project) === null || _f === void 0 ? void 0 : _f.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
@@ -170,7 +172,7 @@ exports.message = message;
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
 function postback(event, req) {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1;
     return __awaiter(this, void 0, void 0, function* () {
         const data = qs.parse(event.postback.data, {
             arrayLimit: 1000,
@@ -191,6 +193,7 @@ function postback(event, req) {
                         date = data.date;
                     }
                     yield PostbackController.searchEventsByDate({
+                        project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         date: date
@@ -198,6 +201,7 @@ function postback(event, req) {
                     break;
                 case 'askScreeningEvent':
                     yield PostbackController.askScreeningEvent({
+                        project: { id: (_b = req.project) === null || _b === void 0 ? void 0 : _b.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         screeningEventSeriesId: data.screeningEventSeriesId,
@@ -207,7 +211,7 @@ function postback(event, req) {
                 // 決済コードをたずねる
                 case 'askPaymentCode':
                     yield PostbackController.askPaymentCode({
-                        project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id },
+                        project: { id: (_c = req.project) === null || _c === void 0 ? void 0 : _c.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         transactionId: data.transactionId
@@ -215,6 +219,7 @@ function postback(event, req) {
                     break;
                 case 'selectCreditCard':
                     yield PostbackController.selectCreditCard({
+                        project: { id: (_d = req.project) === null || _d === void 0 ? void 0 : _d.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         transactionId: data.transactionId
@@ -223,7 +228,7 @@ function postback(event, req) {
                 // 決済方法選択
                 case 'selectPaymentMethodType':
                     yield PostbackController.selectPaymentMethodType({
-                        project: { id: (_b = req.project) === null || _b === void 0 ? void 0 : _b.id },
+                        project: { id: (_e = req.project) === null || _e === void 0 ? void 0 : _e.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         paymentMethodType: data.paymentMethod,
@@ -235,6 +240,7 @@ function postback(event, req) {
                 // 購入者情報決定
                 case 'setCustomerContact':
                     yield PostbackController.setCustomerContact({
+                        project: { id: (_f = req.project) === null || _f === void 0 ? void 0 : _f.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         transactionId: data.transactionId,
@@ -247,6 +253,7 @@ function postback(event, req) {
                 // 注文確定
                 case 'confirmOrder':
                     yield PostbackController.confirmOrder({
+                        project: { id: (_g = req.project) === null || _g === void 0 ? void 0 : _g.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         transactionId: data.transactionId
@@ -255,6 +262,7 @@ function postback(event, req) {
                 // 注文確定
                 case 'cancelOrder':
                     yield PostbackController.cancelOrder({
+                        project: { id: (_h = req.project) === null || _h === void 0 ? void 0 : _h.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         transactionId: data.transactionId
@@ -271,6 +279,7 @@ function postback(event, req) {
                 // おこづかい承認確定
                 case 'confirmTransferMoney':
                     yield PostbackController.confirmTransferMoney({
+                        project: { id: (_j = req.project) === null || _j === void 0 ? void 0 : _j.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         token: data.token,
@@ -285,6 +294,7 @@ function postback(event, req) {
                 // クレジットカード検索
                 case 'searchCreditCards':
                     yield PostbackController.searchCreditCards({
+                        project: { id: (_k = req.project) === null || _k === void 0 ? void 0 : _k.id },
                         replyToken: event.replyToken,
                         user: req.user
                     });
@@ -292,6 +302,7 @@ function postback(event, req) {
                 // クレジットカード追加
                 case 'addCreditCard':
                     yield PostbackController.addCreditCard({
+                        project: { id: (_l = req.project) === null || _l === void 0 ? void 0 : _l.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         token: data.token
@@ -300,6 +311,7 @@ function postback(event, req) {
                 // クレジットカード削除
                 case 'deleteCreditCard':
                     yield PostbackController.deleteCreditCard({
+                        project: { id: (_m = req.project) === null || _m === void 0 ? void 0 : _m.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         cardSeq: data.cardSeq
@@ -308,6 +320,7 @@ function postback(event, req) {
                 // 口座開設
                 case 'openAccount':
                     yield PostbackController.openAccount({
+                        project: { id: (_o = req.project) === null || _o === void 0 ? void 0 : _o.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         name: data.name,
@@ -317,6 +330,7 @@ function postback(event, req) {
                 // 口座解約
                 case 'closeAccount':
                     yield PostbackController.closeAccount({
+                        project: { id: (_p = req.project) === null || _p === void 0 ? void 0 : _p.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         accountType: data.accountType,
@@ -326,12 +340,14 @@ function postback(event, req) {
                 // コイン口座検索
                 case 'searchCoinAccounts':
                     yield PostbackController.searchCoinAccounts({
+                        project: { id: (_q = req.project) === null || _q === void 0 ? void 0 : _q.id },
                         replyToken: event.replyToken,
                         user: req.user
                     });
                     break;
                 case 'searchAccountMoneyTransferActions':
                     yield PostbackController.searchAccountMoneyTransferActions({
+                        project: { id: (_r = req.project) === null || _r === void 0 ? void 0 : _r.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         accountType: data.accountType,
@@ -350,6 +366,7 @@ function postback(event, req) {
                 // 口座入金金額選択
                 case 'depositCoinByCreditCard':
                     yield PostbackController.depositCoinByCreditCard({
+                        project: { id: (_s = req.project) === null || _s === void 0 ? void 0 : _s.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         amount: Number(data.amount),
@@ -364,6 +381,7 @@ function postback(event, req) {
                     break;
                 case 'searchScreeningEventReservations':
                     yield PostbackController.searchScreeningEventReservations({
+                        project: { id: (_t = req.project) === null || _t === void 0 ? void 0 : _t.id },
                         replyToken: event.replyToken,
                         user: req.user
                     });
@@ -373,6 +391,7 @@ function postback(event, req) {
                     const seatNumbers = (typeof data.seatNumbers === 'string') ? data.seatNumbers.split(',') : undefined;
                     const numSeats = (typeof data.numSeats === 'string') ? Number(data.numSeats) : undefined;
                     yield PostbackController.selectSeatOffers({
+                        project: { id: (_u = req.project) === null || _u === void 0 ? void 0 : _u.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         eventId: data.eventId,
@@ -384,6 +403,7 @@ function postback(event, req) {
                 // 所有権コード発行
                 case 'authorizeOwnershipInfo':
                     yield PostbackController.authorizeOwnershipInfo({
+                        project: { id: (_v = req.project) === null || _v === void 0 ? void 0 : _v.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         goodType: data.goodType,
@@ -393,6 +413,7 @@ function postback(event, req) {
                 // 注文照会
                 case 'findOrderByConfirmationNumber':
                     yield PostbackController.findOrderByConfirmationNumber({
+                        project: { id: (_w = req.project) === null || _w === void 0 ? void 0 : _w.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         confirmationNumber: Number(data.confirmationNumber),
@@ -402,6 +423,7 @@ function postback(event, req) {
                 // 注文に対して発券
                 case 'authorizeOwnershipInfosByOrder':
                     yield PostbackController.authorizeOwnershipInfosByOrder({
+                        project: { id: (_x = req.project) === null || _x === void 0 ? void 0 : _x.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         orderNumber: data.orderNumber,
@@ -411,6 +433,7 @@ function postback(event, req) {
                 // 注文検索
                 case 'searchOrders':
                     yield PostbackController.searchOrders({
+                        project: { id: (_y = req.project) === null || _y === void 0 ? void 0 : _y.id },
                         replyToken: event.replyToken,
                         user: req.user
                     });
@@ -418,6 +441,7 @@ function postback(event, req) {
                 // 座席予約コード読み込み
                 case 'findScreeningEventReservationById':
                     yield PostbackController.findScreeningEventReservationById({
+                        project: { id: (_z = req.project) === null || _z === void 0 ? void 0 : _z.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         code: data.code
@@ -426,6 +450,7 @@ function postback(event, req) {
                 // プロフィール検索
                 case 'getProfile':
                     yield PostbackController.getProfile({
+                        project: { id: (_0 = req.project) === null || _0 === void 0 ? void 0 : _0.id },
                         replyToken: event.replyToken,
                         user: req.user
                     });
@@ -433,6 +458,7 @@ function postback(event, req) {
                 // プロフィール更新
                 case 'updateProfile':
                     yield PostbackController.updateProfile({
+                        project: { id: (_1 = req.project) === null || _1 === void 0 ? void 0 : _1.id },
                         replyToken: event.replyToken,
                         user: req.user,
                         profile: data.profile

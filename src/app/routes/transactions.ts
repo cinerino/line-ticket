@@ -76,7 +76,7 @@ transactionsRouter.get(
             const eventService = new cinerinoapi.service.Event({
                 endpoint: <string>process.env.CINERINO_ENDPOINT,
                 auth: user.authClient,
-                project: { id: <string>process.env.PROJECT_ID }
+                project: { id: req.project?.id }
             });
 
             const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({ id: req.query.eventId });
