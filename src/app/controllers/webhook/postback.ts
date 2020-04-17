@@ -1328,12 +1328,14 @@ export async function selectSeatOffers(params: {
                 );
                 const priceStr = (unitPriceSpec !== undefined) ? `${unitPriceSpec.price} ${unitPriceSpec.priceCurrency}` : '';
 
+                const name = (typeof o.name === 'string') ? o.name : o.name?.ja;
+
                 return {
                     type: 'action',
                     imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
                     action: {
                         type: 'postback',
-                        label: `${String(o.name.ja)
+                        label: `${String(name)
                             // tslint:disable-next-line:no-magic-numbers
                             .slice(0, 8)} ${priceStr}`,
                         data: qs.stringify({
@@ -1366,7 +1368,7 @@ export async function selectSeatOffers(params: {
         return;
     }
 
-    await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
+    await LINE.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.identifier} を選択しました` });
 
     const TRANSACTION_EXPIRES_IN_MINUTES = 5;
     await LINE.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
@@ -1397,7 +1399,7 @@ export async function selectSeatOffers(params: {
                     event: { id: event.id },
                     acceptedOffer: params.seatNumbers.map((seatNumber) => {
                         return {
-                            id: selectedTicketOffer.id,
+                            id: <string>selectedTicketOffer.id,
                             ticketedSeat: {
                                 typeOf: cinerinoapi.factory.chevre.placeType.Seat,
                                 seatNumber: seatNumber,
@@ -1432,7 +1434,7 @@ export async function selectSeatOffers(params: {
                     // tslint:disable-next-line:prefer-array-literal
                     acceptedOffer: [...Array(params.numSeats)].map(() => {
                         return {
-                            id: selectedTicketOffer.id,
+                            id: <string>selectedTicketOffer.id,
                             additionalProperty: []
                         };
                     })
@@ -1685,7 +1687,9 @@ export async function authorizeOwnershipInfo(params: {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: String(itemOffered.reservedTicket.ticketType.name.ja),
+                                                        text: (typeof itemOffered.reservedTicket.ticketType.name === 'string')
+                                                            ? String(itemOffered.reservedTicket.ticketType.name)
+                                                            : String(itemOffered.reservedTicket.ticketType.name?.ja),
                                                         wrap: true,
                                                         color: '#666666',
                                                         size: 'sm',
@@ -2288,7 +2292,9 @@ export async function authorizeOwnershipInfosByOrder(params: {
                                         },
                                         {
                                             type: 'text',
-                                            text: String(r.reservedTicket.ticketType.name.ja),
+                                            text: (typeof r.reservedTicket.ticketType.name === 'string')
+                                                ? String(r.reservedTicket.ticketType.name)
+                                                : String(r.reservedTicket.ticketType.name?.ja),
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
@@ -2579,7 +2585,7 @@ export async function findScreeningEventReservationById(params: {
                                                 {
                                                     type: 'text',
                                                     text: (reservation.reservedTicket !== undefined)
-                                                        ? String(reservation.reservedTicket.ticketType.name.ja)
+                                                        ? String((<any>reservation.reservedTicket.ticketType).name.ja)
                                                         : 'No reserved ticket',
                                                     wrap: true,
                                                     color: '#666666',

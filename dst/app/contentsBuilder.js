@@ -134,11 +134,15 @@ function createConfirmOrderFlexBubble(params) {
             spacing: 'sm',
             contents: [
                 ...tmpReservations.map((tmpReservation) => {
+                    var _a;
                     const item = tmpReservation;
                     const event = item.reservationFor;
+                    const offerName = (typeof item.reservedTicket.ticketType.name === 'string')
+                        ? item.reservedTicket.ticketType.name
+                        : (_a = item.reservedTicket.ticketType.name) === null || _a === void 0 ? void 0 : _a.ja;
                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                     const str = (item.reservedTicket.ticketedSeat !== undefined)
-                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
+                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${offerName}`
                         : '座席なし';
                     let priceStr = String(item.priceCurrency);
                     if (item.price !== undefined) {
@@ -367,7 +371,7 @@ function screeningEventSeries2flexBubble(params) {
                             },
                             {
                                 type: 'text',
-                                text: (Array.isArray(event.videoFormat))
+                                text: (Array.isArray(event.videoFormat) && event.videoFormat.length > 0)
                                     ? event.videoFormat.map((f) => f.typeOf)
                                         .join(',')
                                     : '---',
@@ -392,9 +396,9 @@ function screeningEventSeries2flexBubble(params) {
                             },
                             {
                                 type: 'text',
-                                text: (event.duration !== undefined)
+                                text: (typeof event.duration === 'string')
                                     ? moment.duration(event.duration)
-                                        .toIsoString()
+                                        .toISOString()
                                     : '---',
                                 wrap: true,
                                 size: 'sm',
@@ -744,7 +748,9 @@ function order2flexBubble(params) {
                     margin: 'xxl',
                     spacing: 'sm',
                     contents: [
+                        // tslint:disable-next-line:max-func-body-length
                         ...order.acceptedOffers.map((orderItem) => {
+                            var _a;
                             let itemName;
                             let itemDescription;
                             let priceStr = orderItem.priceCurrency.toString();
@@ -754,13 +760,16 @@ function order2flexBubble(params) {
                                     const event = item.reservationFor;
                                     itemName = util_1.format('%s %s', event.name.ja, moment(event.startDate)
                                         .format('MM/DD HH:mm'));
+                                    const offerName = (typeof item.reservedTicket.ticketType.name === 'string')
+                                        ? item.reservedTicket.ticketType.name
+                                        : (_a = item.reservedTicket.ticketType.name) === null || _a === void 0 ? void 0 : _a.ja;
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     if (item.reservedTicket !== undefined) {
                                         if (item.reservedTicket.ticketedSeat !== undefined) {
-                                            itemDescription = util_1.format('%s %s', item.reservedTicket.ticketedSeat.seatNumber, item.reservedTicket.ticketType.name.ja);
+                                            itemDescription = util_1.format('%s %s', item.reservedTicket.ticketedSeat.seatNumber, offerName);
                                         }
                                         else {
-                                            itemDescription = util_1.format('%s %s', '座席なし', item.reservedTicket.ticketType.name.ja);
+                                            itemDescription = util_1.format('%s %s', '座席なし', offerName);
                                         }
                                     }
                                     else {
@@ -1555,6 +1564,7 @@ function moneyTransferAction2flexBubble(params) {
 exports.moneyTransferAction2flexBubble = moneyTransferAction2flexBubble;
 // tslint:disable-next-line:max-func-body-length
 function reservation2flexBubble(params) {
+    var _a;
     const ownershipInfo = params.ownershipInfo;
     const itemOffered = ownershipInfo.typeOfGood;
     const event = itemOffered.reservationFor;
@@ -1681,7 +1691,9 @@ function reservation2flexBubble(params) {
                                 },
                                 {
                                     type: 'text',
-                                    text: String(itemOffered.reservedTicket.ticketType.name.ja),
+                                    text: (typeof itemOffered.reservedTicket.ticketType.name === 'string')
+                                        ? itemOffered.reservedTicket.ticketType.name
+                                        : String((_a = itemOffered.reservedTicket.ticketType.name) === null || _a === void 0 ? void 0 : _a.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',

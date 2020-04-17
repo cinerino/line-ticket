@@ -155,9 +155,12 @@ export function createConfirmOrderFlexBubble(params: {
                 ...tmpReservations.map<FlexBox>((tmpReservation) => {
                     const item = tmpReservation;
                     const event = item.reservationFor;
+                    const offerName = (typeof item.reservedTicket.ticketType.name === 'string')
+                        ? item.reservedTicket.ticketType.name
+                        : item.reservedTicket.ticketType.name?.ja;
                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                     const str = (item.reservedTicket.ticketedSeat !== undefined)
-                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${item.reservedTicket.ticketType.name.ja}`
+                        ? `${item.reservedTicket.ticketedSeat.seatNumber} ${offerName}`
                         : '座席なし';
                     let priceStr = String(item.priceCurrency);
                     if (item.price !== undefined) {
@@ -394,7 +397,7 @@ export function screeningEventSeries2flexBubble(params: {
                             },
                             {
                                 type: 'text',
-                                text: (Array.isArray(event.videoFormat))
+                                text: (Array.isArray(event.videoFormat) && event.videoFormat.length > 0)
                                     ? event.videoFormat.map((f) => f.typeOf)
                                         .join(',')
                                     : '---',
@@ -419,9 +422,9 @@ export function screeningEventSeries2flexBubble(params: {
                             },
                             {
                                 type: 'text',
-                                text: (event.duration !== undefined)
+                                text: (typeof event.duration === 'string')
                                     ? moment.duration(event.duration)
-                                        .toIsoString()
+                                        .toISOString()
                                     : '---',
                                 wrap: true,
                                 size: 'sm',
@@ -781,6 +784,7 @@ export function order2flexBubble(params: {
                     margin: 'xxl',
                     spacing: 'sm',
                     contents: [
+                        // tslint:disable-next-line:max-func-body-length
                         ...order.acceptedOffers.map<FlexBox>((orderItem) => {
                             let itemName: string;
                             let itemDescription: string;
@@ -798,19 +802,23 @@ export function order2flexBubble(params: {
                                             .format('MM/DD HH:mm')
                                     );
 
+                                    const offerName = (typeof item.reservedTicket.ticketType.name === 'string')
+                                        ? item.reservedTicket.ticketType.name
+                                        : item.reservedTicket.ticketType.name?.ja;
+
                                     // tslint:disable-next-line:max-line-length no-unnecessary-local-variable
                                     if (item.reservedTicket !== undefined) {
                                         if (item.reservedTicket.ticketedSeat !== undefined) {
                                             itemDescription = format(
                                                 '%s %s',
                                                 item.reservedTicket.ticketedSeat.seatNumber,
-                                                item.reservedTicket.ticketType.name.ja
+                                                offerName
                                             );
                                         } else {
                                             itemDescription = format(
                                                 '%s %s',
                                                 '座席なし',
-                                                item.reservedTicket.ticketType.name.ja
+                                                offerName
                                             );
                                         }
                                     } else {
@@ -1754,7 +1762,9 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: String(itemOffered.reservedTicket.ticketType.name.ja),
+                                    text: (typeof itemOffered.reservedTicket.ticketType.name === 'string')
+                                        ? itemOffered.reservedTicket.ticketType.name
+                                        : String(itemOffered.reservedTicket.ticketType.name?.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',

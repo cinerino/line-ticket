@@ -1191,14 +1191,16 @@ function selectSeatOffers(params) {
             // tslint:disable-next-line:no-magic-numbers
             const quickReplyItems4selectOffer = ticketOffers.slice(0, 10)
                 .map((o) => {
+                var _a;
                 const unitPriceSpec = o.priceSpecification.priceComponent.find((c) => c.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
                 const priceStr = (unitPriceSpec !== undefined) ? `${unitPriceSpec.price} ${unitPriceSpec.priceCurrency}` : '';
+                const name = (typeof o.name === 'string') ? o.name : (_a = o.name) === null || _a === void 0 ? void 0 : _a.ja;
                 return {
                     type: 'action',
                     imageUrl: `https://${params.user.host}/img/labels/reservation-ticket.png`,
                     action: {
                         type: 'postback',
-                        label: `${String(o.name.ja)
+                        label: `${String(name)
                             // tslint:disable-next-line:no-magic-numbers
                             .slice(0, 8)} ${priceStr}`,
                         data: qs.stringify({
@@ -1226,7 +1228,7 @@ function selectSeatOffers(params) {
             yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${params.offerId} が見つかりません` });
             return;
         }
-        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.name.ja} を選択しました` });
+        yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: `オファー ${selectedTicketOffer.identifier} を選択しました` });
         const TRANSACTION_EXPIRES_IN_MINUTES = 5;
         yield lineClient_1.default.pushMessage(params.user.userId, { type: 'text', text: '取引を開始します...' });
         const transaction = yield placeOrderService.start({
@@ -1361,6 +1363,7 @@ exports.selectSeatOffers = selectSeatOffers;
  */
 // tslint:disable-next-line:max-func-body-length
 function authorizeOwnershipInfo(params) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
@@ -1524,7 +1527,9 @@ function authorizeOwnershipInfo(params) {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: String(itemOffered.reservedTicket.ticketType.name.ja),
+                                                            text: (typeof itemOffered.reservedTicket.ticketType.name === 'string')
+                                                                ? String(itemOffered.reservedTicket.ticketType.name)
+                                                                : String((_a = itemOffered.reservedTicket.ticketType.name) === null || _a === void 0 ? void 0 : _a.ja),
                                                             wrap: true,
                                                             color: '#666666',
                                                             size: 'sm',
@@ -1999,6 +2004,7 @@ function authorizeOwnershipInfosByOrder(params) {
         const bubbles = reservations.map(
         // tslint:disable-next-line:max-func-body-length
         (r) => {
+            var _a;
             return {
                 type: 'bubble',
                 hero: {
@@ -2116,7 +2122,9 @@ function authorizeOwnershipInfosByOrder(params) {
                                         },
                                         {
                                             type: 'text',
-                                            text: String(r.reservedTicket.ticketType.name.ja),
+                                            text: (typeof r.reservedTicket.ticketType.name === 'string')
+                                                ? String(r.reservedTicket.ticketType.name)
+                                                : String((_a = r.reservedTicket.ticketType.name) === null || _a === void 0 ? void 0 : _a.ja),
                                             wrap: true,
                                             color: '#666666',
                                             size: 'sm',
