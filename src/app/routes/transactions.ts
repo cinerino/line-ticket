@@ -81,11 +81,7 @@ transactionsRouter.get(
 
             const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({ id: req.query.eventId });
 
-            const reservedSeatsAvailable = !(event.offers !== undefined
-                && event.offers.itemOffered !== undefined
-                && event.offers.itemOffered.serviceOutput !== undefined
-                && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-                && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
+            const reservedSeatsAvailable = event.offers?.itemOffered.serviceOutput?.reservedTicket?.ticketedSeat !== undefined;
 
             if (reservedSeatsAvailable) {
                 const eventOffers = await eventService.searchOffers({ event: { id: req.query.eventId } });

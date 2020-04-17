@@ -1128,6 +1128,7 @@ exports.searchScreeningEventReservations = searchScreeningEventReservations;
  */
 // tslint:disable-next-line:max-func-body-length
 function selectSeatOffers(params) {
+    var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
@@ -1145,18 +1146,17 @@ function selectSeatOffers(params) {
             project: { id: process.env.PROJECT_ID }
         });
         const event = yield eventService.findById({ id: params.eventId });
-        const reservedSeatsAvailable = !(event.offers !== undefined
-            && event.offers.itemOffered !== undefined
-            && event.offers.itemOffered.serviceOutput !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
-        // 販売者情報取得
-        const searchSellersResult = yield sellerService.search({});
-        const seller = searchSellersResult.data.find((o) => {
-            return o.location !== undefined && o.location.branchCode === event.superEvent.location.branchCode;
+        const reservedSeatsAvailable = ((_c = (_b = (_a = event.offers) === null || _a === void 0 ? void 0 : _a.itemOffered.serviceOutput) === null || _b === void 0 ? void 0 : _b.reservedTicket) === null || _c === void 0 ? void 0 : _c.ticketedSeat) !== undefined;
+        // 販売者情報取得(イベントのオファーに販売者情報あり)
+        const searchSellersResult = yield sellerService.search({
+            project: { id: { $eq: event.project.id } }
+        });
+        const seller = searchSellersResult.data.find((s) => {
+            var _a, _b;
+            return s.id === ((_b = (_a = event.offers) === null || _a === void 0 ? void 0 : _a.seller) === null || _b === void 0 ? void 0 : _b.id);
         });
         if (seller === undefined) {
-            throw new Error('Seller not found');
+            throw new Error(`イベントの販売者が見つかりません: ${(_e = (_d = event.offers) === null || _d === void 0 ? void 0 : _d.seller) === null || _e === void 0 ? void 0 : _e.id}`);
         }
         // 取引開始
         // 許可証トークンパラメーターがなければ、WAITERで許可証を取得

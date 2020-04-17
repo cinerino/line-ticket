@@ -1269,19 +1269,15 @@ export async function selectSeatOffers(params: {
 
     const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({ id: params.eventId });
 
-    const reservedSeatsAvailable = !(event.offers !== undefined
-        && event.offers.itemOffered !== undefined
-        && event.offers.itemOffered.serviceOutput !== undefined
-        && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-        && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
+    const reservedSeatsAvailable = event.offers?.itemOffered.serviceOutput?.reservedTicket?.ticketedSeat !== undefined;
 
-    // 販売者情報取得
-    const searchSellersResult = await sellerService.search({});
-    const seller = searchSellersResult.data.find((o) => {
-        return o.location !== undefined && o.location.branchCode === event.superEvent.location.branchCode;
+    // 販売者情報取得(イベントのオファーに販売者情報あり)
+    const searchSellersResult = await sellerService.search({
+        project: { id: { $eq: event.project.id } }
     });
+    const seller = searchSellersResult.data.find((s) => s.id === event.offers?.seller?.id);
     if (seller === undefined) {
-        throw new Error('Seller not found');
+        throw new Error(`イベントの販売者が見つかりません: ${event.offers?.seller?.id}`);
     }
 
     // 取引開始

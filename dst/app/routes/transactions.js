@@ -64,6 +64,7 @@ transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, 
  * 座席選択フォーム
  */
 transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     try {
         const user = new user_1.default({
             host: req.hostname,
@@ -76,11 +77,7 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
             project: { id: process.env.PROJECT_ID }
         });
         const event = yield eventService.findById({ id: req.query.eventId });
-        const reservedSeatsAvailable = !(event.offers !== undefined
-            && event.offers.itemOffered !== undefined
-            && event.offers.itemOffered.serviceOutput !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket !== undefined
-            && event.offers.itemOffered.serviceOutput.reservedTicket.ticketedSeat === undefined);
+        const reservedSeatsAvailable = ((_c = (_b = (_a = event.offers) === null || _a === void 0 ? void 0 : _a.itemOffered.serviceOutput) === null || _b === void 0 ? void 0 : _b.reservedTicket) === null || _c === void 0 ? void 0 : _c.ticketedSeat) !== undefined;
         if (reservedSeatsAvailable) {
             const eventOffers = yield eventService.searchOffers({ event: { id: req.query.eventId } });
             const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
