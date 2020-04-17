@@ -4,14 +4,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * defaultルーター
  */
 const express = require("express");
-const accounts_1 = require("./accounts");
+const setProject_1 = require("../middlewares/setProject");
 const auth_1 = require("./auth");
-const liff_1 = require("./liff");
-const orders_1 = require("./orders");
-const people_1 = require("./people");
-const reservations_1 = require("./reservations");
-const transactions_1 = require("./transactions");
-const webhook_1 = require("./webhook");
+const detail_1 = require("./projects/detail");
 const router = express.Router();
 // middleware that is specific to this router
 // router.use((req, res, next) => {
@@ -19,11 +14,8 @@ const router = express.Router();
 //   next()
 // })
 router.use(auth_1.default);
-router.use('/accounts', accounts_1.default);
-router.use('/liff', liff_1.default);
-router.use('/orders', orders_1.default);
-router.use('/people', people_1.default);
-router.use('/reservations', reservations_1.default);
-router.use('/transactions', transactions_1.default);
-router.use('/webhook', webhook_1.default);
+// リクエストプロジェクト設定
+router.use(setProject_1.default);
+// 以下プロジェクト指定前提のルーター
+router.use('/projects/:id', detail_1.default);
 exports.default = router;

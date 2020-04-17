@@ -161,7 +161,7 @@ function showProfileMenu(params) {
         }
         // const updateProfileQuery = qs.stringify({ profile: profile });
         const updateProfileQuery = qs.stringify({});
-        const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+        const updateProfileUri = `https://${params.user.host}/projects/${params.project.id}/people/me/profile?${updateProfileQuery}`;
         // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
         debug(liffUri);
@@ -227,7 +227,7 @@ exports.showSeatReservationMenu = showSeatReservationMenu;
  */
 function showOrderMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+        const findOrderUri = `https://${params.user.host}/projects/${params.project.id}/orders/findByConfirmationNumber`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: findOrderUri })}`;
         const actions = [
             {
@@ -274,7 +274,7 @@ function showCreditCardMenu(params) {
         if (creditCardPayment === undefined) {
             throw new Error('クレジットカード決済が許可されていません');
         }
-        const inputCreditCardUri = `/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+        const inputCreditCardUri = `/projects/${seller.project.id}/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
                 type: 'template',
@@ -303,7 +303,7 @@ function showCreditCardMenu(params) {
 exports.showCreditCardMenu = showCreditCardMenu;
 function showCoinAccountMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const openAccountUri = `https://${params.user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+        const openAccountUri = `https://${params.user.host}/projects/${params.project.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
         yield lineClient_1.default.replyMessage(params.replyToken, [
             {
@@ -333,7 +333,7 @@ function showCoinAccountMenu(params) {
 exports.showCoinAccountMenu = showCoinAccountMenu;
 function showCodeMenu(params) {
     return __awaiter(this, void 0, void 0, function* () {
-        const scanQRUri = '/reservations/scanScreeningEventReservationCode';
+        const scanQRUri = `/projects/${params.project.id}/reservations/scanScreeningEventReservationCode`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: scanQRUri })}`;
         const actions = [
             {

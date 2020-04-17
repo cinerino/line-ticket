@@ -485,7 +485,7 @@ export function screeningEvent2flexBubble(params: {
     const MAX_AVAILABILITY_SCORE = 5;
 
     const query = qs.stringify({ eventId: event.id, userId: params.user.userId });
-    const selectSeatsUri = `/transactions/placeOrder/selectSeatOffers?${query}`;
+    const selectSeatsUri = `/projects/${event.project.id}/transactions/placeOrder/selectSeatOffers?${query}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: selectSeatsUri })}`;
     let availability = 100;
     if (event.maximumAttendeeCapacity !== undefined && event.remainingAttendeeCapacity !== undefined) {

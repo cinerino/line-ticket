@@ -21,8 +21,10 @@ const debug = createDebug('cinerino-line-ticket:controllers');
  * メッセージが送信されたことを示すEvent Objectです
  */
 // tslint:disable-next-line:max-func-body-length
-function message(event, user) {
+function message(event, req) {
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
+        const user = req.user;
         // const userId = <string>event.source.userId;
         try {
             switch (event.message.type) {
@@ -39,7 +41,7 @@ function message(event, user) {
                             break;
                         // ログイン
                         case /^login$/.test(messageText):
-                            yield authentication.sendLoginButton(user);
+                            yield authentication.sendLoginButton(req);
                             break;
                         // ログアウト
                         case /^logout$/.test(messageText):
@@ -51,6 +53,7 @@ function message(event, user) {
                         // プロフィール管理
                         case /^プロフィール/.test(messageText):
                             yield MessageController.showProfileMenu({
+                                project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
@@ -64,6 +67,7 @@ function message(event, user) {
                             break;
                         case /^注文$/.test(messageText):
                             yield MessageController.showOrderMenu({
+                                project: { id: (_b = req.project) === null || _b === void 0 ? void 0 : _b.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
@@ -76,12 +80,14 @@ function message(event, user) {
                             break;
                         case /^コイン$/.test(messageText):
                             yield MessageController.showCoinAccountMenu({
+                                project: { id: (_c = req.project) === null || _c === void 0 ? void 0 : _c.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
                             break;
                         case /^コード$/.test(messageText):
                             yield MessageController.showCodeMenu({
+                                project: { id: (_d = req.project) === null || _d === void 0 ? void 0 : _d.id },
                                 replyToken: event.replyToken,
                                 user: user
                             });
@@ -128,7 +134,7 @@ function message(event, user) {
                                 postback: { data: postbackData },
                                 replyToken: event.replyToken
                             };
-                            yield postback(postbackEvent, user);
+                            yield postback(postbackEvent, req);
                             break;
                         default:
                             // 予約照会方法をアドバイス
@@ -163,7 +169,8 @@ exports.message = message;
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
-function postback(event, user) {
+function postback(event, req) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const data = qs.parse(event.postback.data, {
             arrayLimit: 1000,
@@ -185,14 +192,14 @@ function postback(event, user) {
                     }
                     yield PostbackController.searchEventsByDate({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         date: date
                     });
                     break;
                 case 'askScreeningEvent':
                     yield PostbackController.askScreeningEvent({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         screeningEventSeriesId: data.screeningEventSeriesId,
                         date: data.date
                     });
@@ -200,23 +207,25 @@ function postback(event, user) {
                 // 決済コードをたずねる
                 case 'askPaymentCode':
                     yield PostbackController.askPaymentCode({
+                        project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id },
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         transactionId: data.transactionId
                     });
                     break;
                 case 'selectCreditCard':
                     yield PostbackController.selectCreditCard({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         transactionId: data.transactionId
                     });
                     break;
                 // 決済方法選択
                 case 'selectPaymentMethodType':
                     yield PostbackController.selectPaymentMethodType({
+                        project: { id: (_b = req.project) === null || _b === void 0 ? void 0 : _b.id },
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         paymentMethodType: data.paymentMethod,
                         transactionId: data.transactionId,
                         code: data.code,
@@ -227,7 +236,7 @@ function postback(event, user) {
                 case 'setCustomerContact':
                     yield PostbackController.setCustomerContact({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         transactionId: data.transactionId,
                         familyName: data.familyName,
                         givenName: data.givenName,
@@ -239,7 +248,7 @@ function postback(event, user) {
                 case 'confirmOrder':
                     yield PostbackController.confirmOrder({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         transactionId: data.transactionId
                     });
                     break;
@@ -247,7 +256,7 @@ function postback(event, user) {
                 case 'cancelOrder':
                     yield PostbackController.cancelOrder({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         transactionId: data.transactionId
                     });
                     break;
@@ -255,7 +264,7 @@ function postback(event, user) {
                 case 'confirmFriendPay':
                     yield PostbackController.confirmFriendPay({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         token: data.token
                     });
                     break;
@@ -263,7 +272,7 @@ function postback(event, user) {
                 case 'confirmTransferMoney':
                     yield PostbackController.confirmTransferMoney({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         token: data.token,
                         price: parseInt(data.price, 10)
                     });
@@ -277,14 +286,14 @@ function postback(event, user) {
                 case 'searchCreditCards':
                     yield PostbackController.searchCreditCards({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 // クレジットカード追加
                 case 'addCreditCard':
                     yield PostbackController.addCreditCard({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         token: data.token
                     });
                     break;
@@ -292,7 +301,7 @@ function postback(event, user) {
                 case 'deleteCreditCard':
                     yield PostbackController.deleteCreditCard({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         cardSeq: data.cardSeq
                     });
                     break;
@@ -300,7 +309,7 @@ function postback(event, user) {
                 case 'openAccount':
                     yield PostbackController.openAccount({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         name: data.name,
                         accountType: data.accountType
                     });
@@ -309,7 +318,7 @@ function postback(event, user) {
                 case 'closeAccount':
                     yield PostbackController.closeAccount({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
                     });
@@ -318,13 +327,13 @@ function postback(event, user) {
                 case 'searchCoinAccounts':
                     yield PostbackController.searchCoinAccounts({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 case 'searchAccountMoneyTransferActions':
                     yield PostbackController.searchAccountMoneyTransferActions({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
                     });
@@ -333,7 +342,7 @@ function postback(event, user) {
                 case 'selectDepositAmount':
                     yield PostbackController.selectDepositAmount({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         accountType: data.accountType,
                         accountNumber: data.accountNumber
                     });
@@ -342,7 +351,7 @@ function postback(event, user) {
                 case 'depositCoinByCreditCard':
                     yield PostbackController.depositCoinByCreditCard({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         amount: Number(data.amount),
                         toAccountNumber: data.toAccountNumber
                     });
@@ -350,13 +359,13 @@ function postback(event, user) {
                 case 'askEventStartDate':
                     yield MessageController.askEventStartDate({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 case 'searchScreeningEventReservations':
                     yield PostbackController.searchScreeningEventReservations({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 // 座席選択 or 座席数選択
@@ -365,7 +374,7 @@ function postback(event, user) {
                     const numSeats = (typeof data.numSeats === 'string') ? Number(data.numSeats) : undefined;
                     yield PostbackController.selectSeatOffers({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         eventId: data.eventId,
                         seatNumbers: seatNumbers,
                         numSeats: numSeats,
@@ -376,7 +385,7 @@ function postback(event, user) {
                 case 'authorizeOwnershipInfo':
                     yield PostbackController.authorizeOwnershipInfo({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         goodType: data.goodType,
                         id: data.id
                     });
@@ -385,7 +394,7 @@ function postback(event, user) {
                 case 'findOrderByConfirmationNumber':
                     yield PostbackController.findOrderByConfirmationNumber({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         confirmationNumber: Number(data.confirmationNumber),
                         telephone: data.telephone
                     });
@@ -394,7 +403,7 @@ function postback(event, user) {
                 case 'authorizeOwnershipInfosByOrder':
                     yield PostbackController.authorizeOwnershipInfosByOrder({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         orderNumber: data.orderNumber,
                         telephone: data.telephone
                     });
@@ -403,14 +412,14 @@ function postback(event, user) {
                 case 'searchOrders':
                     yield PostbackController.searchOrders({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 // 座席予約コード読み込み
                 case 'findScreeningEventReservationById':
                     yield PostbackController.findScreeningEventReservationById({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         code: data.code
                     });
                     break;
@@ -418,14 +427,14 @@ function postback(event, user) {
                 case 'getProfile':
                     yield PostbackController.getProfile({
                         replyToken: event.replyToken,
-                        user: user
+                        user: req.user
                     });
                     break;
                 // プロフィール更新
                 case 'updateProfile':
                     yield PostbackController.updateProfile({
                         replyToken: event.replyToken,
-                        user: user,
+                        user: req.user,
                         profile: data.profile
                     });
                     break;
@@ -441,7 +450,7 @@ function postback(event, user) {
             catch (error) {
                 // no op
             }
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: text });
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: text });
         }
     });
 }

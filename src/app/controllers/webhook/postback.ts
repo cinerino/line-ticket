@@ -152,6 +152,7 @@ export async function askScreeningEvent(params: {
  * 決済コードをたずねる
  */
 export async function askPaymentCode(params: {
+    project: { id: string };
     replyToken: string;
     user: User;
     transactionId: string;
@@ -165,7 +166,7 @@ export async function askPaymentCode(params: {
     //     const friendMessage = `FriendPayToken.${token}`;
     //     const message = encodeURIComponent(`僕の代わりに決済をお願いできますか？よければ、下のリンクを押してそのままメッセージを送信してください
     // line://oaMessage/${LINE_ID}/?${friendMessage}`);
-    const scanQRUri = `/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
+    const scanQRUri = `/projects/${params.project.id}/transactions/placeOrder/scanQRCode?transactionId=${params.transactionId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: scanQRUri })}`;
     await LINE.replyMessage(params.replyToken, [
         {
@@ -192,6 +193,7 @@ export async function askPaymentCode(params: {
  */
 // tslint:disable-next-line:max-func-body-length
 export async function selectPaymentMethodType(params: {
+    project: { id: string };
     replyToken: string;
     user: User;
     paymentMethodType: PaymentMethodType;
@@ -316,7 +318,7 @@ export async function selectPaymentMethodType(params: {
         };
     }
     const setCustomerContactQuery = qs.stringify({ profile: profile });
-    const setCustomerContactUri = `/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
+    const setCustomerContactUri = `/projects/${params.project.id}/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: setCustomerContactUri })}`;
     const footerContets: FlexComponent[] = [
         {
@@ -496,7 +498,7 @@ export async function selectCreditCard(params: {
         throw new Error('クレジットカード決済が許可されていません');
     }
     const inputCreditCardUri =
-        `/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+        `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`;
     const footerContets: FlexComponent[] = [
         {

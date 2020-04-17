@@ -10,7 +10,6 @@ import LINE from '../../lineClient';
 import * as WebhookController from '../controllers/webhook';
 import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
-import User from '../user';
 
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:router');
@@ -23,21 +22,21 @@ webhookRouter.post(
     async (req, res) => {
         debug('body:', req.body);
         await Promise.all(req.body.events.map(async (e: WebhookEvent) => {
-            await handleEvent(e, req.user);
+            await handleEvent(e, req);
         }));
         res.status(OK)
             .send('ok');
     });
 
-async function handleEvent(event: WebhookEvent, user: User) {
+async function handleEvent(event: WebhookEvent, req: express.Request) {
     try {
         switch (event.type) {
             case 'message':
-                await WebhookController.message(event, user);
+                await WebhookController.message(event, req);
                 break;
 
             case 'postback':
-                await WebhookController.postback(event, user);
+                await WebhookController.postback(event, req);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
@@ -74,7 +73,7 @@ async function handleEvent(event: WebhookEvent, user: User) {
         }
     } catch (error) {
         debug(error);
-        await LINE.pushMessage(user.userId, { type: 'text', text: `${error.name}:${error.message}` });
+        await LINE.pushMessage(req.user.userId, { type: 'text', text: `${error.name}:${error.message}` });
     }
 }
 

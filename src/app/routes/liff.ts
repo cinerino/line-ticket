@@ -35,7 +35,13 @@ liffRouter.get(
                 state: req.query.state
             });
 
-            res.redirect(user.generateAuthUrl());
+            if (req.query.identity_provider === 'Google') {
+                const signInUrl = new URL(user.generateAuthUrl());
+                const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+                res.redirect(googleSignInUrl);
+            } else {
+                res.redirect(user.generateAuthUrl());
+            }
         } catch (error) {
             next(error);
         }

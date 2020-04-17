@@ -58,7 +58,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         if (credentials === undefined) {
             if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
-                await sendLoginButton(req.user);
+                await sendLoginButton(req);
                 res.status(OK)
                     .send('ok');
             } else {
@@ -75,7 +75,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                 },
                 unauthorizedHandler: async () => {
                     // ログインボタンを送信
-                    await sendLoginButton(req.user);
+                    await sendLoginButton(req);
                     res.status(OK)
                         .send('ok');
                 },
@@ -87,16 +87,19 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
-export async function sendLoginButton(user: User) {
+export async function sendLoginButton(req: Request) {
     // tslint:disable-next-line:no-multiline-string
     let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
 
-    const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
+    const cb = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
+    const cbWithGoogle = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state, identity_provider: 'Google' })}`;
+
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
-    const signInUrl = new URL(user.generateAuthUrl());
+    const liffUriWithGoogle = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cbWithGoogle })}`;
+    // const signInUrl = new URL(user.generateAuthUrl());
     // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
-    const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-    const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
+    // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+    // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
 
     const actions: any[] = [
         {
@@ -107,12 +110,12 @@ export async function sendLoginButton(user: User) {
         {
             type: 'uri',
             label: 'Sign In with Google',
-            uri: googleLiffUri
+            uri: liffUriWithGoogle
         }
     ];
 
-    const refreshToken = await user.getRefreshToken();
-    const faces = await user.searchFaces();
+    const refreshToken = await req.user.getRefreshToken();
+    const faces = await req.user.searchFaces();
     // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
     if (refreshToken !== undefined && faces.length > 0) {
         text = 'ログインしてください';
@@ -130,7 +133,8 @@ export async function sendLoginButton(user: User) {
 
     // 会員として未使用であれば会員登録ボタン表示
     if (refreshToken === undefined) {
-        const signUpCb = `https://${user.host}/liff/signUp?${qs.stringify({ userId: user.userId, state: user.state })}`;
+        const signUpCb =
+            `https://${req.user.host}/projects/${req.project?.id}/liff/signUp?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
         const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
 
         actions.push({
@@ -149,5 +153,5 @@ export async function sendLoginButton(user: User) {
             actions: actions
         }
     };
-    await LINE.pushMessage(user.userId, [template]);
+    await LINE.pushMessage(req.user.userId, [template]);
 }

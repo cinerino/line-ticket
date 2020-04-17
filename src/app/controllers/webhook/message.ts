@@ -150,6 +150,7 @@ export async function pushHowToUse(params: {
  * プロフィールメニューを表示する
  */
 export async function showProfileMenu(params: {
+    project: { id: string };
     replyToken: string;
     user: User;
 }) {
@@ -174,7 +175,7 @@ export async function showProfileMenu(params: {
 
     // const updateProfileQuery = qs.stringify({ profile: profile });
     const updateProfileQuery = qs.stringify({});
-    const updateProfileUri = `https://${params.user.host}/people/me/profile?${updateProfileQuery}`;
+    const updateProfileUri = `https://${params.user.host}/projects/${params.project.id}/people/me/profile?${updateProfileQuery}`;
     // const updateProfileUri = `https://${params.user.host}/people/me/profile`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: updateProfileUri })}`;
     debug(liffUri);
@@ -245,9 +246,10 @@ export async function showSeatReservationMenu(params: {
  */
 export async function showOrderMenu(params: {
     replyToken: string;
+    project: { id: string };
     user: User;
 }) {
-    const findOrderUri = `https://${params.user.host}/orders/findByConfirmationNumber`;
+    const findOrderUri = `https://${params.user.host}/projects/${params.project.id}/orders/findByConfirmationNumber`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: findOrderUri })}`;
     const actions: Action[] = [
         {
@@ -296,7 +298,7 @@ export async function showCreditCardMenu(params: {
     if (creditCardPayment === undefined) {
         throw new Error('クレジットカード決済が許可されていません');
     }
-    const inputCreditCardUri = `/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+    const inputCreditCardUri = `/projects/${seller.project.id}/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
     await LINE.replyMessage(params.replyToken, [
         {
             type: 'template',
@@ -323,10 +325,11 @@ export async function showCreditCardMenu(params: {
 }
 
 export async function showCoinAccountMenu(params: {
+    project: { id: string };
     replyToken: string;
     user: User;
 }) {
-    const openAccountUri = `https://${params.user.host}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+    const openAccountUri = `https://${params.user.host}/projects/${params.project.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
     await LINE.replyMessage(params.replyToken, [
         {
@@ -354,10 +357,11 @@ export async function showCoinAccountMenu(params: {
 }
 
 export async function showCodeMenu(params: {
+    project: { id: string };
     replyToken: string;
     user: User;
 }) {
-    const scanQRUri = '/reservations/scanScreeningEventReservationCode';
+    const scanQRUri = `/projects/${params.project.id}/reservations/scanScreeningEventReservationCode`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: scanQRUri })}`;
     const actions: Action[] = [
         {

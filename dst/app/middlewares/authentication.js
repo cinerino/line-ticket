@@ -59,7 +59,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         if (credentials === undefined) {
             if (LOGIN_REQUIRED) {
                 // ログインボタンを送信
-                yield sendLoginButton(req.user);
+                yield sendLoginButton(req);
                 res.status(http_status_1.OK)
                     .send('ok');
             }
@@ -78,7 +78,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                 }),
                 unauthorizedHandler: () => __awaiter(void 0, void 0, void 0, function* () {
                     // ログインボタンを送信
-                    yield sendLoginButton(req.user);
+                    yield sendLoginButton(req);
                     res.status(http_status_1.OK)
                         .send('ok');
                 }),
@@ -90,16 +90,19 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         next(new cinerinoapi.factory.errors.Unauthorized(error.message));
     }
 });
-function sendLoginButton(user) {
+function sendLoginButton(req) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         // tslint:disable-next-line:no-multiline-string
         let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
-        const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
+        const cb = `https://${req.user.host}/projects/${(_a = req.project) === null || _a === void 0 ? void 0 : _a.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
+        const cbWithGoogle = `https://${req.user.host}/projects/${(_b = req.project) === null || _b === void 0 ? void 0 : _b.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state, identity_provider: 'Google' })}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
-        const signInUrl = new URL(user.generateAuthUrl());
+        const liffUriWithGoogle = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cbWithGoogle })}`;
+        // const signInUrl = new URL(user.generateAuthUrl());
         // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
-        const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
+        // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+        // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
         const actions = [
             {
                 type: 'uri',
@@ -109,11 +112,11 @@ function sendLoginButton(user) {
             {
                 type: 'uri',
                 label: 'Sign In with Google',
-                uri: googleLiffUri
+                uri: liffUriWithGoogle
             }
         ];
-        const refreshToken = yield user.getRefreshToken();
-        const faces = yield user.searchFaces();
+        const refreshToken = yield req.user.getRefreshToken();
+        const faces = yield req.user.searchFaces();
         // リフレッシュトークン保管済、かつ、顔画像登録済であればFace Login使用可能
         if (refreshToken !== undefined && faces.length > 0) {
             text = 'ログインしてください';
@@ -130,7 +133,7 @@ function sendLoginButton(user) {
         }
         // 会員として未使用であれば会員登録ボタン表示
         if (refreshToken === undefined) {
-            const signUpCb = `https://${user.host}/liff/signUp?${qs.stringify({ userId: user.userId, state: user.state })}`;
+            const signUpCb = `https://${req.user.host}/projects/${(_c = req.project) === null || _c === void 0 ? void 0 : _c.id}/liff/signUp?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
             const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
             actions.push({
                 type: 'uri',
@@ -147,7 +150,7 @@ function sendLoginButton(user) {
                 actions: actions
             }
         };
-        yield lineClient_1.default.pushMessage(user.userId, [template]);
+        yield lineClient_1.default.pushMessage(req.user.userId, [template]);
     });
 }
 exports.sendLoginButton = sendLoginButton;

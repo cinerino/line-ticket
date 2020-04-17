@@ -3,14 +3,10 @@
  */
 import * as express from 'express';
 
-import accountsRouter from './accounts';
+import setProject from '../middlewares/setProject';
+
 import authRouter from './auth';
-import liffRouter from './liff';
-import ordersRouter from './orders';
-import peopleRouter from './people';
-import reservationsRouter from './reservations';
-import transactionsRouter from './transactions';
-import webhookRouter from './webhook';
+import projectDetailRouter from './projects/detail';
 
 const router = express.Router();
 
@@ -21,12 +17,11 @@ const router = express.Router();
 // })
 
 router.use(authRouter);
-router.use('/accounts', accountsRouter);
-router.use('/liff', liffRouter);
-router.use('/orders', ordersRouter);
-router.use('/people', peopleRouter);
-router.use('/reservations', reservationsRouter);
-router.use('/transactions', transactionsRouter);
-router.use('/webhook', webhookRouter);
+
+// リクエストプロジェクト設定
+router.use(setProject);
+
+// 以下プロジェクト指定前提のルーター
+router.use('/projects/:id', projectDetailRouter);
 
 export default router;

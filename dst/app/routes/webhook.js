@@ -23,20 +23,20 @@ webhookRouter.post('', faceLogin_1.default, authentication_1.default,
 (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     debug('body:', req.body);
     yield Promise.all(req.body.events.map((e) => __awaiter(void 0, void 0, void 0, function* () {
-        yield handleEvent(e, req.user);
+        yield handleEvent(e, req);
     })));
     res.status(http_status_1.OK)
         .send('ok');
 }));
-function handleEvent(event, user) {
+function handleEvent(event, req) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             switch (event.type) {
                 case 'message':
-                    yield WebhookController.message(event, user);
+                    yield WebhookController.message(event, req);
                     break;
                 case 'postback':
-                    yield WebhookController.postback(event, user);
+                    yield WebhookController.postback(event, req);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
@@ -68,7 +68,7 @@ function handleEvent(event, user) {
         }
         catch (error) {
             debug(error);
-            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: `${error.name}:${error.message}` });
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `${error.name}:${error.message}` });
         }
     });
 }

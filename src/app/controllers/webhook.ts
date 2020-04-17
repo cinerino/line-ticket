@@ -3,10 +3,10 @@
  */
 import * as line from '@line/bot-sdk';
 import * as createDebug from 'debug';
+import { Request } from 'express';
 import * as qs from 'qs';
 
 import LINE from '../../lineClient';
-import User from '../user';
 import * as MessageController from './webhook/message';
 import * as ImageMessageController from './webhook/message/image';
 import * as PostbackController from './webhook/postback';
@@ -19,7 +19,9 @@ const debug = createDebug('cinerino-line-ticket:controllers');
  * メッセージが送信されたことを示すEvent Objectです
  */
 // tslint:disable-next-line:max-func-body-length
-export async function message(event: line.MessageEvent, user: User) {
+export async function message(event: line.MessageEvent, req: Request) {
+    const user = req.user;
+
     // const userId = <string>event.source.userId;
     try {
         switch (event.message.type) {
@@ -36,7 +38,7 @@ export async function message(event: line.MessageEvent, user: User) {
                         break;
                     // ログイン
                     case /^login$/.test(messageText):
-                        await authentication.sendLoginButton(user);
+                        await authentication.sendLoginButton(req);
                         break;
                     // ログアウト
                     case /^logout$/.test(messageText):
@@ -48,6 +50,7 @@ export async function message(event: line.MessageEvent, user: User) {
                     // プロフィール管理
                     case /^プロフィール/.test(messageText):
                         await MessageController.showProfileMenu({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
@@ -61,6 +64,7 @@ export async function message(event: line.MessageEvent, user: User) {
                         break;
                     case /^注文$/.test(messageText):
                         await MessageController.showOrderMenu({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
@@ -73,12 +77,14 @@ export async function message(event: line.MessageEvent, user: User) {
                         break;
                     case /^コイン$/.test(messageText):
                         await MessageController.showCoinAccountMenu({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
                         break;
                     case /^コード$/.test(messageText):
                         await MessageController.showCodeMenu({
+                            project: { id: <string>req.project?.id },
                             replyToken: event.replyToken,
                             user: user
                         });
@@ -125,7 +131,7 @@ export async function message(event: line.MessageEvent, user: User) {
                             postback: { data: postbackData },
                             replyToken: event.replyToken
                         };
-                        await postback(postbackEvent, user);
+                        await postback(postbackEvent, req);
                         break;
                     default:
                         // 予約照会方法をアドバイス
@@ -159,7 +165,7 @@ export async function message(event: line.MessageEvent, user: User) {
  * イベントの送信元が、template messageに付加されたポストバックアクションを実行したことを示すevent objectです
  */
 // tslint:disable-next-line:cyclomatic-complexity max-func-body-length
-export async function postback(event: line.PostbackEvent, user: User) {
+export async function postback(event: line.PostbackEvent, req: Request) {
     const data = qs.parse(event.postback.data, {
         arrayLimit: 1000,
         parseArrays: true,
@@ -179,14 +185,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
                 }
                 await PostbackController.searchEventsByDate({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     date: date
                 });
                 break;
             case 'askScreeningEvent':
                 await PostbackController.askScreeningEvent({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     screeningEventSeriesId: <string>data.screeningEventSeriesId,
                     date: <string>data.date
                 });
@@ -194,23 +200,25 @@ export async function postback(event: line.PostbackEvent, user: User) {
             // 決済コードをたずねる
             case 'askPaymentCode':
                 await PostbackController.askPaymentCode({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     transactionId: <string>data.transactionId
                 });
                 break;
             case 'selectCreditCard':
                 await PostbackController.selectCreditCard({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     transactionId: <string>data.transactionId
                 });
                 break;
             // 決済方法選択
             case 'selectPaymentMethodType':
                 await PostbackController.selectPaymentMethodType({
+                    project: { id: <string>req.project?.id },
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     paymentMethodType: <PostbackController.PaymentMethodType>data.paymentMethod,
                     transactionId: <string>data.transactionId,
                     code: data.code,
@@ -221,7 +229,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'setCustomerContact':
                 await PostbackController.setCustomerContact({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     transactionId: <string>data.transactionId,
                     familyName: <string>data.familyName,
                     givenName: <string>data.givenName,
@@ -233,7 +241,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'confirmOrder':
                 await PostbackController.confirmOrder({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     transactionId: <string>data.transactionId
                 });
                 break;
@@ -241,7 +249,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'cancelOrder':
                 await PostbackController.cancelOrder({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     transactionId: <string>data.transactionId
                 });
                 break;
@@ -249,7 +257,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'confirmFriendPay':
                 await PostbackController.confirmFriendPay({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     token: <string>data.token
                 });
                 break;
@@ -257,7 +265,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'confirmTransferMoney':
                 await PostbackController.confirmTransferMoney({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     token: <string>data.token,
                     price: parseInt(<string>data.price, 10)
                 });
@@ -271,14 +279,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'searchCreditCards':
                 await PostbackController.searchCreditCards({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
             // クレジットカード追加
             case 'addCreditCard':
                 await PostbackController.addCreditCard({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     token: <string>data.token
                 });
                 break;
@@ -286,7 +294,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'deleteCreditCard':
                 await PostbackController.deleteCreditCard({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     cardSeq: <string>data.cardSeq
                 });
                 break;
@@ -294,7 +302,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'openAccount':
                 await PostbackController.openAccount({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     name: data.name,
                     accountType: data.accountType
                 });
@@ -303,7 +311,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'closeAccount':
                 await PostbackController.closeAccount({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     accountType: data.accountType,
                     accountNumber: data.accountNumber
                 });
@@ -312,13 +320,13 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'searchCoinAccounts':
                 await PostbackController.searchCoinAccounts({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
             case 'searchAccountMoneyTransferActions':
                 await PostbackController.searchAccountMoneyTransferActions({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     accountType: data.accountType,
                     accountNumber: data.accountNumber
                 });
@@ -327,7 +335,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'selectDepositAmount':
                 await PostbackController.selectDepositAmount({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     accountType: data.accountType,
                     accountNumber: data.accountNumber
                 });
@@ -336,7 +344,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'depositCoinByCreditCard':
                 await PostbackController.depositCoinByCreditCard({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     amount: Number(data.amount),
                     toAccountNumber: data.toAccountNumber
                 });
@@ -344,13 +352,13 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'askEventStartDate':
                 await MessageController.askEventStartDate({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
             case 'searchScreeningEventReservations':
                 await PostbackController.searchScreeningEventReservations({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
 
@@ -361,7 +369,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
 
                 await PostbackController.selectSeatOffers({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     eventId: <string>data.eventId,
                     seatNumbers: seatNumbers,
                     numSeats: numSeats,
@@ -374,7 +382,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'authorizeOwnershipInfo':
                 await PostbackController.authorizeOwnershipInfo({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     goodType: data.goodType,
                     id: data.id
                 });
@@ -383,7 +391,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'findOrderByConfirmationNumber':
                 await PostbackController.findOrderByConfirmationNumber({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     confirmationNumber: Number(data.confirmationNumber),
                     telephone: data.telephone
                 });
@@ -392,7 +400,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'authorizeOwnershipInfosByOrder':
                 await PostbackController.authorizeOwnershipInfosByOrder({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     orderNumber: data.orderNumber,
                     telephone: data.telephone
                 });
@@ -401,14 +409,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'searchOrders':
                 await PostbackController.searchOrders({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
             // 座席予約コード読み込み
             case 'findScreeningEventReservationById':
                 await PostbackController.findScreeningEventReservationById({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     code: <string>data.code
                 });
                 break;
@@ -416,14 +424,14 @@ export async function postback(event: line.PostbackEvent, user: User) {
             case 'getProfile':
                 await PostbackController.getProfile({
                     replyToken: event.replyToken,
-                    user: user
+                    user: req.user
                 });
                 break;
             // プロフィール更新
             case 'updateProfile':
                 await PostbackController.updateProfile({
                     replyToken: event.replyToken,
-                    user: user,
+                    user: req.user,
                     profile: data.profile
                 });
                 break;
@@ -437,7 +445,7 @@ export async function postback(event: line.PostbackEvent, user: User) {
         } catch (error) {
             // no op
         }
-        await LINE.pushMessage(user.userId, { type: 'text', text: text });
+        await LINE.pushMessage(req.user.userId, { type: 'text', text: text });
     }
 }
 
