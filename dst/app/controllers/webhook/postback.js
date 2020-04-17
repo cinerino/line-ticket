@@ -1151,10 +1151,7 @@ function selectSeatOffers(params) {
         const searchSellersResult = yield sellerService.search({
             project: { id: { $eq: event.project.id } }
         });
-        const seller = searchSellersResult.data.find((s) => {
-            var _a, _b;
-            return s.id === ((_b = (_a = event.offers) === null || _a === void 0 ? void 0 : _a.seller) === null || _b === void 0 ? void 0 : _b.id);
-        });
+        const seller = searchSellersResult.data.find((s) => { var _a, _b; return s.id === ((_b = (_a = event.offers) === null || _a === void 0 ? void 0 : _a.seller) === null || _b === void 0 ? void 0 : _b.id); });
         if (seller === undefined) {
             throw new Error(`イベントの販売者が見つかりません: ${(_e = (_d = event.offers) === null || _d === void 0 ? void 0 : _d.seller) === null || _e === void 0 ? void 0 : _e.id}`);
         }
