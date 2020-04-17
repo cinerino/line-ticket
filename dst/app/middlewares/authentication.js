@@ -96,21 +96,21 @@ function sendLoginButton(user) {
         let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
         const cb = `https://${user.host}/liff/signIn?${qs.stringify({ userId: user.userId, state: user.state })}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
+        const signInUrl = new URL(user.generateAuthUrl());
         // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
-        // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
-        // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
+        const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;
+        const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
         const actions = [
             {
                 type: 'uri',
                 label: 'Sign In',
                 uri: liffUri
-                // uri: liffUri
+            },
+            {
+                type: 'uri',
+                label: 'Sign In with Google',
+                uri: googleLiffUri
             }
-            // {
-            //     type: 'uri',
-            //     label: 'Sign In with Google',
-            //     uri: googleLiffUri
-            // }
         ];
         const refreshToken = yield user.getRefreshToken();
         const faces = yield user.searchFaces();
