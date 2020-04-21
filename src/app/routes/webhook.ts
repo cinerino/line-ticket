@@ -7,7 +7,7 @@ import * as express from 'express';
 import { OK } from 'http-status';
 
 import LINE from '../../lineClient';
-import * as WebhookController from '../controllers/webhook';
+import { WebhookController } from '../controllers/webhook';
 import authentication from '../middlewares/authentication';
 import faceLogin from '../middlewares/faceLogin';
 
@@ -30,43 +30,45 @@ webhookRouter.post(
 
 async function handleEvent(event: WebhookEvent, req: express.Request) {
     try {
+        const webhookController = new WebhookController(req);
+
         switch (event.type) {
             case 'message':
-                await WebhookController.message(event, req);
+                await webhookController.message(event);
                 break;
 
             case 'postback':
-                await WebhookController.postback(event, req);
+                await webhookController.postback(event);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
             /* istanbul ignore next */
             case 'follow':
-                await WebhookController.follow(event);
+                await webhookController.follow(event);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
             /* istanbul ignore next */
             case 'unfollow':
-                await WebhookController.unfollow(event);
+                await webhookController.unfollow(event);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
             /* istanbul ignore next */
             case 'join':
-                await WebhookController.join(event);
+                await webhookController.join(event);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
             /* istanbul ignore next */
             case 'leave':
-                await WebhookController.leave(event);
+                await webhookController.leave(event);
                 break;
 
             // tslint:disable-next-line:no-single-line-block-comment
             /* istanbul ignore next */
             case 'beacon':
-                await WebhookController.beacon(event);
+                await webhookController.beacon(event);
                 break;
 
             default:

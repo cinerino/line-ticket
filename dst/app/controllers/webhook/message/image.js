@@ -10,16 +10,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const lineClient_1 = require("../../../../lineClient");
-function indexFace(user, messageId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // faceをコレクションに登録
-        const content = yield lineClient_1.default.getMessageContent(messageId);
-        const source = yield streamToBuffer(content);
-        yield user.indexFace(source);
-        yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: '顔写真を登録しましたので、Face Loginをご利用できます' });
-    });
+/**
+ * 画像メッセージウェブフックコントローラ
+ */
+class ImageMessageWebhookController {
+    constructor(req) {
+        // this.project = req.project;
+        this.user = req.user;
+    }
+    indexFace(messageId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // faceをコレクションに登録
+            const content = yield lineClient_1.default.getMessageContent(messageId);
+            const source = yield streamToBuffer(content);
+            yield this.user.indexFace(source);
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '顔写真を登録しましたので、Face Loginをご利用できます' });
+        });
+    }
 }
-exports.indexFace = indexFace;
+exports.ImageMessageWebhookController = ImageMessageWebhookController;
 function streamToBuffer(readable) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {

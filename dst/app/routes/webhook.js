@@ -13,7 +13,7 @@ const createDebug = require("debug");
 const express = require("express");
 const http_status_1 = require("http-status");
 const lineClient_1 = require("../../lineClient");
-const WebhookController = require("../controllers/webhook");
+const webhook_1 = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
 const webhookRouter = express.Router();
@@ -31,37 +31,38 @@ webhookRouter.post('', faceLogin_1.default, authentication_1.default,
 function handleEvent(event, req) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const webhookController = new webhook_1.WebhookController(req);
             switch (event.type) {
                 case 'message':
-                    yield WebhookController.message(event, req);
+                    yield webhookController.message(event);
                     break;
                 case 'postback':
-                    yield WebhookController.postback(event, req);
+                    yield webhookController.postback(event);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'follow':
-                    yield WebhookController.follow(event);
+                    yield webhookController.follow(event);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'unfollow':
-                    yield WebhookController.unfollow(event);
+                    yield webhookController.unfollow(event);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'join':
-                    yield WebhookController.join(event);
+                    yield webhookController.join(event);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'leave':
-                    yield WebhookController.leave(event);
+                    yield webhookController.leave(event);
                     break;
                 // tslint:disable-next-line:no-single-line-block-comment
                 /* istanbul ignore next */
                 case 'beacon':
-                    yield WebhookController.beacon(event);
+                    yield webhookController.beacon(event);
                     break;
                 default:
             }
