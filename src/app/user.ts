@@ -74,7 +74,7 @@ if (USER_EXPIRES_IN_SECONDS === undefined) {
     throw new Error('Environment variable USER_EXPIRES_IN_SECONDS required.');
 }
 // tslint:disable-next-line:no-magic-numbers
-const EXPIRES_IN_SECONDS = parseInt(USER_EXPIRES_IN_SECONDS, 10);
+const EXPIRES_IN_SECONDS = Number(USER_EXPIRES_IN_SECONDS);
 
 const REFRESH_TOKEN_EXPIRES_IN_SECONDS_ENV = process.env.REFRESH_TOKEN_EXPIRES_IN_SECONDS;
 if (REFRESH_TOKEN_EXPIRES_IN_SECONDS_ENV === undefined) {
@@ -172,6 +172,11 @@ export default class User {
             .then((value) => (value === null) ? undefined : value);
     }
 
+    public async getSelectedProject(): Promise<string | undefined> {
+        return redisClient.get(`line-ticket:selectedProject:${this.userId}`)
+            .then((value) => (value === null) ? undefined : value);
+    }
+
     public setCredentials(credentials: ICredentials) {
         const payload = <any>jwt.decode(credentials.access_token);
         debug('payload:', payload);
@@ -181,6 +186,13 @@ export default class User {
         this.authClient.setCredentials(credentials);
 
         return this;
+    }
+
+    public async selectProject(params: { id: string }) {
+        await redisClient.multi()
+            .set(`line-ticket:selectedProject:${this.userId}`, params.id)
+            .expire(`line-ticket:selectedProject:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .exec();
     }
 
     public async signIn(code: string) {

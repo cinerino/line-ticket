@@ -2,114 +2,108 @@
  * 顔ログインミドルウェア
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-// import { WebhookEvent } from '@line/bot-sdk';
+import { QuickReplyItem, TextMessage, WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
-// import { OK } from 'http-status';
-// import * as qs from 'qs';
+import { OK } from 'http-status';
+import * as qs from 'qs';
 // import * as request from 'request-promise-native';
 
-// import LINE from '../../lineClient';
+import LINE from '../../lineClient';
 // import User from '../user';
 
-// tslint:disable-next-line:max-func-body-length
-export default async (__: Request, ___: Response, next: NextFunction) => {
+export default async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // switch (event.type) {
-        //     // 画像が送信されてくれば、顔認証
-        //     case 'message':
-        //         if (event.message.type === 'image') {
-        //             try {
-        //                 const faces = await req.user.searchFaces();
-        //                 if (faces.length === 0) {
-        //                     // 顔登録済でなければメッセージ送信
-        //                     await LINE.pushMessage(userId, { type: 'text', text: '顔写真を少なくとも1枚登録してください' });
-        //                 } else {
-        //                     await LINE.pushMessage(userId, { type: 'text', text: `画像を検証中...${event.message.id}` });
-        //                     const content = await LINE.getMessageContent(event.message.id);
-        //                     const searchFacesByImageResponse = await req.user.verifyFace(await streamToBuffer(content));
-        //                     // const searchFacesByImageResponse = await searchFacesByImage(new Buffer(content));
-        //                     if (!Array.isArray(searchFacesByImageResponse.FaceMatches)) {
-        //                         await LINE.pushMessage(userId, { type: 'text', text: '類似画像が見つかりませんでした' });
-        //                     } else if (searchFacesByImageResponse.FaceMatches.length === 0) {
-        //                         await LINE.pushMessage(userId, { type: 'text', text: '類似画像が見つかりませんでした' });
-        //                     } else {
-        //                         const similarity = searchFacesByImageResponse.FaceMatches[0].Similarity;
-        //                         if (similarity === undefined) {
-        //                             await LINE.pushMessage(userId, { type: 'text', text: '類似画像が見つかりませんでした' });
-        //                         } else if (similarity < FACE_MATCH_THRESHOLD) {
-        //                             await LINE.pushMessage(userId, {
-        //                                 type: 'text',
-        //                                 text: `類似率(${searchFacesByImageResponse.FaceMatches[0].Similarity}%)が低すぎます`
-        //                             });
-        //                         } else {
-        //                             await LINE.pushMessage(userId, {
-        //                                 type: 'text',
-        //                                 text: `${searchFacesByImageResponse.FaceMatches[0].Similarity}%の確立で一致しました`
-        //                             });
+        // プロジェクト選択中かどうか
+        let selectedProjectId = await req.user.getSelectedProject();
+        await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
 
-        //                             // 一致結果があれば、リフレッシュトークンでアクセストークンを手動更新して、ログイン
-        //                             const refreshToken = await req.user.getRefreshToken();
-        //                             if (refreshToken === undefined) {
-        // tslint:disable-next-line:max-line-length
-        //                                 await LINE.pushMessage(userId, { type: 'text', text: 'LINEと会員が結合されていません。一度、IDとパスワードでログインしてください。' });
-        //                             } else {
-        //                                 req.user.authClient.setCredentials({
-        //                                     refresh_token: refreshToken,
-        //                                     token_type: 'Bearer'
-        //                                 });
-        //                                 await req.user.signInForcibly(<any>await req.user.authClient.refreshAccessToken());
-        //                                 await LINE.pushMessage(userId, { type: 'text', text: `Hello ${req.user.payload.username}.` });
+        // 選択アクションであればプロジェクト選択
+        const events: WebhookEvent[] = req.body.events;
+        const event = events[0];
+        if (event !== undefined) {
+            switch (event.type) {
+                // case 'message':
+                //     if (event.message.type === 'text') {
+                //         try {
+                //         } catch (error) {
+                //             await LINE.pushMessage(userId, { type: 'text', text: error.message });
+                //         }
 
-        //                                 // ログイン前のイベントを強制的に再送信
-        //                                 try {
-        //                                     const callbackState = await req.user.findCallbackState();
-        //                                     if (callbackState !== undefined) {
-        //                                         await req.user.deleteCallbackState();
-        //                                         await request.post(`https://${req.hostname}/webhook`, {
-        //                                             headers: {
-        //                                                 'Content-Type': 'application/json'
-        //                                             },
-        //                                             form: callbackState
-        //                                         })
-        //                                             .promise();
-        //                                     }
-        //                                 } catch (error) {
-        //                                     await LINE.pushMessage(userId, { type: 'text', text: error.message });
-        //                                 }
-        //                             }
-        //                         }
-        //                     }
-        //                 }
-        //             } catch (error) {
-        //                 await LINE.pushMessage(userId, { type: 'text', text: error.message });
-        //             }
+                //         res.status(OK)
+                //             .send('ok');
 
-        //             res.status(OK)
-        //                 .send('ok');
+                //         return;
+                //     }
+                //     break;
 
-        //             return;
-        //         }
-        //         break;
+                case 'postback':
+                    const data = qs.parse(event.postback.data);
+                    if (data.action === 'selectProject') {
+                        selectedProjectId = data.id;
+                        if (typeof selectedProjectId === 'string' && selectedProjectId.length > 0) {
+                            await req.user.selectProject({ id: <string>data.id });
+                            await LINE.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトを選択しました' });
+                            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${data.id}` });
+                        } else {
+                            // プロジェクト変更アクション
+                            await sendSelectMessage(req);
+                        }
 
-        //     // face loginイベントであれば、メッセージを送信
-        //     case 'postback':
-        //         const data = qs.parse(event.postback.data);
-        //         if (data.action === 'loginByFace') {
-        //             // ログイン前のstateを保管
-        //             await req.user.saveCallbackState(<string>data.state);
-        //             await LINE.pushMessage(userId, { type: 'text', text: '顔写真を送信してください' });
-        //             res.status(OK)
-        //                 .send('ok');
+                        res.status(OK)
+                            .send('ok');
 
-        //             return;
-        //         }
-        //         break;
+                        return;
+                    }
 
-        //     default:
-        // }
+                    break;
 
-        next();
+                default:
+            }
+        }
+
+        // 選択中であればリクエストにプロジェクトセット
+        if (typeof selectedProjectId === 'string') {
+            req.project = { typeOf: cinerinoapi.factory.organizationType.Project, id: selectedProjectId };
+
+            next();
+
+            return;
+        }
+
+        // 選択中でなければ選択メッセージ送信
+        await sendSelectMessage(req);
+
+        res.status(OK)
+            .send('ok');
     } catch (error) {
         next(new cinerinoapi.factory.errors.Unauthorized(error.message));
     }
 };
+
+export async function sendSelectMessage(req: Request) {
+    const projectIds = String(process.env.PROJECT_IDS)
+        .split(',');
+    const quickReplyItems: QuickReplyItem[] = projectIds.map((projectId) => {
+        return {
+            type: 'action',
+            // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
+            action: {
+                type: 'postback',
+                label: projectId,
+                data: qs.stringify({
+                    action: 'selectProject',
+                    id: projectId
+                })
+            }
+        };
+    });
+
+    const message: TextMessage = {
+        type: 'text',
+        text: 'プロジェクトを選択してください',
+        quickReply: {
+            items: quickReplyItems
+        }
+    };
+    await LINE.pushMessage(req.user.userId, [message]);
+}

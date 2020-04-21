@@ -34,8 +34,6 @@ export class WebhookController {
         // const userId = <string>event.source.userId;
 
         try {
-            await LINE.pushMessage(this.req.user.userId, { type: 'text', text: `Project: ${this.req.project?.id}` });
-
             switch (event.message.type) {
                 case 'text':
                     const messageController = new MessageWebhookController(this.req);

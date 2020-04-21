@@ -89,6 +89,16 @@ class MessageWebhookController {
                     }
                 }, {
                     type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/profile-96.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'プロジェクト変更',
+                        data: qs.stringify({
+                            action: 'selectProject'
+                        })
+                    }
+                }, {
+                    type: 'action',
                     imageUrl: `https://${this.user.host}/img/labels/login-96.png`,
                     action: {
                         type: 'message',
@@ -129,6 +139,16 @@ class MessageWebhookController {
                         type: 'message',
                         label: 'コード管理',
                         text: 'コード'
+                    }
+                }, {
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/profile-96.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'プロジェクト変更',
+                        data: qs.stringify({
+                            action: 'selectProject'
+                        })
                     }
                 });
             }
