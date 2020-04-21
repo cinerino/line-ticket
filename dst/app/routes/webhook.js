@@ -16,11 +16,17 @@ const lineClient_1 = require("../../lineClient");
 const webhook_1 = require("../controllers/webhook");
 const authentication_1 = require("../middlewares/authentication");
 const faceLogin_1 = require("../middlewares/faceLogin");
+const selectProject_1 = require("../middlewares/selectProject");
 const webhookRouter = express.Router();
 const debug = createDebug('cinerino-line-ticket:router');
-webhookRouter.post('', faceLogin_1.default, authentication_1.default, 
+webhookRouter.post('', 
+// 顔認証ログインイベントであれば処理
+faceLogin_1.default, 
+// ユーザー認証
+authentication_1.default, 
 // line.middleware(config),
-(req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// プロジェクト選択確認
+selectProject_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     debug('body:', req.body);
     yield Promise.all(req.body.events.map((e) => __awaiter(void 0, void 0, void 0, function* () {
         yield handleEvent(e, req);
@@ -68,7 +74,7 @@ function handleEvent(event, req) {
             }
         }
         catch (error) {
-            debug(error);
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: 'ウェブフック処理中にエラーが発生しました' });
             yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `${error.name}:${error.message}` });
         }
     });
