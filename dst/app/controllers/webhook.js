@@ -29,10 +29,12 @@ class WebhookController {
      */
     // tslint:disable-next-line:max-func-body-length
     message(event) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const user = this.req.user;
             // const userId = <string>event.source.userId;
             try {
+                yield lineClient_1.default.pushMessage(this.req.user.userId, { type: 'text', text: `Project: ${(_a = this.req.project) === null || _a === void 0 ? void 0 : _a.id}` });
                 switch (event.message.type) {
                     case 'text':
                         const messageController = new message_1.MessageWebhookController(this.req);

@@ -10,7 +10,7 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/api-nodejs-client": "2.0.0-alpha.77",
+    "@cinerino/api-nodejs-client": "2.0.0-alpha.78",
     "@line/bot-sdk": "^6.7.0",
     "@motionpicture/express-middleware": "^0.1.1",
     "aws-sdk": "^2.458.0",

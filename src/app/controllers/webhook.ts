@@ -31,9 +31,11 @@ export class WebhookController {
     // tslint:disable-next-line:max-func-body-length
     public async message(event: line.MessageEvent) {
         const user = this.req.user;
-
         // const userId = <string>event.source.userId;
+
         try {
+            await LINE.pushMessage(this.req.user.userId, { type: 'text', text: `Project: ${this.req.project?.id}` });
+
             switch (event.message.type) {
                 case 'text':
                     const messageController = new MessageWebhookController(this.req);
