@@ -18,11 +18,18 @@ const qs = require("qs");
 // import * as request from 'request-promise-native';
 const lineClient_1 = require("../../lineClient");
 // import User from '../user';
+const message_1 = require("../controllers/webhook/message");
+const contentsBuilder_1 = require("../contentsBuilder");
 exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // プロジェクト選択中かどうか
         let selectedProjectId = yield req.user.getSelectedProject();
-        yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
+        if (typeof selectedProjectId === 'string') {
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
+        }
+        else {
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: '選択中のプロジェクトがありません' });
+        }
         // 選択アクションであればプロジェクト選択
         const events = req.body.events;
         const event = events[0];
@@ -47,6 +54,8 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                             yield req.user.selectProject({ id: data.id });
                             yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトを選択しました' });
                             yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${data.id}` });
+                            const messageController = new message_1.MessageWebhookController(req);
+                            yield messageController.pushHowToUse({ replyToken: event.replyToken });
                         }
                         else {
                             // プロジェクト変更アクション
@@ -77,30 +86,58 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 });
 function sendSelectMessage(req) {
     return __awaiter(this, void 0, void 0, function* () {
-        const projectIds = String(process.env.PROJECT_IDS)
-            .split(',');
-        const quickReplyItems = projectIds.map((projectId) => {
-            return {
-                type: 'action',
-                // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
-                action: {
-                    type: 'postback',
-                    label: projectId,
-                    data: qs.stringify({
-                        action: 'selectProject',
-                        id: projectId
-                    })
+        try {
+            const projectService = new cinerinoapi.service.Project({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: req.user.authClient
+            });
+            const searchProjectsResult = yield projectService.search({ limit: 10 });
+            if (searchProjectsResult.data.length === 0) {
+                yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトが見つかりませんでした' });
+                return;
+            }
+            // const accessToken = await params.user.authClient.getAccessToken();
+            const flex = {
+                type: 'flex',
+                altText: 'プロジェクトを選択してください',
+                contents: {
+                    type: 'carousel',
+                    contents: [
+                        // tslint:disable-next-line:no-magic-numbers
+                        ...searchProjectsResult.data.slice(0, 10)
+                            .map((project) => {
+                            return contentsBuilder_1.project2flexBubble({ project: project });
+                        })
+                    ]
                 }
             };
-        });
-        const message = {
-            type: 'text',
-            text: 'プロジェクトを選択してください',
-            quickReply: {
-                items: quickReplyItems
-            }
-        };
-        yield lineClient_1.default.pushMessage(req.user.userId, [message]);
+            yield lineClient_1.default.pushMessage(req.user.userId, [flex]);
+            // const quickReplyItems: QuickReplyItem[] = searchProjectsResult.data.map((project) => {
+            //     return {
+            //         type: 'action',
+            //         // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
+            //         action: {
+            //             type: 'postback',
+            //             label: String(project.name),
+            //             data: qs.stringify({
+            //                 action: 'selectProject',
+            //                 id: String(project.id)
+            //             })
+            //         }
+            //     };
+            // });
+            // const message: TextMessage = {
+            //     type: 'text',
+            //     text: 'プロジェクトを選択してください',
+            //     quickReply: {
+            //         items: quickReplyItems
+            //     }
+            // };
+            // await LINE.pushMessage(req.user.userId, [message]);
+        }
+        catch (error) {
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `プロジェクトを検索できませんでした: ${error.message}` });
+        }
     });
 }
 exports.sendSelectMessage = sendSelectMessage;

@@ -234,79 +234,82 @@ export class PostbackWebhookController {
         const price = seatReservationAuthorization.result.price;
         // const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
 
-        switch (params.paymentMethodType) {
-            case cinerinoapi.factory.paymentMethodType.Account:
-                await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
-                let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType> | string;
-                if (params.code === undefined) {
-                    // 口座番号取得
-                    const searchAccountsResult =
-                        await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
-                            typeOfGood: {
-                                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                                accountType: cinerinoapi.factory.accountType.Coin
-                            }
-                        });
-                    let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
-                    accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-                    debug('accounts:', accounts);
-                    if (accounts.length === 0) {
-                        throw new Error('口座未開設です');
+        // 金額が0であれば決済不要
+        if (price > 0) {
+            switch (params.paymentMethodType) {
+                case cinerinoapi.factory.paymentMethodType.Account:
+                    await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
+                    let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType> | string;
+                    if (params.code === undefined) {
+                        // 口座番号取得
+                        const searchAccountsResult =
+                            await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+                                typeOfGood: {
+                                    typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                                    accountType: cinerinoapi.factory.accountType.Coin
+                                }
+                            });
+                        let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
+                        accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+                        debug('accounts:', accounts);
+                        if (accounts.length === 0) {
+                            throw new Error('口座未開設です');
+                        }
+                        account = accounts[0];
+                    } else {
+                        const { token } = await ownershipInfoService.getToken({ code: params.code });
+                        account = token;
                     }
-                    account = accounts[0];
-                } else {
-                    const { token } = await ownershipInfoService.getToken({ code: params.code });
-                    account = token;
-                }
-                const accountAuthorization = await paymentService.authorizeAccount({
-                    object: {
-                        typeOf: cinerinoapi.factory.paymentMethodType.Account,
-                        amount: price,
-                        fromAccount: account
-                    },
-                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
-                });
-                debug('残高確認済', accountAuthorization);
-                await LINE.pushMessage(this.user.userId, { type: 'text', text: '残高の確認がとれました' });
-                break;
+                    const accountAuthorization = await paymentService.authorizeAccount({
+                        object: {
+                            typeOf: cinerinoapi.factory.paymentMethodType.Account,
+                            amount: price,
+                            fromAccount: account
+                        },
+                        purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
+                    });
+                    debug('残高確認済', accountAuthorization);
+                    await LINE.pushMessage(this.user.userId, { type: 'text', text: '残高の確認がとれました' });
+                    break;
 
-            case cinerinoapi.factory.paymentMethodType.CreditCard:
-                await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
-                if (params.creditCard === undefined) {
-                    throw new Error('クレジットカードが指定されていません');
-                }
+                case cinerinoapi.factory.paymentMethodType.CreditCard:
+                    await LINE.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
+                    if (params.creditCard === undefined) {
+                        throw new Error('クレジットカードが指定されていません');
+                    }
 
-                await paymentService.authorizeCreditCard({
-                    object: {
-                        typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
-                        name: 'クレカ',
-                        amount: price,
-                        method: <any>'1',
-                        creditCard: params.creditCard
-                    },
-                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
-                });
-                await LINE.pushMessage(this.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
-                break;
+                    await paymentService.authorizeCreditCard({
+                        object: {
+                            typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                            name: 'クレカ',
+                            amount: price,
+                            method: <any>'1',
+                            creditCard: params.creditCard
+                        },
+                        purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
+                    });
+                    await LINE.pushMessage(this.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
+                    break;
 
-            case cinerinoapi.factory.paymentMethodType.Others:
-                await LINE.replyMessage(params.replyToken, { type: 'text', text: '決済承認を実行します...' });
+                case cinerinoapi.factory.paymentMethodType.Others:
+                    await LINE.replyMessage(params.replyToken, { type: 'text', text: '決済承認を実行します...' });
 
-                await paymentService.authorizeAnyPayment({
-                    object: {
-                        typeOf: cinerinoapi.factory.paymentMethodType.Others,
-                        name: 'LINE POS その他',
-                        amount: price
-                    },
-                    purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
-                });
+                    await paymentService.authorizeAnyPayment({
+                        object: {
+                            typeOf: cinerinoapi.factory.paymentMethodType.Others,
+                            name: 'LINE POS その他',
+                            amount: price
+                        },
+                        purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
+                    });
 
-                await LINE.pushMessage(this.user.userId, { type: 'text', text: '決済の承認がとれました' });
+                    await LINE.pushMessage(this.user.userId, { type: 'text', text: '決済の承認がとれました' });
 
-                break;
+                    break;
 
-            default:
-                throw new Error(`Unknown payment method ${params.paymentMethodType}`);
+                default:
+                    throw new Error(`Unknown payment method ${params.paymentMethodType}`);
+            }
         }
 
         // 購入者情報確認

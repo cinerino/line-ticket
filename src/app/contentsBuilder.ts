@@ -20,6 +20,99 @@ export type IReservationPriceSpec =
     cinerinoapi.factory.chevre.reservation.IPriceSpecification<cinerinoapi.factory.chevre.reservationType.EventReservation>;
 
 // tslint:disable-next-line:max-func-body-length
+export function project2flexBubble(params: {
+    project: cinerinoapi.factory.project.IProject;
+}): FlexBubble {
+    const project = params.project;
+
+    const thumbnailImageUrl = (typeof project.logo === 'string')
+        ? project.logo
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+
+    const body: FlexBox = {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+            {
+                type: 'text',
+                text: String(project.name),
+                wrap: true,
+                weight: 'bold',
+                gravity: 'center',
+                size: 'xl'
+            },
+            {
+                type: 'box',
+                layout: 'vertical',
+                margin: 'lg',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: '運営',
+                                color: '#aaaaaa',
+                                size: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'text',
+                                text: String(project.parentOrganization?.name.ja),
+                                wrap: true,
+                                color: '#666666',
+                                size: 'sm',
+                                flex: 4
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    return {
+        type: 'bubble',
+        hero: {
+            type: 'image',
+            url: thumbnailImageUrl,
+            size: 'full',
+            aspectRatio: '20:13',
+            aspectMode: 'cover',
+            action: {
+                type: 'uri',
+                label: 'event',
+                // tslint:disable-next-line:no-http-string
+                uri: 'http://linecorp.com/'
+            }
+        },
+        body: body,
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: 'プロジェクト選択',
+                        data: qs.stringify({
+                            action: 'selectProject',
+                            id: String(project.id)
+                        })
+                    }
+                }
+            ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
 export function createConfirmOrderFlexBubble(params: {
     id: string;
     seller: cinerinoapi.factory.seller.IOrganization<any>;

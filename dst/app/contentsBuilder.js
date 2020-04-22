@@ -8,6 +8,95 @@ const moment = require("moment");
 const qs = require("qs");
 const util_1 = require("util");
 // tslint:disable-next-line:max-func-body-length
+function project2flexBubble(params) {
+    var _a;
+    const project = params.project;
+    const thumbnailImageUrl = (typeof project.logo === 'string')
+        ? project.logo
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+    const body = {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+            {
+                type: 'text',
+                text: String(project.name),
+                wrap: true,
+                weight: 'bold',
+                gravity: 'center',
+                size: 'xl'
+            },
+            {
+                type: 'box',
+                layout: 'vertical',
+                margin: 'lg',
+                spacing: 'sm',
+                contents: [
+                    {
+                        type: 'box',
+                        layout: 'baseline',
+                        spacing: 'sm',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: '運営',
+                                color: '#aaaaaa',
+                                size: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'text',
+                                text: String((_a = project.parentOrganization) === null || _a === void 0 ? void 0 : _a.name.ja),
+                                wrap: true,
+                                color: '#666666',
+                                size: 'sm',
+                                flex: 4
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+    return {
+        type: 'bubble',
+        hero: {
+            type: 'image',
+            url: thumbnailImageUrl,
+            size: 'full',
+            aspectRatio: '20:13',
+            aspectMode: 'cover',
+            action: {
+                type: 'uri',
+                label: 'event',
+                // tslint:disable-next-line:no-http-string
+                uri: 'http://linecorp.com/'
+            }
+        },
+        body: body,
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: 'プロジェクト選択',
+                        data: qs.stringify({
+                            action: 'selectProject',
+                            id: String(project.id)
+                        })
+                    }
+                }
+            ]
+        }
+    };
+}
+exports.project2flexBubble = project2flexBubble;
+// tslint:disable-next-line:max-func-body-length
 function createConfirmOrderFlexBubble(params) {
     const seller = params.seller;
     const profile = params.profile;

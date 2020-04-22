@@ -2,7 +2,7 @@
  * 顔ログインミドルウェア
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
-import { QuickReplyItem, TextMessage, WebhookEvent } from '@line/bot-sdk';
+import { FlexBubble, FlexMessage, WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
 import * as qs from 'qs';
@@ -11,11 +11,19 @@ import * as qs from 'qs';
 import LINE from '../../lineClient';
 // import User from '../user';
 
+import { MessageWebhookController } from '../controllers/webhook/message';
+
+import { project2flexBubble } from '../contentsBuilder';
+
 export default async (req: Request, res: Response, next: NextFunction) => {
     try {
         // プロジェクト選択中かどうか
         let selectedProjectId = await req.user.getSelectedProject();
-        await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
+        if (typeof selectedProjectId === 'string') {
+            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
+        } else {
+            await LINE.pushMessage(req.user.userId, { type: 'text', text: '選択中のプロジェクトがありません' });
+        }
 
         // 選択アクションであればプロジェクト選択
         const events: WebhookEvent[] = req.body.events;
@@ -44,6 +52,9 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                             await req.user.selectProject({ id: <string>data.id });
                             await LINE.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトを選択しました' });
                             await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${data.id}` });
+
+                            const messageController = new MessageWebhookController(req);
+                            await messageController.pushHowToUse({ replyToken: event.replyToken });
                         } else {
                             // プロジェクト変更アクション
                             await sendSelectMessage(req);
@@ -81,29 +92,60 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function sendSelectMessage(req: Request) {
-    const projectIds = String(process.env.PROJECT_IDS)
-        .split(',');
-    const quickReplyItems: QuickReplyItem[] = projectIds.map((projectId) => {
-        return {
-            type: 'action',
-            // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
-            action: {
-                type: 'postback',
-                label: projectId,
-                data: qs.stringify({
-                    action: 'selectProject',
-                    id: projectId
-                })
+    try {
+        const projectService = new cinerinoapi.service.Project({
+            endpoint: <string>process.env.CINERINO_ENDPOINT,
+            auth: req.user.authClient
+        });
+        const searchProjectsResult = await projectService.search({ limit: 10 });
+
+        if (searchProjectsResult.data.length === 0) {
+            await LINE.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトが見つかりませんでした' });
+
+            return;
+        }
+
+        // const accessToken = await params.user.authClient.getAccessToken();
+        const flex: FlexMessage = {
+            type: 'flex',
+            altText: 'プロジェクトを選択してください',
+            contents: {
+                type: 'carousel',
+                contents: [
+                    // tslint:disable-next-line:no-magic-numbers
+                    ...searchProjectsResult.data.slice(0, 10)
+                        .map<FlexBubble>((project) => {
+                            return project2flexBubble({ project: project });
+                        })
+                ]
             }
         };
-    });
+        await LINE.pushMessage(req.user.userId, [flex]);
 
-    const message: TextMessage = {
-        type: 'text',
-        text: 'プロジェクトを選択してください',
-        quickReply: {
-            items: quickReplyItems
-        }
-    };
-    await LINE.pushMessage(req.user.userId, [message]);
+        // const quickReplyItems: QuickReplyItem[] = searchProjectsResult.data.map((project) => {
+        //     return {
+        //         type: 'action',
+        //         // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
+        //         action: {
+        //             type: 'postback',
+        //             label: String(project.name),
+        //             data: qs.stringify({
+        //                 action: 'selectProject',
+        //                 id: String(project.id)
+        //             })
+        //         }
+        //     };
+        // });
+
+        // const message: TextMessage = {
+        //     type: 'text',
+        //     text: 'プロジェクトを選択してください',
+        //     quickReply: {
+        //         items: quickReplyItems
+        //     }
+        // };
+        // await LINE.pushMessage(req.user.userId, [message]);
+    } catch (error) {
+        await LINE.pushMessage(req.user.userId, { type: 'text', text: `プロジェクトを検索できませんでした: ${error.message}` });
+    }
 }
