@@ -30,16 +30,43 @@ class MessageWebhookController {
     pushHowToUse(params) {
         return __awaiter(this, void 0, void 0, function* () {
             const quickReplyItems = [];
+            quickReplyItems.push({
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/project-96.png`,
+                action: {
+                    type: 'postback',
+                    label: 'プロジェクト変更',
+                    data: qs.stringify({
+                        action: 'selectProject'
+                    })
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
+                action: {
+                    type: 'message',
+                    label: '予約管理',
+                    text: '予約'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/order-96.png`,
+                action: {
+                    type: 'message',
+                    label: '注文管理',
+                    text: '注文'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/qr-code-48.png`,
+                action: {
+                    type: 'message',
+                    label: 'コード管理',
+                    text: 'コード'
+                }
+            });
             if ((yield this.user.getCredentials()) !== undefined) {
                 quickReplyItems.push({
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
-                    action: {
-                        type: 'message',
-                        label: '座席予約管理',
-                        text: '座席予約'
-                    }
-                }, {
                     type: 'action',
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
@@ -54,22 +81,6 @@ class MessageWebhookController {
                         type: 'message',
                         label: 'コイン口座管理',
                         text: 'コイン'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/order-96.png`,
-                    action: {
-                        type: 'message',
-                        label: '注文管理',
-                        text: '注文'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/qr-code-48.png`,
-                    action: {
-                        type: 'message',
-                        label: 'コード管理',
-                        text: 'コード'
                     }
                 }, {
                     type: 'action',
@@ -89,16 +100,6 @@ class MessageWebhookController {
                     }
                 }, {
                     type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/profile-96.png`,
-                    action: {
-                        type: 'postback',
-                        label: 'プロジェクト変更',
-                        data: qs.stringify({
-                            action: 'selectProject'
-                        })
-                    }
-                }, {
-                    type: 'action',
                     imageUrl: `https://${this.user.host}/img/labels/login-96.png`,
                     action: {
                         type: 'message',
@@ -115,40 +116,6 @@ class MessageWebhookController {
                         type: 'message',
                         label: 'ログイン',
                         text: 'login'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
-                    action: {
-                        type: 'message',
-                        label: '座席予約管理',
-                        text: '座席予約'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/order-96.png`,
-                    action: {
-                        type: 'message',
-                        label: '注文管理',
-                        text: '注文'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/qr-code-48.png`,
-                    action: {
-                        type: 'message',
-                        label: 'コード管理',
-                        text: 'コード'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/profile-96.png`,
-                    action: {
-                        type: 'postback',
-                        label: 'プロジェクト変更',
-                        data: qs.stringify({
-                            action: 'selectProject'
-                        })
                     }
                 });
             }
@@ -215,13 +182,13 @@ class MessageWebhookController {
         });
     }
     /**
-     * 座席予約メニューを表示する
+     * 予約メニューを表示する
      */
     showSeatReservationMenu(params) {
         return __awaiter(this, void 0, void 0, function* () {
             const actions = [{
                     type: 'postback',
-                    label: '座席を予約する',
+                    label: '予約する',
                     data: `action=askEventStartDate`
                 }];
             if ((yield this.user.getCredentials()) !== undefined) {
@@ -234,10 +201,10 @@ class MessageWebhookController {
             yield lineClient_1.default.replyMessage(params.replyToken, [
                 {
                     type: 'template',
-                    altText: '座席予約メニュー',
+                    altText: '予約メニュー',
                     template: {
                         type: 'buttons',
-                        title: '座席予約',
+                        title: '予約',
                         text: 'ご用件はなんでしょう？',
                         actions: actions
                     }
@@ -362,7 +329,7 @@ class MessageWebhookController {
             const actions = [
                 {
                     type: 'uri',
-                    label: '座席予約チケット読み込み',
+                    label: '予約チケット読み込み',
                     uri: liffUri
                 }
             ];

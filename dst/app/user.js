@@ -54,6 +54,13 @@ class User {
         this.userId = configurations.userId;
         this.state = configurations.state;
         this.rekognitionCollectionId = `cinerino-line-ticket-${this.userId}`;
+        this.authClientApplication = new cinerinoapi.auth.ClientCredentials({
+            domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: process.env.CINERINO_CLIENT_ID,
+            clientSecret: process.env.CINERINO_CLIENT_SECRET,
+            scopes: [],
+            state: ''
+        });
         this.authClient = new cinerinoapi.auth.ClientCredentials({
             domain: process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
             clientId: process.env.CINERINO_CLIENT_ID,
@@ -93,8 +100,17 @@ class User {
     }
     getSelectedProject() {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket:selectedProject:${this.userId}`)
+            const redisValue = yield redisClient.get(`line-ticket:selectedProject:${this.userId}`)
                 .then((value) => (value === null) ? undefined : value);
+            if (typeof redisValue === 'string') {
+                try {
+                    return JSON.parse(redisValue);
+                }
+                catch (error) {
+                    // no op
+                }
+            }
+            return;
         });
     }
     setCredentials(credentials) {
@@ -109,7 +125,7 @@ class User {
     selectProject(params) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()
-                .set(`line-ticket:selectedProject:${this.userId}`, params.id)
+                .set(`line-ticket:selectedProject:${this.userId}`, JSON.stringify(params))
                 .expire(`line-ticket:selectedProject:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
         });

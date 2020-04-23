@@ -103,7 +103,8 @@ export function project2flexBubble(params: {
                         label: 'プロジェクト選択',
                         data: qs.stringify({
                             action: 'selectProject',
-                            id: String(project.id)
+                            id: String(project.id),
+                            name: String(project.name)
                         })
                     }
                 }

@@ -61,8 +61,8 @@ class WebhookController {
                                     replyToken: event.replyToken
                                 });
                                 break;
-                            // ログアウト
-                            case /^座席予約$/.test(messageText):
+                            // 予約
+                            case /予約/.test(messageText):
                                 yield messageController.showSeatReservationMenu({
                                     replyToken: event.replyToken
                                 });
@@ -377,7 +377,7 @@ class WebhookController {
                             replyToken: event.replyToken
                         });
                         break;
-                    // 座席予約コード読み込み
+                    // 予約コード読み込み
                     case 'findScreeningEventReservationById':
                         yield postbackController.findScreeningEventReservationById({
                             replyToken: event.replyToken,

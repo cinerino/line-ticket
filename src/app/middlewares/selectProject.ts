@@ -18,9 +18,9 @@ import { project2flexBubble } from '../contentsBuilder';
 export default async (req: Request, res: Response, next: NextFunction) => {
     try {
         // プロジェクト選択中かどうか
-        let selectedProjectId = await req.user.getSelectedProject();
-        if (typeof selectedProjectId === 'string') {
-            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProjectId}` });
+        let selectedProject = await req.user.getSelectedProject();
+        if (selectedProject !== undefined) {
+            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProject.name}` });
         } else {
             await LINE.pushMessage(req.user.userId, { type: 'text', text: '選択中のプロジェクトがありません' });
         }
@@ -47,11 +47,16 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                 case 'postback':
                     const data = qs.parse(event.postback.data);
                     if (data.action === 'selectProject') {
-                        selectedProjectId = data.id;
-                        if (typeof selectedProjectId === 'string' && selectedProjectId.length > 0) {
-                            await req.user.selectProject({ id: <string>data.id });
+                        const projectId = data.id;
+                        if (typeof projectId === 'string' && projectId.length > 0) {
+                            selectedProject = {
+                                typeOf: cinerinoapi.factory.organizationType.Project,
+                                id: data.id,
+                                name: data.name
+                            };
+                            await req.user.selectProject(selectedProject);
                             await LINE.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトを選択しました' });
-                            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${data.id}` });
+                            await LINE.pushMessage(req.user.userId, { type: 'text', text: `選択中のプロジェクト:${selectedProject.name}` });
 
                             const messageController = new MessageWebhookController(req);
                             await messageController.pushHowToUse({ replyToken: event.replyToken });
@@ -73,8 +78,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         }
 
         // 選択中であればリクエストにプロジェクトセット
-        if (typeof selectedProjectId === 'string') {
-            req.project = { typeOf: cinerinoapi.factory.organizationType.Project, id: selectedProjectId };
+        if (selectedProject !== undefined) {
+            req.project = { typeOf: cinerinoapi.factory.organizationType.Project, id: selectedProject.id };
 
             next();
 
@@ -95,7 +100,7 @@ export async function sendSelectMessage(req: Request) {
     try {
         const projectService = new cinerinoapi.service.Project({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: req.user.authClient
+            auth: req.user.authClientApplication
         });
         const searchProjectsResult = await projectService.search({ limit: 10 });
 

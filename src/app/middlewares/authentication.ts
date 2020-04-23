@@ -91,10 +91,11 @@ export async function sendLoginButton(req: Request) {
     // tslint:disable-next-line:no-multiline-string
     let text = '一度ログイン後、顔写真を登録すると次回からFace Loginを使用できます';
 
-    const cb = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
+    // tslint:disable-next-line:max-line-length
+    // const cb = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
     const cbWithGoogle = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state, identity_provider: 'Google' })}`;
 
-    const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
+    // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
     const liffUriWithGoogle = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cbWithGoogle })}`;
     // const signInUrl = new URL(user.generateAuthUrl());
     // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
@@ -102,11 +103,11 @@ export async function sendLoginButton(req: Request) {
     // const googleLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: googleSignInUrl })}`;
 
     const actions: any[] = [
-        {
-            type: 'uri',
-            label: 'Sign In',
-            uri: liffUri
-        },
+        // {
+        //     type: 'uri',
+        //     label: 'Sign In',
+        //     uri: liffUri
+        // },
         {
             type: 'uri',
             label: 'Sign In with Google',
@@ -133,15 +134,16 @@ export async function sendLoginButton(req: Request) {
 
     // 会員として未使用であれば会員登録ボタン表示
     if (refreshToken === undefined) {
-        const signUpCb =
-            `https://${req.user.host}/projects/${req.project?.id}/liff/signUp?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
-        const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
+        // const signUpCb =
+        // tslint:disable-next-line:max-line-length
+        //     `https://${req.user.host}/projects/${req.project?.id}/liff/signUp?${qs.stringify({ userId: req.user.userId, state: req.user.state })}`;
+        // const signUpLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signUpCb })}`;
 
-        actions.push({
-            type: 'uri',
-            label: '会員登録',
-            uri: signUpLiffUri
-        });
+        // actions.push({
+        //     type: 'uri',
+        //     label: '会員登録',
+        //     uri: signUpLiffUri
+        // });
     }
 
     const template: TemplateMessage = {

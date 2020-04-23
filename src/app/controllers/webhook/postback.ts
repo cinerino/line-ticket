@@ -31,6 +31,8 @@ export type PaymentMethodType =
     | cinerinoapi.factory.paymentMethodType.Others;
 export type ICreditCard = cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUncheckedCardTokenized
     | cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
+export type ISeatReservationAuthorization
+    = cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>;
 
 /**
  * ポストバックウェブフックコントローラ
@@ -85,24 +87,32 @@ export class PostbackWebhookController {
         superEvents = superEvents.slice(0, 10);
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `${superEvents.length}件の作品がみつかりました` });
 
-        if (superEvents.length > 0) {
-            // const accessToken = await params.user.authClient.getAccessToken();
-            const flex: FlexMessage = {
-                type: 'flex',
-                altText: 'This is a Flex Message',
-                contents: {
-                    type: 'carousel',
-                    contents: [
-                        // tslint:disable-next-line:no-magic-numbers
-                        ...superEvents.slice(0, 10)
-                            .map<FlexBubble>((event) => {
-                                return screeningEventSeries2flexBubble({ date: params.date, event: event });
-                            })
-                    ]
-                }
-            };
-            await LINE.pushMessage(this.user.userId, [flex]);
+        if (superEvents.length === 0) {
+            // 日付を再選択
+            await this.askEventStartDate({
+                replyToken: params.replyToken,
+                text: '他の日付はいかがでしょうか？'
+            });
+
+            return;
         }
+
+        // const accessToken = await params.user.authClient.getAccessToken();
+        const flex: FlexMessage = {
+            type: 'flex',
+            altText: 'This is a Flex Message',
+            contents: {
+                type: 'carousel',
+                contents: [
+                    // tslint:disable-next-line:no-magic-numbers
+                    ...superEvents.slice(0, 10)
+                        .map<FlexBubble>((event) => {
+                            return screeningEventSeries2flexBubble({ date: params.date, event: event });
+                        })
+                ]
+            }
+        };
+        await LINE.pushMessage(this.user.userId, [flex]);
     }
 
     /**
@@ -1181,13 +1191,13 @@ export class PostbackWebhookController {
     }
 
     /**
-     * ユーザーのチケット(座席予約)を検索する
+     * ユーザーのチケット(予約)を検索する
      */
     public async searchScreeningEventReservations(params: {
         replyToken: string;
     }) {
         const now = new Date();
-        await LINE.replyMessage(params.replyToken, { type: 'text', text: 'ここ一カ月の座席予約を検索しています...' });
+        await LINE.replyMessage(params.replyToken, { type: 'text', text: 'ここ一カ月の予約を検索しています...' });
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
             auth: this.user.authClient,
@@ -1211,11 +1221,11 @@ export class PostbackWebhookController {
         const ownershipInfos = searchScreeningEventReservationsResult.data;
         // 未来の予約
         if (searchScreeningEventReservationsResult.data.length === 0) {
-            await LINE.pushMessage(this.user.userId, { type: 'text', text: '座席予約が見つかりませんでした' });
+            await LINE.pushMessage(this.user.userId, { type: 'text', text: '予約が見つかりませんでした' });
         } else {
             await LINE.pushMessage(this.user.userId, {
                 type: 'text',
-                text: '座席予約が見つかりました'
+                text: '予約が見つかりました'
             });
 
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `直近の${ownershipInfos.length}件は以下の通りです` });
@@ -1238,7 +1248,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 座席仮予約
+     * 仮予約
      */
     // tslint:disable-next-line:max-func-body-length
     public async selectSeatOffers(params: {
@@ -1308,7 +1318,7 @@ export class PostbackWebhookController {
             return movieTicketTypeChargeSpecification === undefined;
         });
         if (ticketOffers.length === 0) {
-            throw new Error('ムビチケなしのオファーが見つかりません');
+            throw new Error('使用可能なオファーが見つかりませんでした');
         }
 
         // 券種未選択であれば、券種選択へ
@@ -1376,6 +1386,9 @@ export class PostbackWebhookController {
         debug('transaction started.', transaction.id);
         await this.user.saveTransaction(transaction);
 
+        // tslint:disable-next-line:max-line-length
+        let seatReservationAuthorization: ISeatReservationAuthorization;
+
         if (reservedSeatsAvailable) {
             if (params.seatNumbers === undefined) {
                 await LINE.pushMessage(this.user.userId, { type: 'text', text: '座席が指定されていません' });
@@ -1385,27 +1398,25 @@ export class PostbackWebhookController {
 
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
             debug('creating a seat reservation authorization...');
-            const seatReservationAuthorization =
-                <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
-                await placeOrderService.authorizeSeatReservation({
-                    object: {
-                        event: { id: event.id },
-                        acceptedOffer: params.seatNumbers.map((seatNumber) => {
-                            return {
-                                id: <string>selectedTicketOffer.id,
-                                ticketedSeat: {
-                                    typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                                    seatNumber: seatNumber,
-                                    seatSection: 'Default',
-                                    seatRow: '',
-                                    seatingType: <any>{}
-                                },
-                                additionalProperty: []
-                            };
-                        })
-                    },
-                    purpose: transaction
-                });
+            seatReservationAuthorization = <ISeatReservationAuthorization>await placeOrderService.authorizeSeatReservation({
+                object: {
+                    event: { id: event.id },
+                    acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                        return {
+                            id: <string>selectedTicketOffer.id,
+                            ticketedSeat: {
+                                typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                                seatNumber: seatNumber,
+                                seatSection: 'Default',
+                                seatRow: '',
+                                seatingType: <any>{}
+                            },
+                            additionalProperty: []
+                        };
+                    })
+                },
+                purpose: transaction
+            });
             debug('seatReservationAuthorization:', seatReservationAuthorization);
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `座席 ${params.seatNumbers.join(' ')} を確保しました` });
 
@@ -1419,29 +1430,50 @@ export class PostbackWebhookController {
 
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `${params.numSeats}枚を確保します...` });
             debug('creating a seat reservation authorization...');
-            const seatReservationAuthorization =
-                <cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>>
-                await placeOrderService.authorizeSeatReservation({
-                    object: {
-                        event: { id: event.id },
-                        // tslint:disable-next-line:prefer-array-literal
-                        acceptedOffer: [...Array(params.numSeats)].map(() => {
-                            return {
-                                id: <string>selectedTicketOffer.id,
-                                additionalProperty: []
-                            };
-                        })
-                    },
-                    purpose: transaction
-                });
+            seatReservationAuthorization = <ISeatReservationAuthorization>await placeOrderService.authorizeSeatReservation({
+                object: {
+                    event: { id: event.id },
+                    // tslint:disable-next-line:prefer-array-literal
+                    acceptedOffer: [...Array(params.numSeats)].map(() => {
+                        return {
+                            id: <string>selectedTicketOffer.id,
+                            additionalProperty: []
+                        };
+                    })
+                },
+                purpose: transaction
+            });
             debug('seatReservationAuthorization:', seatReservationAuthorization);
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `${params.numSeats}枚を確保しました` });
 
             await this.user.saveSeatReservationAuthorization(seatReservationAuthorization);
         }
 
-        const quickReplyItems: QuickReplyItem[] = [
-            {
+        if (seatReservationAuthorization.result === undefined) {
+            throw new Error('予約承認結果が見つかりません');
+        }
+
+        const price = seatReservationAuthorization.result.price;
+
+        const quickReplyItems: QuickReplyItem[] = [];
+
+        if (price === 0) {
+            quickReplyItems.push({
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'postback',
+                    label: '決済なし',
+                    data: qs.stringify({
+                        action: 'selectPaymentMethodType',
+                        paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                        transactionId: transaction.id
+                    })
+                }
+            });
+        } else {
+            // クレジットカード決済
+            quickReplyItems.push({
                 type: 'action',
                 imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                 action: {
@@ -1452,54 +1484,55 @@ export class PostbackWebhookController {
                         transactionId: transaction.id
                     })
                 }
-            }
-        ];
+            });
 
-        if (await this.user.getCredentials() !== undefined) {
-            quickReplyItems.push(
-                {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
-                    action: {
-                        type: 'postback',
-                        label: 'コイン',
-                        data: qs.stringify({
-                            action: 'selectPaymentMethodType',
-                            paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
-                            transactionId: transaction.id
-                        })
+            if (await this.user.getCredentials() !== undefined) {
+                quickReplyItems.push(
+                    {
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'コイン',
+                            data: qs.stringify({
+                                action: 'selectPaymentMethodType',
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                transactionId: transaction.id
+                            })
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'Friend Pay',
+                            data: qs.stringify({
+                                action: 'askPaymentCode',
+                                transactionId: transaction.id
+                            })
+                        }
+                    },
+                    {
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'その他',
+                            data: qs.stringify({
+                                action: 'selectPaymentMethodType',
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                transactionId: transaction.id
+                            })
+                        }
                     }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
-                    action: {
-                        type: 'postback',
-                        label: 'Friend Pay',
-                        data: qs.stringify({
-                            action: 'askPaymentCode',
-                            transactionId: transaction.id
-                        })
-                    }
-                },
-                {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
-                    action: {
-                        type: 'postback',
-                        label: 'その他',
-                        data: qs.stringify({
-                            action: 'selectPaymentMethodType',
-                            paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
-                            transactionId: transaction.id
-                        })
-                    }
-                }
-            );
+                );
+            }
         }
+
         const message: TextMessage = {
             type: 'text',
-            text: '決済方法を選択してください',
+            text: `決済方法を選択してください(${price}円)`,
             quickReply: {
                 items: quickReplyItems
             }
@@ -2411,7 +2444,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 座席予約コード読み込み
+     * 予約コード読み込み
      */
     // tslint:disable-next-line:max-func-body-length
     public async findScreeningEventReservationById(params: {
@@ -2727,10 +2760,11 @@ export class PostbackWebhookController {
      */
     public async askEventStartDate(params: {
         replyToken: string;
+        text?: string;
     }) {
         const message: TextMessage = {
             type: 'text',
-            text: 'イベント日を選択してください',
+            text: (typeof params.text === 'string' && params.text.length > 0) ? params.text : 'イベント日を選択してください',
             quickReply: {
                 items: [
                     {
@@ -2799,6 +2833,6 @@ export class PostbackWebhookController {
                 ]
             }
         };
-        await LINE.replyMessage(params.replyToken, [message]);
+        await LINE.pushMessage(this.user.userId, [message]);
     }
 }

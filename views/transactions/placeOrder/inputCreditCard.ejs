@@ -11,8 +11,8 @@
     <script src="https://pt01.mul-pay.jp/ext/js/token.js"></script>
     <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
     <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 
 <body>
@@ -25,12 +25,13 @@
             <div class="form-group">
                 <label for="cardNumber">CardNumber</label>
                 <input type="tel" name="cardNumber" id="cardNumber" class="form-control input-required" value=""
-                    maxlength="16" data-pattern="^[0-9]+$" data-fieldname="CardNumber" required>
+                    maxlength="16" data-pattern="^[0-9]+$" data-fieldname="CardNumber" placeholder="4111111111111111"
+                    required>
             </div>
             <div class="form-group">
                 <label for="holdername">CardHoldername</label>
                 <input type="text" name="holdername" id="holdername" class="form-control input-required" value=""
-                    data-fieldname="CardHoldername" required>
+                    data-fieldname="CardHoldername" placeholder="AA BB" required>
             </div>
             <div class="form-group">
                 <label for="expire">CardExpire</label>
@@ -70,7 +71,7 @@
             <div class="form-group">
                 <label for="securitycode">Securitycode</label>
                 <input type="tel" name="securitycode" id="securitycode" class="form-control input-required" value=""
-                    maxlength="4" data-pattern="^[0-9]+$" data-fieldname="Securitycode" required>
+                    maxlength="4" data-pattern="^[0-9]+$" data-fieldname="Securitycode" placeholder="123" required>
             </div>
             <a class="btn btn-primary btn-next" href="javascript:void(0);">
                 <span>Next</span>

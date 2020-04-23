@@ -125,6 +125,7 @@ export default class User {
     public userId: string;
     public payload: IPayload;
     public accessToken: string;
+    public authClientApplication: cinerinoapi.auth.ClientCredentials;
     public authClient: cinerinoapi.auth.OAuth2 | cinerinoapi.auth.ClientCredentials;
     public authClientOAuth2: cinerinoapi.auth.OAuth2;
     public rekognitionCollectionId: string;
@@ -134,6 +135,13 @@ export default class User {
         this.userId = configurations.userId;
         this.state = configurations.state;
         this.rekognitionCollectionId = `cinerino-line-ticket-${this.userId}`;
+        this.authClientApplication = new cinerinoapi.auth.ClientCredentials({
+            domain: <string>process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
+            clientId: <string>process.env.CINERINO_CLIENT_ID,
+            clientSecret: <string>process.env.CINERINO_CLIENT_SECRET,
+            scopes: [],
+            state: ''
+        });
         this.authClient = new cinerinoapi.auth.ClientCredentials({
             domain: <string>process.env.CINERINO_AUTHORIZE_SERVER_DOMAIN,
             clientId: <string>process.env.CINERINO_CLIENT_ID,
@@ -172,9 +180,19 @@ export default class User {
             .then((value) => (value === null) ? undefined : value);
     }
 
-    public async getSelectedProject(): Promise<string | undefined> {
-        return redisClient.get(`line-ticket:selectedProject:${this.userId}`)
+    public async getSelectedProject(): Promise<cinerinoapi.factory.project.IProject | undefined> {
+        const redisValue = await redisClient.get(`line-ticket:selectedProject:${this.userId}`)
             .then((value) => (value === null) ? undefined : value);
+
+        if (typeof redisValue === 'string') {
+            try {
+                return JSON.parse(redisValue);
+            } catch (error) {
+                // no op
+            }
+        }
+
+        return;
     }
 
     public setCredentials(credentials: ICredentials) {
@@ -188,9 +206,9 @@ export default class User {
         return this;
     }
 
-    public async selectProject(params: { id: string }) {
+    public async selectProject(params: cinerinoapi.factory.project.IProject) {
         await redisClient.multi()
-            .set(`line-ticket:selectedProject:${this.userId}`, params.id)
+            .set(`line-ticket:selectedProject:${this.userId}`, JSON.stringify(params))
             .expire(`line-ticket:selectedProject:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
