@@ -582,10 +582,15 @@ export function screeningEvent2flexBubble(params: {
     const selectSeatsUri = `/projects/${event.project.id}/transactions/placeOrder/selectSeatOffers?${query}`;
     const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: selectSeatsUri })}`;
     let availability = 100;
-    if (event.maximumAttendeeCapacity !== undefined && event.remainingAttendeeCapacity !== undefined) {
-        // tslint:disable-next-line:no-magic-numbers
-        availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
+    if (event.remainingAttendeeCapacity === 0) {
+        availability = 0;
+    } else {
+        if (typeof event.maximumAttendeeCapacity === 'number' && typeof event.remainingAttendeeCapacity === 'number') {
+            // tslint:disable-next-line:no-magic-numbers
+            availability = Math.floor((event.remainingAttendeeCapacity / event.maximumAttendeeCapacity) * 100);
+        }
     }
+
     // tslint:disable-next-line:no-magic-numbers
     const availabilityScore = Math.floor(availability / Math.floor(100 / MAX_AVAILABILITY_SCORE));
 

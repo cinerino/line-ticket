@@ -30,7 +30,7 @@ authRouter.get(
             });
 
             await user.signIn(req.query.code);
-            await LINE.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
+            await LINE.pushMessage(userId, { type: 'text', text: `こんにちは ${user.payload.username} さん` });
             res.render('auth/signIn', {
                 username: user.payload.username
             });
@@ -85,7 +85,7 @@ authRouter.get(
 
                 // アプリケーション側でログアウト
                 await user.logout();
-                // await LINE.pushMessage(user.userId, 'Logged out.');
+                await LINE.pushMessage(user.userId, { type: 'text', text: 'ログアウトしました' });
 
                 // Cognitoからもログアウト
                 res.redirect(user.generateLogoutUrl());

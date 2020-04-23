@@ -31,7 +31,7 @@ authRouter.get('/signIn', (req, res, next) => __awaiter(void 0, void 0, void 0, 
             state: req.query.state
         });
         yield user.signIn(req.query.code);
-        yield lineClient_1.default.pushMessage(userId, { type: 'text', text: `Signed in. ${user.payload.username}` });
+        yield lineClient_1.default.pushMessage(userId, { type: 'text', text: `こんにちは ${user.payload.username} さん` });
         res.render('auth/signIn', {
             username: user.payload.username
         });
@@ -80,7 +80,7 @@ authRouter.get('/logout', (req, res, next) => __awaiter(void 0, void 0, void 0, 
             });
             // アプリケーション側でログアウト
             yield user.logout();
-            // await LINE.pushMessage(user.userId, 'Logged out.');
+            yield lineClient_1.default.pushMessage(user.userId, { type: 'text', text: 'ログアウトしました' });
             // Cognitoからもログアウト
             res.redirect(user.generateLogoutUrl());
         }

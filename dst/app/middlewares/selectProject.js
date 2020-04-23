@@ -101,6 +101,7 @@ function sendSelectMessage(req) {
                 yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトが見つかりませんでした' });
                 return;
             }
+            yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: 'プロジェクトを選択してください' });
             // const accessToken = await params.user.authClient.getAccessToken();
             const flex = {
                 type: 'flex',
@@ -117,28 +118,6 @@ function sendSelectMessage(req) {
                 }
             };
             yield lineClient_1.default.pushMessage(req.user.userId, [flex]);
-            // const quickReplyItems: QuickReplyItem[] = searchProjectsResult.data.map((project) => {
-            //     return {
-            //         type: 'action',
-            //         // imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
-            //         action: {
-            //             type: 'postback',
-            //             label: String(project.name),
-            //             data: qs.stringify({
-            //                 action: 'selectProject',
-            //                 id: String(project.id)
-            //             })
-            //         }
-            //     };
-            // });
-            // const message: TextMessage = {
-            //     type: 'text',
-            //     text: 'プロジェクトを選択してください',
-            //     quickReply: {
-            //         items: quickReplyItems
-            //     }
-            // };
-            // await LINE.pushMessage(req.user.userId, [message]);
         }
         catch (error) {
             yield lineClient_1.default.pushMessage(req.user.userId, { type: 'text', text: `プロジェクトを検索できませんでした: ${error.message}` });
