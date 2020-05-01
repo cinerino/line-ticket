@@ -1370,7 +1370,7 @@ function account2flexBubble(params) {
                         label: '取引履歴確認',
                         data: qs.stringify({
                             action: 'searchAccountMoneyTransferActions',
-                            accountType: cinerinoapi.factory.accountType.Coin,
+                            accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                             accountNumber: account.accountNumber
                         })
                     }
@@ -1382,7 +1382,7 @@ function account2flexBubble(params) {
                         label: 'クレジットカードで入金',
                         data: qs.stringify({
                             action: 'selectDepositAmount',
-                            accountType: cinerinoapi.factory.accountType.Coin,
+                            accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                             accountNumber: account.accountNumber
                         })
                     }

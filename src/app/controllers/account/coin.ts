@@ -11,7 +11,7 @@ import {
 } from '../../contentsBuilder';
 
 /**
- * コイン口座コントローラ
+ * プリペイドカードコントローラ
  */
 export class CoinAccountController {
     private readonly project?: { id: string };
@@ -23,7 +23,7 @@ export class CoinAccountController {
     }
 
     /**
-     * コイン転送
+     * プリペイドカード転送
      */
     public async processTransferCoin(params: {
         amount: number;
@@ -42,7 +42,7 @@ export class CoinAccountController {
 
         // 通貨転送取引開始
         const moneyTransferTransaction =
-            await moneyTransferService.start<cinerinoapi.factory.accountType.Coin, cinerinoapi.factory.pecorino.account.TypeOf.Account>({
+            await moneyTransferService.start<string, cinerinoapi.factory.pecorino.account.TypeOf.Account>({
                 project: { typeOf: cinerinoapi.factory.organizationType.Project, id: params.seller.project.id },
                 expires: moment()
                     .add(1, 'minutes')
@@ -64,12 +64,12 @@ export class CoinAccountController {
                     description: 'Cinerino LINE Ticket Pocket Money',
                     fromLocation: {
                         typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                         accountNumber: params.fromLocation.accountNumber
                     },
                     toLocation: {
                         typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                         accountNumber: params.transferMoneyInfo.accountNumber
                     }
                 }
@@ -95,7 +95,7 @@ export class CoinAccountController {
     }
 
     /**
-     * コイン注文
+     * プリペイドカードに金額注文
      */
     public async  processOrderCoin(params: {
         replyToken: string;
@@ -149,13 +149,13 @@ export class CoinAccountController {
                 itemOffered: {
                     typeOf: 'MonetaryAmount',
                     value: Number(params.amount),
-                    currency: cinerinoapi.factory.accountType.Coin
+                    currency: cinerinoapi.factory.paymentMethodType.PrepaidCard
                 },
                 priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
                 seller: { typeOf: params.seller.typeOf, name: params.seller.name },
                 toLocation: {
                     typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin,
+                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                     accountNumber: params.toLocation.accountNumber
                 }
             },

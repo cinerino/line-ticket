@@ -78,7 +78,7 @@ export class WebhookController {
                                 replyToken: event.replyToken
                             });
                             break;
-                        case /^コイン$/.test(messageText):
+                        case /^プリペイド/.test(messageText):
                             await messageController.showCoinAccountMenu({
                                 replyToken: event.replyToken
                             });
@@ -296,7 +296,7 @@ export class WebhookController {
                         accountNumber: data.accountNumber
                     });
                     break;
-                // コイン口座検索
+                // プリペイドカード検索
                 case 'searchCoinAccounts':
                     await postbackController.searchCoinAccounts({
                         replyToken: event.replyToken

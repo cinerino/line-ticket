@@ -77,7 +77,7 @@ class WebhookController {
                                     replyToken: event.replyToken
                                 });
                                 break;
-                            case /^コイン$/.test(messageText):
+                            case /^プリペイド/.test(messageText):
                                 yield messageController.showCoinAccountMenu({
                                     replyToken: event.replyToken
                                 });
@@ -296,7 +296,7 @@ class WebhookController {
                             accountNumber: data.accountNumber
                         });
                         break;
-                    // コイン口座検索
+                    // プリペイドカード検索
                     case 'searchCoinAccounts':
                         yield postbackController.searchCoinAccounts({
                             replyToken: event.replyToken

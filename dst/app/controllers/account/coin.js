@@ -14,7 +14,7 @@ const moment = require("moment");
 const lineClient_1 = require("../../../lineClient");
 const contentsBuilder_1 = require("../../contentsBuilder");
 /**
- * コイン口座コントローラ
+ * プリペイドカードコントローラ
  */
 class CoinAccountController {
     constructor(req) {
@@ -22,7 +22,7 @@ class CoinAccountController {
         this.user = req.user;
     }
     /**
-     * コイン転送
+     * プリペイドカード転送
      */
     processTransferCoin(params) {
         var _a;
@@ -55,12 +55,12 @@ class CoinAccountController {
                     description: 'Cinerino LINE Ticket Pocket Money',
                     fromLocation: {
                         typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                         accountNumber: params.fromLocation.accountNumber
                     },
                     toLocation: {
                         typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                         accountNumber: params.transferMoneyInfo.accountNumber
                     }
                 }
@@ -83,7 +83,7 @@ class CoinAccountController {
         });
     }
     /**
-     * コイン注文
+     * プリペイドカードに金額注文
      */
     processOrderCoin(params) {
         var _a, _b, _c;
@@ -124,13 +124,13 @@ class CoinAccountController {
                     itemOffered: {
                         typeOf: 'MonetaryAmount',
                         value: Number(params.amount),
-                        currency: cinerinoapi.factory.accountType.Coin
+                        currency: cinerinoapi.factory.paymentMethodType.PrepaidCard
                     },
                     priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
                     seller: { typeOf: params.seller.typeOf, name: params.seller.name },
                     toLocation: {
                         typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Coin,
+                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                         accountNumber: params.toLocation.accountNumber
                     }
                 },

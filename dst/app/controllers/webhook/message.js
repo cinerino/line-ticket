@@ -79,8 +79,8 @@ class MessageWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
                     action: {
                         type: 'message',
-                        label: 'コイン口座管理',
-                        text: 'コイン'
+                        label: 'プリペイドカード管理',
+                        text: 'プリペイドカード'
                     }
                 }, {
                     type: 'action',
@@ -294,15 +294,15 @@ class MessageWebhookController {
     showCoinAccountMenu(params) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const openAccountUri = `https://${this.user.host}/projects/${(_a = this.project) === null || _a === void 0 ? void 0 : _a.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+            const openAccountUri = `https://${this.user.host}/projects/${(_a = this.project) === null || _a === void 0 ? void 0 : _a.id}/accounts/open?accountType=${cinerinoapi.factory.paymentMethodType.PrepaidCard}`;
             const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
             yield lineClient_1.default.replyMessage(params.replyToken, [
                 {
                     type: 'template',
-                    altText: 'コイン口座管理',
+                    altText: 'プリペイドカード管理',
                     template: {
                         type: 'buttons',
-                        title: 'コイン口座管理',
+                        title: 'プリペイドカード管理',
                         text: 'ご用件はなんでしょう？',
                         actions: [
                             {
@@ -446,7 +446,7 @@ class MessageWebhookController {
             const searchAccountsResult = yield personOwnershipInfoService.search({
                 typeOfGood: {
                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin
+                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                 }
             });
             const accounts = searchAccountsResult.data

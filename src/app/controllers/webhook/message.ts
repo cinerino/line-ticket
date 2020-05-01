@@ -88,8 +88,8 @@ export class MessageWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
                     action: {
                         type: 'message',
-                        label: 'コイン口座管理',
-                        text: 'コイン'
+                        label: 'プリペイドカード管理',
+                        text: 'プリペイドカード'
                     }
                 },
                 {
@@ -319,15 +319,15 @@ export class MessageWebhookController {
     public async showCoinAccountMenu(params: {
         replyToken: string;
     }) {
-        const openAccountUri = `https://${this.user.host}/projects/${this.project?.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Coin}`;
+        const openAccountUri = `https://${this.user.host}/projects/${this.project?.id}/accounts/open?accountType=${cinerinoapi.factory.paymentMethodType.PrepaidCard}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
         await LINE.replyMessage(params.replyToken, [
             {
                 type: 'template',
-                altText: 'コイン口座管理',
+                altText: 'プリペイドカード管理',
                 template: {
                     type: 'buttons',
-                    title: 'コイン口座管理',
+                    title: 'プリペイドカード管理',
                     text: 'ご用件はなんでしょう？',
                     actions: [
                         {
@@ -476,7 +476,7 @@ export class MessageWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.accountType.Coin
+                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
             }
         });
         const accounts = searchAccountsResult.data

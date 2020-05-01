@@ -213,7 +213,7 @@ class PostbackWebhookController {
                             const searchAccountsResult = yield personOwnershipInfoService.search({
                                 typeOfGood: {
                                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                                    accountType: cinerinoapi.factory.accountType.Coin
+                                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                                 }
                             });
                             let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
@@ -756,7 +756,7 @@ class PostbackWebhookController {
             const searchAccountsResult = yield personOwnershipInfoService.search({
                 typeOfGood: {
                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin
+                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                 }
             });
             const accounts = searchAccountsResult.data
@@ -764,7 +764,7 @@ class PostbackWebhookController {
                 .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
             const account = accounts.shift();
             if (account === undefined) {
-                throw new Error('コイン口座未開設なので振込を実行できません');
+                throw new Error('プリペイドカード未作成なので振込を実行できません');
             }
             // 取引に販売者を指定する必要があるので、適当に検索
             const searchSellersResult = yield sellerService.search({ limit: 1 });
@@ -786,7 +786,7 @@ class PostbackWebhookController {
         });
     }
     /**
-     * コイン口座入金金額選択
+     * プリペイドカード入金金額選択
      */
     selectDepositAmount(params) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -844,7 +844,7 @@ class PostbackWebhookController {
         });
     }
     /**
-     * クレジット決済でコイン入金
+     * クレジット決済でプリペイドカード入金
      */
     depositCoinByCreditCard(params) {
         var _a, _b, _c;
@@ -1002,7 +1002,7 @@ class PostbackWebhookController {
             const searchAccountsResult = yield personOwnershipInfoService.search({
                 typeOfGood: {
                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                    accountType: cinerinoapi.factory.accountType.Coin
+                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                 }
             });
             const accountOwnershipInfos = searchAccountsResult.data
@@ -1350,7 +1350,7 @@ class PostbackWebhookController {
                         imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
                         action: {
                             type: 'postback',
-                            label: 'コイン',
+                            label: 'プリペイドカード',
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
                                 paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
@@ -1683,7 +1683,7 @@ class PostbackWebhookController {
                     const searchAccountsResult = yield personOwnershipInfoService.search({
                         typeOfGood: {
                             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                            accountType: cinerinoapi.factory.accountType.Coin
+                            accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                         }
                     });
                     const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.id === params.id);

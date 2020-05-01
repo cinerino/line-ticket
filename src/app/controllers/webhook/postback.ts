@@ -249,14 +249,14 @@ export class PostbackWebhookController {
             switch (params.paymentMethodType) {
                 case cinerinoapi.factory.paymentMethodType.Account:
                     await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
-                    let account: cinerinoapi.factory.pecorino.account.IAccount<cinerinoapi.factory.accountType> | string;
+                    let account: cinerinoapi.factory.pecorino.account.IAccount<string> | string;
                     if (params.code === undefined) {
                         // 口座番号取得
                         const searchAccountsResult =
                             await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
                                 typeOfGood: {
                                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                                    accountType: cinerinoapi.factory.accountType.Coin
+                                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                                 }
                             });
                         let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
@@ -834,7 +834,7 @@ export class PostbackWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.accountType.Coin
+                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
             }
         });
         const accounts = searchAccountsResult.data
@@ -842,7 +842,7 @@ export class PostbackWebhookController {
             .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         const account = accounts.shift();
         if (account === undefined) {
-            throw new Error('コイン口座未開設なので振込を実行できません');
+            throw new Error('プリペイドカード未作成なので振込を実行できません');
         }
 
         // 取引に販売者を指定する必要があるので、適当に検索
@@ -867,11 +867,11 @@ export class PostbackWebhookController {
     }
 
     /**
-     * コイン口座入金金額選択
+     * プリペイドカード入金金額選択
      */
     public async selectDepositAmount(params: {
         replyToken: string;
-        accountType: cinerinoapi.factory.accountType;
+        accountType: string;
         accountNumber: string;
     }) {
         const message: TextMessage = {
@@ -928,7 +928,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * クレジット決済でコイン入金
+     * クレジット決済でプリペイドカード入金
      */
     public async depositCoinByCreditCard(params: {
         replyToken: string;
@@ -1056,7 +1056,7 @@ export class PostbackWebhookController {
     public async openAccount(params: {
         replyToken: string;
         name: string;
-        accountType: cinerinoapi.factory.accountType;
+        accountType: string;
     }) {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -1078,7 +1078,7 @@ export class PostbackWebhookController {
      */
     public async closeAccount(params: {
         replyToken: string;
-        accountType: cinerinoapi.factory.accountType;
+        accountType: string;
         accountNumber: string;
     }) {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
@@ -1101,7 +1101,7 @@ export class PostbackWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.accountType.Coin
+                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
             }
         });
         const accountOwnershipInfos = searchAccountsResult.data
@@ -1130,7 +1130,7 @@ export class PostbackWebhookController {
      */
     public async searchAccountMoneyTransferActions(params: {
         replyToken: string;
-        accountType: cinerinoapi.factory.accountType;
+        accountType: string;
         accountNumber: string;
     }) {
         const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
@@ -1493,7 +1493,7 @@ export class PostbackWebhookController {
                         imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
                         action: {
                             type: 'postback',
-                            label: 'コイン',
+                            label: 'プリペイドカード',
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
                                 paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
@@ -1835,7 +1835,7 @@ export class PostbackWebhookController {
                     await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
                         typeOfGood: {
                             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                            accountType: cinerinoapi.factory.accountType.Coin
+                            accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
                         }
                     });
                 const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.id === params.id);
