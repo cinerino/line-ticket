@@ -26,7 +26,7 @@ import {
 const debug = createDebug('cinerino-line-ticket:controllers');
 
 export type PaymentMethodType =
-    cinerinoapi.factory.paymentMethodType.Account
+    cinerinoapi.factory.paymentMethodType.PrepaidCard
     | cinerinoapi.factory.paymentMethodType.CreditCard
     | cinerinoapi.factory.paymentMethodType.Others;
 export type ICreditCard = cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUncheckedCardTokenized
@@ -247,7 +247,7 @@ export class PostbackWebhookController {
         // 金額が0であれば決済不要
         if (price > 0) {
             switch (params.paymentMethodType) {
-                case cinerinoapi.factory.paymentMethodType.Account:
+                case cinerinoapi.factory.paymentMethodType.PrepaidCard:
                     await LINE.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
                     let account: cinerinoapi.factory.pecorino.account.IAccount<string> | string;
                     if (params.code === undefined) {
@@ -270,11 +270,16 @@ export class PostbackWebhookController {
                         const { token } = await ownershipInfoService.getToken({ code: params.code });
                         account = token;
                     }
-                    const accountAuthorization = await paymentService.authorizeAccount({
+                    const accountAuthorization = await paymentService.authorizePrepaidCard({
                         object: {
-                            typeOf: cinerinoapi.factory.paymentMethodType.Account,
+                            typeOf: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                             amount: price,
-                            fromAccount: account
+                            fromLocation: (typeof account === 'string')
+                                ? account
+                                : {
+                                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
+                                    accountNumber: account.accountNumber
+                                }
                         },
                         purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                     });
@@ -1496,7 +1501,7 @@ export class PostbackWebhookController {
                             label: 'プリペイドカード',
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                                 transactionId: transaction.id
                             })
                         }

@@ -205,7 +205,7 @@ class PostbackWebhookController {
             // 金額が0であれば決済不要
             if (price > 0) {
                 switch (params.paymentMethodType) {
-                    case cinerinoapi.factory.paymentMethodType.Account:
+                    case cinerinoapi.factory.paymentMethodType.PrepaidCard:
                         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
                         let account;
                         if (params.code === undefined) {
@@ -228,11 +228,16 @@ class PostbackWebhookController {
                             const { token } = yield ownershipInfoService.getToken({ code: params.code });
                             account = token;
                         }
-                        const accountAuthorization = yield paymentService.authorizeAccount({
+                        const accountAuthorization = yield paymentService.authorizePrepaidCard({
                             object: {
-                                typeOf: cinerinoapi.factory.paymentMethodType.Account,
+                                typeOf: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                                 amount: price,
-                                fromAccount: account
+                                fromLocation: (typeof account === 'string')
+                                    ? account
+                                    : {
+                                        accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
+                                        accountNumber: account.accountNumber
+                                    }
                             },
                             purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                         });
@@ -1353,7 +1358,7 @@ class PostbackWebhookController {
                             label: 'プリペイドカード',
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Account,
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.PrepaidCard,
                                 transactionId: transaction.id
                             })
                         }
