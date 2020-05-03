@@ -319,7 +319,7 @@ export class MessageWebhookController {
     public async showCoinAccountMenu(params: {
         replyToken: string;
     }) {
-        const openAccountUri = `https://${this.user.host}/projects/${this.project?.id}/accounts/open?accountType=${cinerinoapi.factory.paymentMethodType.PrepaidCard}`;
+        const openAccountUri = `https://${this.user.host}/projects/${this.project?.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Prepaid}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
         await LINE.replyMessage(params.replyToken, [
             {
@@ -476,7 +476,7 @@ export class MessageWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
+                accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
         const accounts = searchAccountsResult.data

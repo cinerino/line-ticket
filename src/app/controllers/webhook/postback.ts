@@ -256,7 +256,7 @@ export class PostbackWebhookController {
                             await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
                                 typeOfGood: {
                                     typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
+                                    accountType: cinerinoapi.factory.accountType.Prepaid
                                 }
                             });
                         let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
@@ -277,7 +277,7 @@ export class PostbackWebhookController {
                             fromLocation: (typeof account === 'string')
                                 ? account
                                 : {
-                                    accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard,
+                                    accountType: cinerinoapi.factory.accountType.Prepaid,
                                     accountNumber: account.accountNumber
                                 }
                         },
@@ -839,7 +839,7 @@ export class PostbackWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
+                accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
         const accounts = searchAccountsResult.data
@@ -1106,7 +1106,7 @@ export class PostbackWebhookController {
         const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
             typeOfGood: {
                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
+                accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
         const accountOwnershipInfos = searchAccountsResult.data
@@ -1840,7 +1840,7 @@ export class PostbackWebhookController {
                     await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
                         typeOfGood: {
                             typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                            accountType: cinerinoapi.factory.paymentMethodType.PrepaidCard
+                            accountType: cinerinoapi.factory.accountType.Prepaid
                         }
                     });
                 const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.id === params.id);
