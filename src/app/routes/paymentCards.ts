@@ -6,12 +6,12 @@ import * as express from 'express';
 
 import User from '../user';
 
-const accountsRouter = express.Router();
+const paymentCardsRouter = express.Router();
 
 /**
  * 決済カード注文
  */
-accountsRouter.get(
+paymentCardsRouter.get(
     '/order',
     async (req, res, next) => {
         try {
@@ -42,7 +42,7 @@ accountsRouter.get(
 /**
  * 入金注文
  */
-accountsRouter.get(
+paymentCardsRouter.get(
     '/orderMonetaryAmount',
     async (req, res, next) => {
         try {
@@ -73,7 +73,7 @@ accountsRouter.get(
 /**
  * 照会
  */
-accountsRouter.get(
+paymentCardsRouter.get(
     '/check',
     async (req, res, next) => {
         try {
@@ -101,4 +101,4 @@ accountsRouter.get(
     }
 );
 
-export default accountsRouter;
+export default paymentCardsRouter;

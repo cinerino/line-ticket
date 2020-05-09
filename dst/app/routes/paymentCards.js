@@ -15,11 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express = require("express");
 const user_1 = require("../user");
-const accountsRouter = express.Router();
+const paymentCardsRouter = express.Router();
 /**
  * 決済カード注文
  */
-accountsRouter.get('/order', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+paymentCardsRouter.get('/order', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const user = new user_1.default({
@@ -46,7 +46,7 @@ accountsRouter.get('/order', (req, res, next) => __awaiter(void 0, void 0, void 
 /**
  * 入金注文
  */
-accountsRouter.get('/orderMonetaryAmount', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+paymentCardsRouter.get('/orderMonetaryAmount', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     try {
         const user = new user_1.default({
@@ -73,7 +73,7 @@ accountsRouter.get('/orderMonetaryAmount', (req, res, next) => __awaiter(void 0,
 /**
  * 照会
  */
-accountsRouter.get('/check', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+paymentCardsRouter.get('/check', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _c;
     try {
         const user = new user_1.default({
@@ -97,4 +97,4 @@ accountsRouter.get('/check', (req, res, next) => __awaiter(void 0, void 0, void 
         next(error);
     }
 }));
-exports.default = accountsRouter;
+exports.default = paymentCardsRouter;
