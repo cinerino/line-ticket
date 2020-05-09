@@ -52,8 +52,43 @@ transactionsRouter.get(
         try {
             // フォーム
             res.render('transactions/placeOrder/inputCreditCard', {
+                amount: req.query.amount,
                 gmoShopId: req.query.gmoShopId,
                 transactionId: req.params.transactionId
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+/**
+ * プリペイドカード入力フォーム
+ */
+transactionsRouter.get(
+    '/placeOrder/:transactionId/inputPaymentCard',
+    async (req, res, next) => {
+        try {
+            const user = new User({
+                host: req.hostname,
+                userId: req.query.userId,
+                state: ''
+            });
+            const productService = new cinerinoapi.service.Product({
+                endpoint: <string>process.env.CINERINO_ENDPOINT,
+                auth: user.authClient,
+                project: { id: req.project?.id }
+            });
+
+            const searchProductsResult = await productService.search({
+                typeOf: { $eq: 'PaymentCard' }
+            });
+
+            // フォーム
+            res.render('transactions/placeOrder/inputPaymentCard', {
+                amount: req.query.amount,
+                transactionId: req.params.transactionId,
+                products: searchProductsResult.data
             });
         } catch (error) {
             next(error);

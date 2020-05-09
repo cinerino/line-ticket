@@ -174,70 +174,65 @@ class PostbackWebhookController {
      */
     // tslint:disable-next-line:max-func-body-length
     selectPaymentMethodType(params) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             const personService = new cinerinoapi.service.Person({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
             });
-            const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            // const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+            //     auth: this.user.authClient,
+            //     project: { id: this.project?.id }
+            // });
+            const paymentService = new cinerinoapi.service.Payment({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_b = this.project) === null || _b === void 0 ? void 0 : _b.id }
             });
-            const paymentService = new cinerinoapi.service.Payment({
-                endpoint: process.env.CINERINO_ENDPOINT,
-                auth: this.user.authClient,
-                project: { id: (_c = this.project) === null || _c === void 0 ? void 0 : _c.id }
-            });
-            const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
-                endpoint: process.env.CINERINO_ENDPOINT,
-                auth: this.user.authClient,
-                project: { id: (_d = this.project) === null || _d === void 0 ? void 0 : _d.id }
-            });
-            const seatReservationAuthorization = yield this.user.findSeatReservationAuthorization();
-            if (seatReservationAuthorization.result === undefined) {
-                throw new Error('Invalid seat reservation authorization');
-            }
-            const price = seatReservationAuthorization.result.price;
-            // const tmpReservations = seatReservationAuthorization.result.responseBody.object.reservations;
+            // const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
+            //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+            //     auth: this.user.authClient,
+            //     project: { id: this.project?.id }
+            // });
+            const price = params.amount;
             // 金額が0であれば決済不要
             if (price > 0) {
                 switch (params.paymentMethodType) {
-                    case cinerinoapi.factory.paymentMethodType.PrepaidCard:
-                        yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: '残高を確認しています...' });
-                        let account;
-                        if (params.code === undefined) {
-                            // 口座番号取得
-                            const searchAccountsResult = yield personOwnershipInfoService.search({
-                                typeOfGood: {
-                                    typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
-                                    accountType: cinerinoapi.factory.accountType.Prepaid
-                                }
-                            });
-                            let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
-                            accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
-                            debug('accounts:', accounts);
-                            if (accounts.length === 0) {
-                                throw new Error('口座未開設です');
-                            }
-                            account = accounts[0];
+                    case 'PaymentCard':
+                        // let account: cinerinoapi.factory.pecorino.account.IAccount<string> | string;
+                        // if (params.code === undefined) {
+                        //     // 口座番号取得
+                        //     const searchAccountsResult =
+                        //         await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+                        //             typeOfGood: {
+                        //                 typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                        //                 accountType: cinerinoapi.factory.accountType.Prepaid
+                        //             }
+                        //         });
+                        //     let accounts = searchAccountsResult.data.map((o) => o.typeOfGood);
+                        //     accounts = accounts.filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+                        //     debug('accounts:', accounts);
+                        //     if (accounts.length === 0) {
+                        //         throw new Error('口座未開設です');
+                        //     }
+                        //     account = accounts[0];
+                        // } else {
+                        //     const { token } = await ownershipInfoService.getToken({ code: params.code });
+                        //     account = token;
+                        // }
+                        const paymentCard = params.paymentCard;
+                        if (paymentCard === undefined) {
+                            throw new Error('プリペイドカードが指定されていません');
                         }
-                        else {
-                            const { token } = yield ownershipInfoService.getToken({ code: params.code });
-                            account = token;
-                        }
+                        yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${JSON.stringify(paymentCard)}` });
+                        yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${paymentCard.identifier}の残高を確認しています...` });
                         const accountAuthorization = yield paymentService.authorizePrepaidCard({
                             object: {
-                                typeOf: cinerinoapi.factory.paymentMethodType.PrepaidCard,
+                                typeOf: paymentCard.typeOf,
                                 amount: price,
-                                fromLocation: (typeof account === 'string')
-                                    ? account
-                                    : {
-                                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                                        accountNumber: account.accountNumber
-                                    }
+                                fromLocation: paymentCard
                             },
                             purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                         });
@@ -245,6 +240,7 @@ class PostbackWebhookController {
                         yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '残高の確認がとれました' });
                         break;
                     case cinerinoapi.factory.paymentMethodType.CreditCard:
+                        yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${JSON.stringify(params.creditCard)}` });
                         yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'クレジットカードを確認しています...' });
                         if (params.creditCard === undefined) {
                             throw new Error('クレジットカードが指定されていません');
@@ -277,6 +273,8 @@ class PostbackWebhookController {
                         throw new Error(`Unknown payment method ${params.paymentMethodType}`);
                 }
             }
+            // セッションに金額保管
+            yield this.user.saveTransactionAmount(price);
             // 購入者情報確認
             let profile;
             if ((yield this.user.getCredentials()) !== undefined) {
@@ -292,7 +290,7 @@ class PostbackWebhookController {
                 };
             }
             const setCustomerContactQuery = qs.stringify({ profile: profile });
-            const setCustomerContactUri = `/projects/${(_e = this.project) === null || _e === void 0 ? void 0 : _e.id}/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
+            const setCustomerContactUri = `/projects/${(_c = this.project) === null || _c === void 0 ? void 0 : _c.id}/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
             const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: setCustomerContactUri })}`;
             const footerContets = [
                 {
@@ -312,9 +310,9 @@ class PostbackWebhookController {
                     style: 'primary',
                     action: {
                         type: 'postback',
-                        label: '注文する',
+                        label: 'このまま進む',
                         data: qs.stringify({
-                            action: 'setCustomerContact',
+                            action: 'setProfile',
                             transactionId: params.transactionId,
                             familyName: profile.familyName,
                             givenName: profile.givenName,
@@ -468,7 +466,7 @@ class PostbackWebhookController {
             if (creditCardPayment === undefined) {
                 throw new Error('クレジットカード決済が許可されていません');
             }
-            const inputCreditCardUri = `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+            const inputCreditCardUri = `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}&amount=${params.amount}`;
             const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`;
             const footerContets = [
                 {
@@ -501,6 +499,7 @@ class PostbackWebhookController {
                             label: creditCard.cardNo,
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
+                                amount: params.amount,
                                 transactionId: params.transactionId,
                                 paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
                                 creditCard: {
@@ -548,10 +547,254 @@ class PostbackWebhookController {
         });
     }
     /**
+     * プリペイドカード照会
+     */
+    checkPaymentCard(params) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const paymentService = new cinerinoapi.service.Payment({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
+            });
+            const paymentCard = yield paymentService.checkPrepaidCard({
+                object: params.paymentCard
+            });
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `カードが見つかりました:${paymentCard.identifier}` });
+            const flex = {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'carousel',
+                    contents: [
+                        contentsBuilder_1.paymentCard2flexBubble({ paymentCard: Object.assign(Object.assign({}, paymentCard), { accessCode: params.paymentCard.accessCode }), user: this.user })
+                    ]
+                }
+            };
+            yield lineClient_1.default.pushMessage(this.user.userId, [flex]);
+        });
+    }
+    /**
+     * 決済カード注文
+     */
+    // tslint:disable-next-line:max-func-body-length
+    orderPaymentCard(params) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        return __awaiter(this, void 0, void 0, function* () {
+            const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
+            });
+            const offerService = new cinerinoapi.service.Offer({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_b = this.project) === null || _b === void 0 ? void 0 : _b.id }
+            });
+            // 販売者検索
+            const sellerService = new cinerinoapi.service.Seller({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_c = this.project) === null || _c === void 0 ? void 0 : _c.id }
+            });
+            const searchOrganizationsResult = yield sellerService.search({ limit: 1 });
+            const seller = searchOrganizationsResult.data[0];
+            // if (seller.paymentAccepted === undefined) {
+            //     throw new Error('許可された決済方法が見つかりません');
+            // }
+            // const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+            //     seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+            // if (creditCardPayment === undefined) {
+            //     throw new Error('クレジットカード決済が許可されていません');
+            // }
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '注文取引を開始します...' });
+            const transaction = yield placeOrderService.start({
+                expires: moment()
+                    .add(1, 'minutes')
+                    .toDate(),
+                agent: {},
+                seller: {
+                    typeOf: seller.typeOf,
+                    id: seller.id
+                },
+                object: {
+                // passport: { token: passportToken }
+                }
+            });
+            yield offerService.authorizePaymentCard({
+                object: {
+                    project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
+                    typeOf: cinerinoapi.factory.chevre.offerType.Offer,
+                    priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
+                    id: 'dummy',
+                    itemOffered: {
+                        typeOf: 'PaymentCard',
+                        id: (_d = params.itemOffered) === null || _d === void 0 ? void 0 : _d.id,
+                        serviceOutput: {
+                            accessCode: (_f = (_e = params.itemOffered) === null || _e === void 0 ? void 0 : _e.serviceOutput) === null || _f === void 0 ? void 0 : _f.accessCode,
+                            name: (_h = (_g = params.itemOffered) === null || _g === void 0 ? void 0 : _g.serviceOutput) === null || _h === void 0 ? void 0 : _h.name,
+                            additionalProperty: []
+                        }
+                    },
+                    seller: { typeOf: seller.typeOf, name: seller.name.ja }
+                },
+                purpose: { typeOf: transaction.typeOf, id: transaction.id }
+            });
+            // クレジットカード決済承認
+            // console.log('authorizing credit card payment...');
+            // let creditCardPaymentAuth = await paymentService.authorizeCreditCard({
+            //     object: {
+            //         typeOf: client.factory.paymentMethodType.CreditCard,
+            //         amount: amount,
+            //         method: '1',
+            //         creditCard: creditCard
+            //     },
+            //     purpose: { typeOf: transaction.typeOf, id: transaction.id },
+            // });
+            // console.log('credit card payment authorized', creditCardPaymentAuth.id);
+            yield placeOrderService.setProfile({
+                id: transaction.id,
+                agent: params.profile
+            });
+            const email = {
+                sender: {
+                    name: `♥ ${seller.name.ja} ♥`
+                },
+                about: `♥♥♥ ${params.profile.givenName}さんへ${(_k = (_j = params.itemOffered) === null || _j === void 0 ? void 0 : _j.serviceOutput) === null || _k === void 0 ? void 0 : _k.name}発行のお知らせ ♥♥♥`
+            };
+            const result = yield placeOrderService.confirm({
+                id: transaction.id,
+                potentialActions: {
+                    order: {
+                        potentialActions: {
+                            sendOrder: {
+                                potentialActions: {
+                                    sendEmailMessage: [
+                                        {
+                                            object: email
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'カードを発行しました' });
+            const flex = {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: contentsBuilder_1.order2flexBubble({ order: result.order })
+            };
+            yield lineClient_1.default.pushMessage(this.user.userId, [flex]);
+        });
+    }
+    /**
+     * 決済カード選択
+     */
+    // tslint:disable-next-line:max-func-body-length
+    selectPaymentCard(params) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const sellerService = new cinerinoapi.service.Seller({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
+            });
+            const searchOrganizationsResult = yield sellerService.search({ limit: 1 });
+            const seller = searchOrganizationsResult.data[0];
+            if (seller.paymentAccepted === undefined) {
+                throw new Error('許可された決済方法が見つかりません');
+            }
+            // const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+            //     seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
+            // if (creditCardPayment === undefined) {
+            //     throw new Error('クレジットカード決済が許可されていません');
+            // }
+            const inputPaymentCardUri = `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputPaymentCard?amount=${params.amount}`;
+            const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputPaymentCardUri })}`;
+            const footerContets = [
+                {
+                    type: 'button',
+                    // flex: 2,
+                    style: 'secondary',
+                    action: {
+                        type: 'uri',
+                        label: '入力する',
+                        uri: liffUri
+                    }
+                }
+            ];
+            // ログイン状態の場合、会員カードを選択肢に追加
+            // if (await this.user.getCredentials() !== undefined) {
+            //     const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            //         endpoint: <string>process.env.CINERINO_ENDPOINT,
+            //         auth: this.user.authClient,
+            //         project: { id: this.project?.id }
+            //     });
+            //     const creditCards = await personOwnershipInfoService.searchCreditCards({});
+            //     await LINE.pushMessage(this.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
+            //     if (creditCards.length > 0) {
+            //         const creditCard = creditCards[0];
+            //         footerContets.push({
+            //             type: 'button',
+            //             style: 'primary',
+            //             action: {
+            //                 type: 'postback',
+            //                 label: creditCard.cardNo,
+            //                 data: qs.stringify({
+            //                     action: 'selectPaymentMethodType',
+            //                     transactionId: params.transactionId,
+            //                     paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard,
+            //                     creditCard: {
+            //                         memberId: 'me',
+            //                         cardSeq: creditCard.cardSeq
+            //                     }
+            //                 })
+            //             }
+            //         });
+            //     }
+            // }
+            yield lineClient_1.default.pushMessage(this.user.userId, [
+                {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: {
+                        type: 'bubble',
+                        styles: {
+                            footer: {
+                                separator: true
+                            }
+                        },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'プリペイドカードを選択してください',
+                                    weight: 'bold',
+                                    color: '#1DB446',
+                                    size: 'sm'
+                                }
+                            ]
+                        },
+                        footer: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'sm',
+                            contents: footerContets
+                        }
+                    }
+                }
+            ]);
+        });
+    }
+    /**
      * 購入者情報決定
      */
-    setCustomerContact(params) {
-        var _a, _b;
+    setProfile(params) {
+        var _a, _b, _c, _d;
         return __awaiter(this, void 0, void 0, function* () {
             const sellerService = new cinerinoapi.service.Seller({
                 endpoint: process.env.CINERINO_ENDPOINT,
@@ -566,12 +809,8 @@ class PostbackWebhookController {
             const transaction = yield this.user.findTransaction();
             const seller = yield sellerService.findById({ id: transaction.seller.id });
             const seatReservationAuthorization = yield this.user.findSeatReservationAuthorization();
-            if (seatReservationAuthorization.result === undefined) {
-                throw new Error('Invalid seat reservation authorization');
-            }
-            const tmpReservations = (Array.isArray(seatReservationAuthorization.result.responseBody.object.reservations))
-                ? seatReservationAuthorization.result.responseBody.object.reservations
-                : [];
+            let tmpReservations = (_d = (_c = seatReservationAuthorization) === null || _c === void 0 ? void 0 : _c.result) === null || _d === void 0 ? void 0 : _d.responseBody.object.reservations;
+            tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
             const profile = {
                 familyName: params.familyName,
                 givenName: params.givenName,
@@ -579,24 +818,23 @@ class PostbackWebhookController {
                 name: `${params.givenName} ${params.familyName}`,
                 telephone: params.telephone
             };
-            yield placeOrderService.setCustomerContact({
+            yield placeOrderService.setProfile({
                 id: params.transactionId,
-                object: {
-                    customerContact: profile
-                }
+                agent: profile
             });
             yield placeOrderService.setProfile({
                 id: params.transactionId,
                 agent: profile
             });
             // 注文内容確認
+            const price = yield this.user.findTransactionAmount();
             yield lineClient_1.default.pushMessage(this.user.userId, [
                 contentsBuilder_1.createConfirmOrderFlexBubble({
                     seller: seller,
                     profile: profile,
                     tmpReservations: tmpReservations,
                     id: params.transactionId,
-                    price: seatReservationAuthorization.result.price
+                    price: price
                 })
             ]);
         });
@@ -809,8 +1047,7 @@ class PostbackWebhookController {
                                 data: qs.stringify({
                                     action: 'depositCoinByCreditCard',
                                     amount: 100,
-                                    accountType: params.accountType,
-                                    toAccountNumber: params.accountNumber
+                                    paymentCard: params.paymentCard
                                 })
                             }
                         },
@@ -823,8 +1060,7 @@ class PostbackWebhookController {
                                 data: qs.stringify({
                                     action: 'depositCoinByCreditCard',
                                     amount: 1000,
-                                    accountType: params.accountType,
-                                    toAccountNumber: params.accountNumber
+                                    paymentCard: params.paymentCard
                                 })
                             }
                         },
@@ -837,8 +1073,7 @@ class PostbackWebhookController {
                                 data: qs.stringify({
                                     action: 'depositCoinByCreditCard',
                                     amount: 10000,
-                                    accountType: params.accountType,
-                                    toAccountNumber: params.accountNumber
+                                    paymentCard: params.paymentCard
                                 })
                             }
                         }
@@ -851,58 +1086,143 @@ class PostbackWebhookController {
     /**
      * クレジット決済でプリペイドカード入金
      */
+    // tslint:disable-next-line:max-func-body-length
     depositCoinByCreditCard(params) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         return __awaiter(this, void 0, void 0, function* () {
             yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
-            const personService = new cinerinoapi.service.Person({
+            const sellerService = new cinerinoapi.service.Seller({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
             });
-            const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+            const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_b = this.project) === null || _b === void 0 ? void 0 : _b.id }
             });
-            const sellerService = new cinerinoapi.service.Seller({
+            const offerService = new cinerinoapi.service.Offer({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_c = this.project) === null || _c === void 0 ? void 0 : _c.id }
             });
-            const creditCards = yield personOwnershipInfoService.searchCreditCards({});
-            const creditCard = creditCards.shift();
-            if (creditCard === undefined) {
-                throw new Error('クレジットカードが登録されていません');
-            }
-            const lineProfile = yield lineClient_1.default.getProfile(this.user.userId);
-            // 取引に販売者を指定する必要があるので、適当に検索
-            const searchSellersResult = yield sellerService.search({ limit: 1 });
+            // 販売者情報取得
+            const searchSellersResult = yield sellerService.search({
+                project: { id: { $eq: (_d = this.req.project) === null || _d === void 0 ? void 0 : _d.id } }
+            });
             const seller = searchSellersResult.data.shift();
             if (seller === undefined) {
-                throw new Error('販売者が見つかりませんでした');
+                throw new Error('販売者が見つかりません');
             }
-            const profile = yield personService.getProfile({});
-            // 入金取引
-            const coinAccountController = new coin_1.CoinAccountController(this.req);
-            yield coinAccountController.processOrderCoin({
-                replyToken: params.replyToken,
-                amount: params.amount,
-                toLocation: {
-                    accountNumber: params.toAccountNumber
-                },
-                creditCard: {
-                    memberId: 'me',
-                    cardSeq: Number(creditCard.cardSeq)
-                },
-                profile: {
-                    givenName: (profile.givenName === '') ? lineProfile.displayName : profile.givenName,
-                    familyName: (profile.familyName === '') ? 'LINE' : profile.familyName,
-                    email: profile.email,
-                    telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
-                },
-                seller: seller
+            const TRANSACTION_EXPIRES_IN_MINUTES = 5;
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '取引を開始します...' });
+            const transaction = yield placeOrderService.start({
+                expires: moment()
+                    .add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes')
+                    .toDate(),
+                seller: seller,
+                object: {}
             });
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
+            debug('transaction started.', transaction.id);
+            yield this.user.saveTransaction(transaction);
+            yield offerService.authorizeMonetaryAmount({
+                object: {
+                    project: { typeOf: 'Project', id: transaction.project.id },
+                    typeOf: cinerinoapi.factory.chevre.offerType.Offer,
+                    itemOffered: {
+                        typeOf: 'MonetaryAmount',
+                        value: Number(params.amount),
+                        currency: cinerinoapi.factory.accountType.Prepaid
+                    },
+                    priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
+                    seller: { typeOf: seller.typeOf, name: seller.name.ja },
+                    toLocation: params.paymentCard
+                },
+                purpose: { typeOf: transaction.typeOf, id: transaction.id }
+            });
+            const price = params.amount;
+            const quickReplyItems = [];
+            if (price === 0) {
+                quickReplyItems.push({
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '決済なし',
+                        data: qs.stringify({
+                            action: 'selectPaymentMethodType',
+                            amount: 0,
+                            paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                            transactionId: transaction.id
+                        })
+                    }
+                });
+            }
+            else {
+                // クレジットカード決済
+                quickReplyItems.push({
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'クレジットカード',
+                        data: qs.stringify({
+                            action: 'selectCreditCard',
+                            amount: price,
+                            transactionId: transaction.id
+                        })
+                    }
+                }, {
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'プリペイドカード',
+                        data: qs.stringify({
+                            action: 'selectPaymentCard',
+                            amount: price,
+                            transactionId: transaction.id
+                        })
+                    }
+                });
+                if ((yield this.user.getCredentials()) !== undefined) {
+                    quickReplyItems.push({
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'Friend Pay',
+                            data: qs.stringify({
+                                action: 'askPaymentCode',
+                                amount: price,
+                                transactionId: transaction.id
+                            })
+                        }
+                    }, {
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'その他',
+                            data: qs.stringify({
+                                action: 'selectPaymentMethodType',
+                                amount: price,
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                transactionId: transaction.id
+                            })
+                        }
+                    });
+                }
+            }
+            const message = {
+                type: 'text',
+                text: `決済方法を選択してください(${price}円)`,
+                quickReply: {
+                    items: quickReplyItems
+                }
+            };
+            yield lineClient_1.default.pushMessage(this.user.userId, [message]);
         });
     }
     /**
@@ -1329,6 +1649,7 @@ class PostbackWebhookController {
                         label: '決済なし',
                         data: qs.stringify({
                             action: 'selectPaymentMethodType',
+                            amount: price,
                             paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
                             transactionId: transaction.id
                         })
@@ -1345,6 +1666,19 @@ class PostbackWebhookController {
                         label: 'クレジットカード',
                         data: qs.stringify({
                             action: 'selectCreditCard',
+                            amount: price,
+                            transactionId: transaction.id
+                        })
+                    }
+                }, {
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'プリペイドカード',
+                        data: qs.stringify({
+                            action: 'selectPaymentCard',
+                            amount: price,
                             transactionId: transaction.id
                         })
                     }
@@ -1352,24 +1686,13 @@ class PostbackWebhookController {
                 if ((yield this.user.getCredentials()) !== undefined) {
                     quickReplyItems.push({
                         type: 'action',
-                        imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
-                        action: {
-                            type: 'postback',
-                            label: 'プリペイドカード',
-                            data: qs.stringify({
-                                action: 'selectPaymentMethodType',
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.PrepaidCard,
-                                transactionId: transaction.id
-                            })
-                        }
-                    }, {
-                        type: 'action',
                         imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
                         action: {
                             type: 'postback',
                             label: 'Friend Pay',
                             data: qs.stringify({
                                 action: 'askPaymentCode',
+                                amount: price,
                                 transactionId: transaction.id
                             })
                         }
@@ -1381,6 +1704,7 @@ class PostbackWebhookController {
                             label: 'その他',
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
+                                amount: price,
                                 paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
                                 transactionId: transaction.id
                             })

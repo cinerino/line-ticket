@@ -209,7 +209,9 @@ class User {
                 .exec();
         });
     }
-    findSeatReservationAuthorization() {
+    findSeatReservationAuthorization(
+    // tslint:disable-next-line:max-line-length
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
             return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
                 .then((value) => {
@@ -224,6 +226,22 @@ class User {
             yield redisClient.multi()
                 .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
                 .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .exec();
+        });
+    }
+    findTransactionAmount() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return redisClient.get(`line-ticket:transactionAmount:${this.userId}`)
+                .then((value) => {
+                return (value !== null) ? Number(value) : undefined;
+            });
+        });
+    }
+    saveTransactionAmount(amount) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield redisClient.multi()
+                .set(`line-ticket:transactionAmount:${this.userId}`, amount)
+                .expire(`line-ticket:transactionAmount:${this.userId}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
         });
     }

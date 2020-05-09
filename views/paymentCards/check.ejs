@@ -9,7 +9,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
-    <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
@@ -17,27 +16,27 @@
 <body>
     <div class="container">
         <form method="post">
-            <input type="hidden" name="transactionId" value="<%= transactionId %>">
             <div class="form-group">
-                <label for="familyName">Family Name</label>
-                <input type="text" name="familyName" id="familyName" class="form-control input-required"
-                    value="<%= values.familyName %>" maxlength="16" data-fieldname="Family Name" required>
+                <label for="paymentCard[typeOf]">カードタイプ</label>
+                <select name="paymentCard[typeOf]" id="paymentCard[typeOf]" class="form-control">
+                    <% products.forEach((product) => { %>
+                    <option value="<%= product.serviceOutput.typeOf %>"><%= product.name.ja %></option>
+                    <% }) %>
+                </select>
             </div>
+
             <div class="form-group">
-                <label for="givenName">Given Name</label>
-                <input type="text" name="givenName" id="givenName" class="form-control input-required"
-                    value="<%= values.givenName %>" data-fieldname="Given Name" required>
+                <label for="paymentCard[identifier]">カード番号</label>
+                <input type="tel" name="paymentCard[identifier]" id="paymentCard[identifier]" class="form-control"
+                    maxlength="16" data-fieldname="CardNumber" required>
             </div>
+
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" name="email" id="email" class="form-control input-required"
-                    value="<%= values.email %>" data-fieldname="Email" required>
+                <label for="paymentCard[accessCode]">アクセスコード</label>
+                <input type="tel" name="paymentCard[accessCode]" id="paymentCard[accessCode]" class="form-control"
+                    maxlength="16" data-fieldname="AccessCode" required>
             </div>
-            <div class="form-group">
-                <label for="telephone">Telephone</label>
-                <input type="tel" name="telephone" id="telephone" class="form-control input-required"
-                    value="<%= values.telephone %>" data-fieldname="Telephone" placeholder="+819012345678" required>
-            </div>
+
             <a class="btn btn-primary btn-next" href="javascript:void(0);">
                 <span>Next</span>
             </a>
@@ -63,15 +62,20 @@
         }
     );
 
+    var submitting = false;
     $(function () {
         // 送信
         $('.btn-next').on('click', function () {
-            const message = 'postback:' + 'action=setProfile&' + $("form").serialize();
-            console.log('sending message...', message);
+            if (submitting) { return false; }
+            submitting = true;
+            $('.btn-next').addClass('disabled').find('span').text('Sending...');
+
             liff.sendMessages([
                 {
                     type: 'text',
-                    text: message
+                    text: 'postback:'
+                        + 'action=checkPaymentCard'
+                        + '&' + $("form").serialize()
                 }
             ])
                 .then(() => {
@@ -81,6 +85,7 @@
                 .catch((err) => {
                     console.log('error', err);
                 });
+            return false;
         });
     });
 </script>

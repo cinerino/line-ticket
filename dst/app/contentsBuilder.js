@@ -890,11 +890,14 @@ function order2flexBubble(params) {
                                     break;
                                 default:
                                     itemName = (typeof orderItem.itemOffered.name === 'string')
-                                        ? String(orderItem.itemOffered.name)
+                                        ? `${String(orderItem.itemOffered.typeOf)} ${String(orderItem.itemOffered.name)}`
                                         : String(orderItem.itemOffered.typeOf);
                                     itemDescription = (typeof orderItem.itemOffered.description === 'string')
                                         ? String(orderItem.itemOffered.description)
                                         : 'no description';
+                                    if (typeof orderItem.itemOffered.identifier === 'string') {
+                                        itemDescription = `${orderItem.itemOffered.identifier}`;
+                                    }
                             }
                             return {
                                 type: 'box',
@@ -1382,8 +1385,10 @@ function account2flexBubble(params) {
                         label: 'クレジットカードで入金',
                         data: qs.stringify({
                             action: 'selectDepositAmount',
-                            accountType: cinerinoapi.factory.accountType.Prepaid,
-                            accountNumber: account.accountNumber
+                            paymentCard: {
+                                typeOf: cinerinoapi.factory.accountType.Prepaid,
+                                identifier: account.accountNumber
+                            }
                         })
                     }
                 },
@@ -1424,6 +1429,211 @@ function account2flexBubble(params) {
     };
 }
 exports.account2flexBubble = account2flexBubble;
+// tslint:disable-next-line:max-func-body-length
+function paymentCard2flexBubble(params) {
+    var _a;
+    const paymentCard = params.paymentCard;
+    return {
+        type: 'bubble',
+        styles: {
+            footer: {
+                separator: true
+            }
+        },
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+                {
+                    type: 'box',
+                    layout: 'baseline',
+                    contents: [
+                        {
+                            type: 'icon',
+                            url: `https://${params.user.host}/img/labels/coin-64.png`
+                        },
+                        {
+                            type: 'text',
+                            text: String(paymentCard.identifier),
+                            wrap: true,
+                            weight: 'bold',
+                            margin: 'sm',
+                            gravity: 'center',
+                            size: 'xl'
+                        }
+                    ]
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Name',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(paymentCard.name),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Type',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(paymentCard.typeOf),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        },
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Balance',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 2
+                                },
+                                {
+                                    type: 'text',
+                                    text: String((_a = paymentCard.amount) === null || _a === void 0 ? void 0 : _a.value),
+                                    wrap: true,
+                                    size: 'sm',
+                                    color: '#666666',
+                                    flex: 5
+                                }
+                            ]
+                        }
+                        // {
+                        //     type: 'box',
+                        //     layout: 'baseline',
+                        //     spacing: 'sm',
+                        //     contents: [
+                        //         {
+                        //             type: 'text',
+                        //             text: 'OpenDate',
+                        //             color: '#aaaaaa',
+                        //             size: 'sm',
+                        //             flex: 2
+                        //         },
+                        //         {
+                        //             type: 'text',
+                        //             text: moment(paymentCard.validFrom)
+                        //                 .format('lll'),
+                        //             wrap: true,
+                        //             color: '#666666',
+                        //             size: 'sm',
+                        //             flex: 5
+                        //         }
+                        //     ]
+                        // }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: '取引履歴',
+                        data: qs.stringify({
+                            action: 'searchAccountMoneyTransferActions',
+                            paymentCard: {
+                                typeOf: paymentCard.typeOf,
+                                identifier: paymentCard.identifier,
+                                accessCode: paymentCard.accessCode
+                            }
+                        })
+                    }
+                },
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: '入金',
+                        data: qs.stringify({
+                            action: 'selectDepositAmount',
+                            paymentCard: {
+                                typeOf: paymentCard.typeOf,
+                                identifier: paymentCard.identifier
+                            }
+                        })
+                    }
+                }
+                // {
+                //     type: 'button',
+                //     action: {
+                //         type: 'postback',
+                //         label: 'コード発行',
+                //         data: qs.stringify({
+                //             action: 'authorizeOwnershipInfo',
+                //             goodType: ownershipInfo.typeOfGood.typeOf,
+                //             id: ownershipInfo.id
+                //         })
+                //     }
+                // },
+                // {
+                //     type: 'button',
+                //     action: {
+                //         type: 'message',
+                //         label: 'おこづかいをもらう',
+                //         text: 'おこづかい'
+                //     }
+                // },
+                // {
+                //     type: 'button',
+                //     action: {
+                //         type: 'postback',
+                //         label: '解約',
+                //         data: qs.stringify({
+                //             action: 'closeAccount',
+                //             accountType: account.accountType,
+                //             accountNumber: account.accountNumber
+                //         })
+                //     }
+                // }
+            ]
+        }
+    };
+}
+exports.paymentCard2flexBubble = paymentCard2flexBubble;
 // tslint:disable-next-line:max-func-body-length
 function moneyTransferAction2flexBubble(params) {
     const a = params.action;

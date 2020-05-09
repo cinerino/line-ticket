@@ -52,8 +52,39 @@ transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, 
     try {
         // フォーム
         res.render('transactions/placeOrder/inputCreditCard', {
+            amount: req.query.amount,
             gmoShopId: req.query.gmoShopId,
             transactionId: req.params.transactionId
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+}));
+/**
+ * プリペイドカード入力フォーム
+ */
+transactionsRouter.get('/placeOrder/:transactionId/inputPaymentCard', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user = new user_1.default({
+            host: req.hostname,
+            userId: req.query.userId,
+            state: ''
+        });
+        const productService = new cinerinoapi.service.Product({
+            endpoint: process.env.CINERINO_ENDPOINT,
+            auth: user.authClient,
+            project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id }
+        });
+        const searchProductsResult = yield productService.search({
+            typeOf: { $eq: 'PaymentCard' }
+        });
+        // フォーム
+        res.render('transactions/placeOrder/inputPaymentCard', {
+            amount: req.query.amount,
+            transactionId: req.params.transactionId,
+            products: searchProductsResult.data
         });
     }
     catch (error) {
@@ -64,7 +95,7 @@ transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, 
  * 座席選択フォーム
  */
 transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _b, _c, _d, _e;
     try {
         const user = new user_1.default({
             host: req.hostname,
@@ -74,10 +105,10 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
         const eventService = new cinerinoapi.service.Event({
             endpoint: process.env.CINERINO_ENDPOINT,
             auth: user.authClient,
-            project: { id: (_a = req.project) === null || _a === void 0 ? void 0 : _a.id }
+            project: { id: (_b = req.project) === null || _b === void 0 ? void 0 : _b.id }
         });
         const event = yield eventService.findById({ id: req.query.eventId });
-        const reservedSeatsAvailable = ((_d = (_c = (_b = event.offers) === null || _b === void 0 ? void 0 : _b.itemOffered.serviceOutput) === null || _c === void 0 ? void 0 : _c.reservedTicket) === null || _d === void 0 ? void 0 : _d.ticketedSeat) !== undefined;
+        const reservedSeatsAvailable = ((_e = (_d = (_c = event.offers) === null || _c === void 0 ? void 0 : _c.itemOffered.serviceOutput) === null || _d === void 0 ? void 0 : _d.reservedTicket) === null || _e === void 0 ? void 0 : _e.ticketedSeat) !== undefined;
         if (reservedSeatsAvailable) {
             const eventOffers = yield eventService.searchOffers({ event: { id: req.query.eventId } });
             const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <title>Cinerino LIFF App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
+    <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <!-- <h1>プリペイドカード情報入力</h1> -->
+        <form method="post">
+            <input type="hidden" name="token" value="">
+            <input type="hidden" name="transactionId" value="<%= transactionId %>">
+            <input type="hidden" name="paymentMethod" value="PaymentCard">
+            <input type="hidden" name="amount" value="<%= amount %>">
+
+            <div class="form-group">
+                <label for="typeOf">カードタイプ</label>
+                <select name="typeOf" id="typeOf" class="form-control">
+                    <% products.forEach((product) => { %>
+                    <option value="<%= product.serviceOutput.typeOf %>"><%= product.name.ja %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cardNumber">CardNumber</label>
+                <input type="tel" name="identifier" id="identifier" class="form-control input-required" value=""
+                    maxlength="16" data-pattern="^[0-9]+$" data-fieldname="CardNumber" placeholder="1234567890"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="securitycode">AccessCode</label>
+                <input type="tel" name="accessCode" id="accessCode" class="form-control input-required" value=""
+                    maxlength="4" data-pattern="^[0-9]+$" data-fieldname="AccessCode" placeholder="123" required>
+            </div>
+            <a class="btn btn-primary btn-next" href="javascript:void(0);">
+                <span>Next</span>
+            </a>
+        </form>
+    </div>
+</body>
+
+<script>
+    liff.init(
+        data => {
+            // Now you can call LIFF API
+            const userId = data.context.userId;
+            liff.getProfile()
+                .then(profile => {
+                    const name = profile.displayName
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        },
+        err => {
+            // LIFF initialization failed
+        }
+    );
+
+    var submitting = false;
+
+    /**
+     * トークン取得後イベント
+     * @function someCallbackFunction
+     * @param {Object} response
+     * @param {Object} response.tokenObject
+     * @param {number} response.resultCode
+     * @returns {void}
+     */
+    function someCallbackFunction(response) {
+        var typeOf = $('select[name=typeOf]').val();
+        var identifier = $('input[name=identifier]').val();
+        var accessCode = $('input[name=accessCode]').val();
+
+        // スクリプトからフォームを submit
+        const message = 'postback:' + 'action=selectPaymentMethodType&'
+            + $("form").serialize()
+            + '&paymentCard[typeOf]=' + typeOf
+            + '&paymentCard[identifier]=' + identifier
+            + '&paymentCard[accessCode]=' + accessCode;
+        console.log('sending message...', message);
+        liff.sendMessages([
+            {
+                type: 'text',
+                text: message
+            }
+        ])
+            .then(() => {
+                console.log('message sent');
+                liff.closeWindow();
+            })
+            .catch((err) => {
+                console.log('error', err);
+            });
+        return false;
+
+        // LINEに戻すのでsubmitしない
+        // $('form').submit();
+    }
+    /**
+     * トークン取得
+     * @function getToken
+     * @returns {void}
+     */
+    function getToken() {
+        someCallbackFunction();
+    }
+
+    $(function () {
+        // 送信
+        $('.btn-next').on('click', function () {
+            if (submitting) { return false; }
+            submitting = true;
+            $('.btn-next').addClass('disabled').find('span').text('Sending...');
+            getToken();
+        });
+    });
+</script>
+
+</html>

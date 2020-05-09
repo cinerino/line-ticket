@@ -7,6 +7,7 @@ const express = require("express");
 const accounts_1 = require("../accounts");
 const liff_1 = require("../liff");
 const orders_1 = require("../orders");
+const paymentCards_1 = require("../paymentCards");
 const people_1 = require("../people");
 const reservations_1 = require("../reservations");
 const transactions_1 = require("../transactions");
@@ -24,6 +25,7 @@ projectDetailRouter.use((req, _, next) => {
 projectDetailRouter.use('/accounts', accounts_1.default);
 projectDetailRouter.use('/liff', liff_1.default);
 projectDetailRouter.use('/orders', orders_1.default);
+projectDetailRouter.use('/paymentCards', paymentCards_1.default);
 projectDetailRouter.use('/people', people_1.default);
 projectDetailRouter.use('/reservations', reservations_1.default);
 projectDetailRouter.use('/transactions', transactions_1.default);

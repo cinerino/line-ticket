@@ -54,14 +54,12 @@ class CoinAccountController {
                     authorizeActions: [],
                     description: 'Cinerino LINE Ticket Pocket Money',
                     fromLocation: {
-                        typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                        accountNumber: params.fromLocation.accountNumber
+                        typeOf: cinerinoapi.factory.accountType.Prepaid,
+                        identifier: params.fromLocation.accountNumber
                     },
                     toLocation: {
-                        typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                        accountNumber: params.transferMoneyInfo.accountNumber
+                        typeOf: cinerinoapi.factory.accountType.Prepaid,
+                        identifier: params.transferMoneyInfo.accountNumber
                     }
                 }
             });
@@ -129,9 +127,8 @@ class CoinAccountController {
                     priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
                     seller: { typeOf: params.seller.typeOf, name: params.seller.name },
                     toLocation: {
-                        typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                        accountNumber: params.toLocation.accountNumber
+                        typeOf: cinerinoapi.factory.accountType.Prepaid,
+                        identifier: params.toLocation.accountNumber
                     }
                 },
                 purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }

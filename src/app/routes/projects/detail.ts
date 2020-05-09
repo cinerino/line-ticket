@@ -6,6 +6,7 @@ import * as express from 'express';
 import accountsRouter from '../accounts';
 import liffRouter from '../liff';
 import ordersRouter from '../orders';
+import paymentCardsRouter from '../paymentCards';
 import peopleRouter from '../people';
 import reservationsRouter from '../reservations';
 import transactionsRouter from '../transactions';
@@ -27,6 +28,7 @@ projectDetailRouter.use((req, _, next) => {
 projectDetailRouter.use('/accounts', accountsRouter);
 projectDetailRouter.use('/liff', liffRouter);
 projectDetailRouter.use('/orders', ordersRouter);
+projectDetailRouter.use('/paymentCards', paymentCardsRouter);
 projectDetailRouter.use('/people', peopleRouter);
 projectDetailRouter.use('/reservations', reservationsRouter);
 projectDetailRouter.use('/transactions', transactionsRouter);

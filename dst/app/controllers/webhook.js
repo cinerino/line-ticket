@@ -163,6 +163,7 @@ class WebhookController {
         return __awaiter(this, void 0, void 0, function* () {
             const data = qs.parse(event.postback.data, {
                 arrayLimit: 1000,
+                depth: 5,
                 parseArrays: true,
                 plainObjects: true,
                 allowDots: false
@@ -199,9 +200,30 @@ class WebhookController {
                             transactionId: data.transactionId
                         });
                         break;
+                    case 'orderPaymentCard':
+                        yield postbackController.orderPaymentCard({
+                            replyToken: event.replyToken,
+                            itemOffered: data.itemOffered,
+                            profile: data.profile
+                        });
+                        break;
+                    case 'checkPaymentCard':
+                        yield postbackController.checkPaymentCard({
+                            replyToken: event.replyToken,
+                            paymentCard: data.paymentCard
+                        });
+                        break;
                     case 'selectCreditCard':
                         yield postbackController.selectCreditCard({
                             replyToken: event.replyToken,
+                            amount: Number(data.amount),
+                            transactionId: data.transactionId
+                        });
+                        break;
+                    case 'selectPaymentCard':
+                        yield postbackController.selectPaymentCard({
+                            replyToken: event.replyToken,
+                            amount: Number(data.amount),
                             transactionId: data.transactionId
                         });
                         break;
@@ -209,15 +231,17 @@ class WebhookController {
                     case 'selectPaymentMethodType':
                         yield postbackController.selectPaymentMethodType({
                             replyToken: event.replyToken,
+                            amount: Number(data.amount),
                             paymentMethodType: data.paymentMethod,
                             transactionId: data.transactionId,
                             code: data.code,
-                            creditCard: data.creditCard
+                            creditCard: data.creditCard,
+                            paymentCard: data.paymentCard
                         });
                         break;
                     // 購入者情報決定
-                    case 'setCustomerContact':
-                        yield postbackController.setCustomerContact({
+                    case 'setProfile':
+                        yield postbackController.setProfile({
                             replyToken: event.replyToken,
                             transactionId: data.transactionId,
                             familyName: data.familyName,
@@ -313,8 +337,7 @@ class WebhookController {
                     case 'selectDepositAmount':
                         yield postbackController.selectDepositAmount({
                             replyToken: event.replyToken,
-                            accountType: data.accountType,
-                            accountNumber: data.accountNumber
+                            paymentCard: data.paymentCard
                         });
                         break;
                     // 口座入金金額選択
@@ -322,7 +345,7 @@ class WebhookController {
                         yield postbackController.depositCoinByCreditCard({
                             replyToken: event.replyToken,
                             amount: Number(data.amount),
-                            toAccountNumber: data.toAccountNumber
+                            paymentCard: data.paymentCard
                         });
                         break;
                     case 'askEventStartDate':

@@ -35,7 +35,7 @@ class MessageWebhookController {
                 imageUrl: `https://${this.user.host}/img/labels/project-96.png`,
                 action: {
                     type: 'postback',
-                    label: 'プロジェクト変更',
+                    label: 'プロジェクト',
                     data: qs.stringify({
                         action: 'selectProject'
                     })
@@ -45,15 +45,23 @@ class MessageWebhookController {
                 imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
                 action: {
                     type: 'message',
-                    label: '予約管理',
+                    label: '予約',
                     text: '予約'
+                }
+            }, {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'プリペイドカード',
+                    text: 'プリペイドカード'
                 }
             }, {
                 type: 'action',
                 imageUrl: `https://${this.user.host}/img/labels/order-96.png`,
                 action: {
                     type: 'message',
-                    label: '注文管理',
+                    label: '注文',
                     text: '注文'
                 }
             }, {
@@ -61,7 +69,7 @@ class MessageWebhookController {
                 imageUrl: `https://${this.user.host}/img/labels/qr-code-48.png`,
                 action: {
                     type: 'message',
-                    label: 'コード管理',
+                    label: 'コード',
                     text: 'コード'
                 }
             });
@@ -71,23 +79,15 @@ class MessageWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
                         type: 'message',
-                        label: 'クレジットカード管理',
+                        label: 'クレジットカード',
                         text: 'クレジットカード'
-                    }
-                }, {
-                    type: 'action',
-                    imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
-                    action: {
-                        type: 'message',
-                        label: 'プリペイドカード管理',
-                        text: 'プリペイドカード'
                     }
                 }, {
                     type: 'action',
                     imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
                     action: {
                         type: 'message',
-                        label: 'おこづかいをもらう',
+                        label: 'おこづかい',
                         text: 'おこづかい'
                     }
                 }, {
@@ -95,7 +95,7 @@ class MessageWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/profile-96.png`,
                     action: {
                         type: 'message',
-                        label: 'プロフィール管理',
+                        label: 'プロフィール',
                         text: 'プロフィール'
                     }
                 }, {
@@ -292,10 +292,17 @@ class MessageWebhookController {
         });
     }
     showCoinAccountMenu(params) {
-        var _a;
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
-            const openAccountUri = `https://${this.user.host}/projects/${(_a = this.project) === null || _a === void 0 ? void 0 : _a.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Prepaid}`;
-            const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: openAccountUri })}`;
+            // const openAccountUri =
+            // tslint:disable-next-line:max-line-length
+            //     `https://${this.user.host}/projects/${this.project?.id}/accounts/open?accountType=${cinerinoapi.factory.accountType.Prepaid}`;
+            const orderPaymentCardUri = `https://${this.user.host}/projects/${(_a = this.project) === null || _a === void 0 ? void 0 : _a.id}/paymentCards/order`;
+            const orderPaymentCardLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: orderPaymentCardUri })}`;
+            const orderMonetaryAmountUri = `https://${this.user.host}/projects/${(_b = this.project) === null || _b === void 0 ? void 0 : _b.id}/paymentCards/orderMonetaryAmount`;
+            const orderMonetaryAmountLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: orderMonetaryAmountUri })}`;
+            const checkPaymentCardUri = `https://${this.user.host}/projects/${(_c = this.project) === null || _c === void 0 ? void 0 : _c.id}/paymentCards/check`;
+            const checkPaymentCardtLiffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: checkPaymentCardUri })}`;
             yield lineClient_1.default.replyMessage(params.replyToken, [
                 {
                     type: 'template',
@@ -307,12 +314,22 @@ class MessageWebhookController {
                         actions: [
                             {
                                 type: 'uri',
-                                label: '開設する',
-                                uri: liffUri
+                                label: '新規発行',
+                                uri: orderPaymentCardLiffUri
+                            },
+                            {
+                                type: 'uri',
+                                label: '照会',
+                                uri: checkPaymentCardtLiffUri
+                            },
+                            {
+                                type: 'uri',
+                                label: '入金',
+                                uri: orderMonetaryAmountLiffUri
                             },
                             {
                                 type: 'postback',
-                                label: 'My口座',
+                                label: 'Myカード',
                                 data: 'action=searchCoinAccounts'
                             }
                         ]

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <title>Cinerino LIFF App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://d.line-scdn.net/liff/1.0/sdk.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <form method="post">
+            <div class="form-group">
+                <label for="itemOffered[id]">カードタイプ</label>
+                <select name="itemOffered[id]" id="itemOffered[id]" class="form-control">
+                    <% products.forEach((product) => { %>
+                    <option value="<%= product.id%>"><%= product.name.ja %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="itemOffered[serviceOutput][accessCode]">アクセスコード</label>
+                <input type="tel" name="itemOffered[serviceOutput][accessCode]"
+                    id="itemOffered[serviceOutput][accessCode]" class="form-control" maxlength="4"
+                    data-fieldname="AccessCode" required>
+            </div>
+
+            <div class="form-group">
+                <label for="itemOffered[serviceOutput][name]">名称</label>
+                <input type="text" name="itemOffered[serviceOutput][name]" id="itemOffered[serviceOutput][name]"
+                    class="form-control" maxlength="64" data-fieldname="Name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="profile[familyName]">Family Name</label>
+                <input type="text" name="profile[familyName]" id="profile[familyName]"
+                    class="form-control input-required" maxlength="16" data-fieldname="Family Name" required>
+            </div>
+            <div class="form-group">
+                <label for="profile[givenName]">Given Name</label>
+                <input type="text" name="profile[givenName]" id="profile[givenName]" class="form-control input-required"
+                    data-fieldname="Given Name" required>
+            </div>
+            <div class="form-group">
+                <label for="profile[email]">Email</label>
+                <input type="email" name="profile[email]" id="profile[email]" class="form-control input-required"
+                    data-fieldname="Email" required>
+            </div>
+            <div class="form-group">
+                <label for="profile[telephone]">Telephone</label>
+                <input type="tel" name="profile[telephone]" id="profile[telephone]" class="form-control input-required"
+                    data-fieldname="Telephone" required>
+            </div>
+
+            <a class="btn btn-primary btn-next" href="javascript:void(0);">
+                <span>Next</span>
+            </a>
+        </form>
+    </div>
+</body>
+
+<script>
+    liff.init(
+        data => {
+            // Now you can call LIFF API
+            const userId = data.context.userId;
+            liff.getProfile()
+                .then(profile => {
+                    const name = profile.displayName
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+        },
+        err => {
+            // LIFF initialization failed
+        }
+    );
+
+    var submitting = false;
+    $(function () {
+        // 送信
+        $('.btn-next').on('click', function () {
+            if (submitting) { return false; }
+            submitting = true;
+            $('.btn-next').addClass('disabled').find('span').text('Sending...');
+
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: 'postback:'
+                        + 'action=orderPaymentCard'
+                        + '&' + $("form").serialize()
+                }
+            ])
+                .then(() => {
+                    console.log('message sent');
+                    liff.closeWindow();
+                })
+                .catch((err) => {
+                    console.log('error', err);
+                });
+            return false;
+        });
+    });
+</script>
+
+</html>

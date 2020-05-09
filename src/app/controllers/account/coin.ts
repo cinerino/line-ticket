@@ -42,7 +42,7 @@ export class CoinAccountController {
 
         // 通貨転送取引開始
         const moneyTransferTransaction =
-            await moneyTransferService.start<string, cinerinoapi.factory.pecorino.account.TypeOf.Account>({
+            await moneyTransferService.start({
                 project: { typeOf: cinerinoapi.factory.organizationType.Project, id: params.seller.project.id },
                 expires: moment()
                     .add(1, 'minutes')
@@ -63,14 +63,12 @@ export class CoinAccountController {
                     authorizeActions: [],
                     description: 'Cinerino LINE Ticket Pocket Money',
                     fromLocation: {
-                        typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                        accountNumber: params.fromLocation.accountNumber
+                        typeOf: cinerinoapi.factory.accountType.Prepaid,
+                        identifier: params.fromLocation.accountNumber
                     },
                     toLocation: {
-                        typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                        accountType: cinerinoapi.factory.accountType.Prepaid,
-                        accountNumber: params.transferMoneyInfo.accountNumber
+                        typeOf: cinerinoapi.factory.accountType.Prepaid,
+                        identifier: params.transferMoneyInfo.accountNumber
                     }
                 }
             });
@@ -103,7 +101,7 @@ export class CoinAccountController {
         toLocation: {
             accountNumber: string;
         };
-        creditCard: cinerinoapi.factory.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
+        creditCard: cinerinoapi.factory.chevre.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
         profile: cinerinoapi.factory.person.IProfile;
         seller: cinerinoapi.factory.seller.IOrganization<any>;
     }) {
@@ -154,9 +152,8 @@ export class CoinAccountController {
                 priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
                 seller: { typeOf: params.seller.typeOf, name: params.seller.name },
                 toLocation: {
-                    typeOf: cinerinoapi.factory.pecorino.account.TypeOf.Account,
-                    accountType: cinerinoapi.factory.accountType.Prepaid,
-                    accountNumber: params.toLocation.accountNumber
+                    typeOf: cinerinoapi.factory.accountType.Prepaid,
+                    identifier: params.toLocation.accountNumber
                 }
             },
             purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }

@@ -295,7 +295,8 @@ export default class User {
             .exec();
     }
     public async findSeatReservationAuthorization(
-    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>> {
+        // tslint:disable-next-line:max-line-length
+    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre> | undefined> {
         return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
             .then((value) => {
                 return (value !== null) ? JSON.parse(value) : undefined;
@@ -308,6 +309,20 @@ export default class User {
         await redisClient.multi()
             .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
             .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .exec();
+    }
+
+    public async findTransactionAmount(): Promise<number | undefined> {
+        return redisClient.get(`line-ticket:transactionAmount:${this.userId}`)
+            .then((value) => {
+                return (value !== null) ? Number(value) : undefined;
+            });
+    }
+
+    public async saveTransactionAmount(amount: number) {
+        await redisClient.multi()
+            .set(`line-ticket:transactionAmount:${this.userId}`, amount)
+            .expire(`line-ticket:transactionAmount:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
 
