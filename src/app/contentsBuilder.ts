@@ -741,6 +741,86 @@ export function screeningEvent2flexBubble(params: {
 }
 
 // tslint:disable-next-line:max-func-body-length
+export function product2flexBubble(params: {
+    product: cinerinoapi.factory.chevre.service.IService;
+    user: User;
+}): FlexBubble {
+    const product = params.product;
+
+    return {
+        type: 'bubble',
+        body: <any>{
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+                {
+                    type: 'text',
+                    text: (typeof product.name === 'string') ? product.name : String(product.name?.ja),
+                    wrap: true,
+                    weight: 'bold',
+                    gravity: 'center',
+                    size: 'xl'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Output',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: String(product.serviceOutput?.typeOf),
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: '登録する',
+                        data: qs.stringify({
+                            action: 'orderPaymentCard',
+                            itemOffered: {
+                                id: product.id,
+                                serviceOutput: {
+                                    // api仕様上必須なので、いったん固定で
+                                    accessCode: '123'
+                                }
+                            }
+                        })
+                    }
+                }
+            ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
 export function order2flexBubble(params: {
     order: cinerinoapi.factory.order.IOrder;
 }): FlexBubble {

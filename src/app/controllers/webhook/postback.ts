@@ -18,6 +18,7 @@ import {
     moneyTransferAction2flexBubble,
     order2flexBubble,
     paymentCard2flexBubble,
+    product2flexBubble,
     profile2bubble,
     reservation2flexBubble,
     screeningEvent2flexBubble,
@@ -155,6 +156,42 @@ export class PostbackWebhookController {
 
         const bubbles: FlexBubble[] = screeningEvents.map<FlexBubble>((event) => {
             return screeningEvent2flexBubble({ event: event, user: this.user });
+        });
+
+        await LINE.pushMessage(this.user.userId, [
+            {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: {
+                    type: 'carousel',
+                    contents: bubbles
+                }
+            }
+        ]);
+    }
+
+    /**
+     * メンバーシップサービスを検索する
+     */
+    public async searchMembershipServices(params: {
+        replyToken: string;
+    }) {
+        await LINE.replyMessage(params.replyToken, { type: 'text', text: 'プロダクトを検索しています...' });
+        const productService = new cinerinoapi.service.Product({
+            endpoint: <string>process.env.CINERINO_ENDPOINT,
+            auth: this.user.authClient,
+            project: { id: this.project?.id }
+        });
+        const searchProductsResult = await productService.search({
+            typeOf: { $eq: 'MembershipService' }
+        });
+        let products = searchProductsResult.data;
+        // tslint:disable-next-line:no-magic-numbers
+        products = products.slice(0, 10);
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: `${products.length}件のプロダクトがみつかりました` });
+
+        const bubbles: FlexBubble[] = products.map<FlexBubble>((product) => {
+            return product2flexBubble({ product, user: this.user });
         });
 
         await LINE.pushMessage(this.user.userId, [

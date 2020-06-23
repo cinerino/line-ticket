@@ -83,6 +83,11 @@ export class WebhookController {
                                 replyToken: event.replyToken
                             });
                             break;
+                        case /^メンバーシップ/.test(messageText):
+                            await messageController.showMembershipMenu({
+                                replyToken: event.replyToken
+                            });
+                            break;
                         case /^コード$/.test(messageText):
                             await messageController.showCodeMenu({
                                 replyToken: event.replyToken
@@ -193,6 +198,14 @@ export class WebhookController {
                         date: <string>data.date
                     });
                     break;
+
+                // メンバーシップサービス検索
+                case 'searchMembershipServices':
+                    await postbackController.searchMembershipServices({
+                        replyToken: event.replyToken
+                    });
+                    break;
+
                 // 決済コードをたずねる
                 case 'askPaymentCode':
                     await postbackController.askPaymentCode({
@@ -200,6 +213,7 @@ export class WebhookController {
                         transactionId: <string>data.transactionId
                     });
                     break;
+
                 case 'orderPaymentCard':
                     await postbackController.orderPaymentCard({
                         replyToken: event.replyToken,

@@ -54,11 +54,20 @@ export class MessageWebhookController {
             },
             {
                 type: 'action',
-                imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                imageUrl: `https://${this.user.host}/img/labels/payment-card-64.png`,
                 action: {
                     type: 'message',
                     label: 'ペイメントカード',
                     text: 'ペイメントカード'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/membership-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'メンバーシップ',
+                    text: 'メンバーシップ'
                 }
             },
             {
@@ -357,6 +366,37 @@ export class MessageWebhookController {
                             type: 'postback',
                             label: 'Myカード',
                             data: 'action=searchCoinAccounts'
+                        }
+                    ]
+                }
+            }
+        ]);
+    }
+
+    // tslint:disable-next-line:prefer-function-over-method
+    public async showMembershipMenu(params: {
+        replyToken: string;
+    }) {
+        await LINE.replyMessage(params.replyToken, [
+            {
+                type: 'template',
+                altText: 'メンバーシップ管理',
+                template: {
+                    type: 'buttons',
+                    title: 'メンバーシップ管理',
+                    text: 'ご用件はなんでしょう？',
+                    actions: [
+                        {
+                            type: 'postback',
+                            label: '新規登録',
+                            data: qs.stringify({
+                                action: 'searchMembershipServices'
+                            })
+                        },
+                        {
+                            type: 'postback',
+                            label: 'Myメンバーシップ',
+                            data: 'action=searchMemberships'
                         }
                     ]
                 }

@@ -82,6 +82,11 @@ class WebhookController {
                                     replyToken: event.replyToken
                                 });
                                 break;
+                            case /^メンバーシップ/.test(messageText):
+                                yield messageController.showMembershipMenu({
+                                    replyToken: event.replyToken
+                                });
+                                break;
                             case /^コード$/.test(messageText):
                                 yield messageController.showCodeMenu({
                                     replyToken: event.replyToken
@@ -191,6 +196,12 @@ class WebhookController {
                             replyToken: event.replyToken,
                             screeningEventSeriesId: data.screeningEventSeriesId,
                             date: data.date
+                        });
+                        break;
+                    // メンバーシップサービス検索
+                    case 'searchMembershipServices':
+                        yield postbackController.searchMembershipServices({
+                            replyToken: event.replyToken
                         });
                         break;
                     // 決済コードをたずねる

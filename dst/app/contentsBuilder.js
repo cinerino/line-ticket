@@ -704,6 +704,83 @@ function screeningEvent2flexBubble(params) {
 }
 exports.screeningEvent2flexBubble = screeningEvent2flexBubble;
 // tslint:disable-next-line:max-func-body-length
+function product2flexBubble(params) {
+    var _a, _b;
+    const product = params.product;
+    return {
+        type: 'bubble',
+        body: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+                {
+                    type: 'text',
+                    text: (typeof product.name === 'string') ? product.name : String((_a = product.name) === null || _a === void 0 ? void 0 : _a.ja),
+                    wrap: true,
+                    weight: 'bold',
+                    gravity: 'center',
+                    size: 'xl'
+                },
+                {
+                    type: 'box',
+                    layout: 'vertical',
+                    margin: 'lg',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'box',
+                            layout: 'baseline',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'Output',
+                                    color: '#aaaaaa',
+                                    size: 'sm',
+                                    flex: 1
+                                },
+                                {
+                                    type: 'text',
+                                    text: String((_b = product.serviceOutput) === null || _b === void 0 ? void 0 : _b.typeOf),
+                                    wrap: true,
+                                    color: '#666666',
+                                    size: 'sm',
+                                    flex: 4
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        footer: {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+                {
+                    type: 'button',
+                    action: {
+                        type: 'postback',
+                        label: '登録する',
+                        data: qs.stringify({
+                            action: 'orderPaymentCard',
+                            itemOffered: {
+                                id: product.id,
+                                serviceOutput: {
+                                    // api仕様上必須なので、いったん固定で
+                                    accessCode: '123'
+                                }
+                            }
+                        })
+                    }
+                }
+            ]
+        }
+    };
+}
+exports.product2flexBubble = product2flexBubble;
+// tslint:disable-next-line:max-func-body-length
 function order2flexBubble(params) {
     const order = params.order;
     return {

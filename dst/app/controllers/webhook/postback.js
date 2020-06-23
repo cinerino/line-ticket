@@ -133,6 +133,40 @@ class PostbackWebhookController {
         });
     }
     /**
+     * メンバーシップサービスを検索する
+     */
+    searchMembershipServices(params) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: 'プロダクトを検索しています...' });
+            const productService = new cinerinoapi.service.Product({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
+            });
+            const searchProductsResult = yield productService.search({
+                typeOf: { $eq: 'MembershipService' }
+            });
+            let products = searchProductsResult.data;
+            // tslint:disable-next-line:no-magic-numbers
+            products = products.slice(0, 10);
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${products.length}件のプロダクトがみつかりました` });
+            const bubbles = products.map((product) => {
+                return contentsBuilder_1.product2flexBubble({ product, user: this.user });
+            });
+            yield lineClient_1.default.pushMessage(this.user.userId, [
+                {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: {
+                        type: 'carousel',
+                        contents: bubbles
+                    }
+                }
+            ]);
+        });
+    }
+    /**
      * 決済コードをたずねる
      */
     askPaymentCode(params) {
