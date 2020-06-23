@@ -326,6 +326,23 @@ export default class User {
             .exec();
     }
 
+    public async findProfile(
+    ): Promise<cinerinoapi.factory.person.IProfile | undefined> {
+        return redisClient.get(`line-ticket:profile:${this.userId}`)
+            .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
+    }
+
+    public async saveProfile(
+        profile: cinerinoapi.factory.person.IProfile
+    ) {
+        await redisClient.multi()
+            .set(`line-ticket:profile:${this.userId}`, JSON.stringify(profile))
+            .expire(`line-ticket:profile:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .exec();
+    }
+
     public async saveCallbackState(state: string) {
         await redisClient.multi()
             .set(`line-ticket:callbackState:${this.userId}`, state)

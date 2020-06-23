@@ -14,7 +14,7 @@ const moment = require("moment");
 const lineClient_1 = require("../../../lineClient");
 const contentsBuilder_1 = require("../../contentsBuilder");
 /**
- * プリペイドカードコントローラ
+ * 決済カードコントローラ
  */
 class CoinAccountController {
     constructor(req) {
@@ -22,7 +22,7 @@ class CoinAccountController {
         this.user = req.user;
     }
     /**
-     * プリペイドカード転送
+     * 転送
      */
     processTransferCoin(params) {
         var _a;
@@ -81,7 +81,7 @@ class CoinAccountController {
         });
     }
     /**
-     * プリペイドカードに金額注文
+     * 金額注文
      */
     processOrderCoin(params) {
         var _a, _b, _c;

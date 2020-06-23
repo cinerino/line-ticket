@@ -11,7 +11,7 @@ import {
 } from '../../contentsBuilder';
 
 /**
- * プリペイドカードコントローラ
+ * 決済カードコントローラ
  */
 export class CoinAccountController {
     private readonly project?: { id: string };
@@ -23,7 +23,7 @@ export class CoinAccountController {
     }
 
     /**
-     * プリペイドカード転送
+     * 転送
      */
     public async processTransferCoin(params: {
         amount: number;
@@ -93,7 +93,7 @@ export class CoinAccountController {
     }
 
     /**
-     * プリペイドカードに金額注文
+     * 金額注文
      */
     public async  processOrderCoin(params: {
         replyToken: string;

@@ -63,7 +63,7 @@ transactionsRouter.get(
 );
 
 /**
- * プリペイドカード入力フォーム
+ * 決済カード入力フォーム
  */
 transactionsRouter.get(
     '/placeOrder/:transactionId/inputPaymentCard',

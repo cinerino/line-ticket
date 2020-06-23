@@ -245,6 +245,22 @@ class User {
                 .exec();
         });
     }
+    findProfile() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return redisClient.get(`line-ticket:profile:${this.userId}`)
+                .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
+        });
+    }
+    saveProfile(profile) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield redisClient.multi()
+                .set(`line-ticket:profile:${this.userId}`, JSON.stringify(profile))
+                .expire(`line-ticket:profile:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .exec();
+        });
+    }
     saveCallbackState(state) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()

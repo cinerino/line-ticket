@@ -891,7 +891,7 @@ export function order2flexBubble(params: {
 
                             switch (orderItem.itemOffered.typeOf) {
                                 case cinerinoapi.factory.chevre.reservationType.EventReservation:
-                                    const item = orderItem.itemOffered;
+                                    const item = <cinerinoapi.factory.order.IReservation>orderItem.itemOffered;
                                     const event = item.reservationFor;
 
                                     itemName = format(
@@ -944,16 +944,16 @@ export function order2flexBubble(params: {
 
                                     break;
                                 default:
-                                    itemName = (typeof orderItem.itemOffered.name === 'string')
-                                        ? `${String(orderItem.itemOffered.typeOf)} ${String(orderItem.itemOffered.name)}`
+                                    itemName = (typeof (<any>orderItem.itemOffered).name === 'string')
+                                        ? `${String(orderItem.itemOffered.typeOf)} ${String((<any>orderItem.itemOffered).name)}`
                                         : String(orderItem.itemOffered.typeOf);
 
-                                    itemDescription = (typeof orderItem.itemOffered.description === 'string')
-                                        ? String(orderItem.itemOffered.description)
+                                    itemDescription = (typeof (<any>orderItem.itemOffered).description === 'string')
+                                        ? String((<any>orderItem.itemOffered).description)
                                         : 'no description';
 
-                                    if (typeof orderItem.itemOffered.identifier === 'string') {
-                                        itemDescription = `${orderItem.itemOffered.identifier}`;
+                                    if (typeof (<any>orderItem.itemOffered).identifier === 'string') {
+                                        itemDescription = `${(<any>orderItem.itemOffered).identifier}`;
                                     }
                             }
 
@@ -1499,7 +1499,7 @@ export function account2flexBubble(params: {
 
 // tslint:disable-next-line:max-func-body-length
 export function paymentCard2flexBubble(params: {
-    paymentCard: cinerinoapi.factory.chevre.paymentMethod.paymentCard.prepaidCard.IPrepaidCard;
+    paymentCard: cinerinoapi.factory.chevre.paymentMethod.paymentCard.IPaymentCard;
     user: User;
 }): FlexBubble {
     const paymentCard = params.paymentCard;
@@ -1707,7 +1707,7 @@ export function paymentCard2flexBubble(params: {
 
 // tslint:disable-next-line:max-func-body-length
 export function moneyTransferAction2flexBubble(params: {
-    action: cinerinoapi.factory.pecorino.action.transfer.moneyTransfer.IAction<any>;
+    action: cinerinoapi.factory.pecorino.action.transfer.moneyTransfer.IAction;
     user: User;
 }): FlexBubble {
     const a = params.action;

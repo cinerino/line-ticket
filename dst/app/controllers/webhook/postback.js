@@ -224,11 +224,11 @@ class PostbackWebhookController {
                         // }
                         const paymentCard = params.paymentCard;
                         if (paymentCard === undefined) {
-                            throw new Error('プリペイドカードが指定されていません');
+                            throw new Error('決済カードが指定されていません');
                         }
                         yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${JSON.stringify(paymentCard)}` });
                         yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${paymentCard.identifier}の残高を確認しています...` });
-                        const accountAuthorization = yield paymentService.authorizePrepaidCard({
+                        const accountAuthorization = yield paymentService.authorizePaymentCard({
                             object: {
                                 typeOf: paymentCard.typeOf,
                                 amount: price,
@@ -288,6 +288,9 @@ class PostbackWebhookController {
                     email: profile.email,
                     telephone: (profile.telephone === '') ? '+819012345678' : profile.telephone
                 };
+            }
+            else {
+                profile = yield this.user.findProfile();
             }
             const setCustomerContactQuery = qs.stringify({ profile: profile });
             const setCustomerContactUri = `/projects/${(_c = this.project) === null || _c === void 0 ? void 0 : _c.id}/transactions/placeOrder/${params.transactionId}/setCustomerContact?${setCustomerContactQuery}`;
@@ -547,7 +550,7 @@ class PostbackWebhookController {
         });
     }
     /**
-     * プリペイドカード照会
+     * 決済カード照会
      */
     checkPaymentCard(params) {
         var _a;
@@ -557,7 +560,7 @@ class PostbackWebhookController {
                 auth: this.user.authClient,
                 project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
             });
-            const paymentCard = yield paymentService.checkPrepaidCard({
+            const paymentCard = yield paymentService.checkPaymentCard({
                 object: params.paymentCard
             });
             yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `カードが見つかりました:${paymentCard.identifier}` });
@@ -579,7 +582,7 @@ class PostbackWebhookController {
      */
     // tslint:disable-next-line:max-func-body-length
     orderPaymentCard(params) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         return __awaiter(this, void 0, void 0, function* () {
             const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
                 endpoint: process.env.CINERINO_ENDPOINT,
@@ -591,12 +594,17 @@ class PostbackWebhookController {
                 auth: this.user.authClient,
                 project: { id: (_b = this.project) === null || _b === void 0 ? void 0 : _b.id }
             });
-            // 販売者検索
             const sellerService = new cinerinoapi.service.Seller({
                 endpoint: process.env.CINERINO_ENDPOINT,
                 auth: this.user.authClient,
                 project: { id: (_c = this.project) === null || _c === void 0 ? void 0 : _c.id }
             });
+            const productService = new cinerinoapi.service.Product({
+                endpoint: process.env.CINERINO_ENDPOINT,
+                auth: this.user.authClient,
+                project: { id: (_d = this.project) === null || _d === void 0 ? void 0 : _d.id }
+            });
+            // 販売者検索
             const searchOrganizationsResult = yield sellerService.search({ limit: 1 });
             const seller = searchOrganizationsResult.data[0];
             // if (seller.paymentAccepted === undefined) {
@@ -607,6 +615,55 @@ class PostbackWebhookController {
             // if (creditCardPayment === undefined) {
             //     throw new Error('クレジットカード決済が許可されていません');
             // }
+            // オファー未選択であれば、オファー選択へ
+            if (typeof ((_e = params.offer) === null || _e === void 0 ? void 0 : _e.id) !== 'string') {
+                yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'オファーを検索しています...' });
+                const offers = yield productService.searchOffers({ itemOffered: { id: (_f = params.itemOffered) === null || _f === void 0 ? void 0 : _f.id } });
+                if (offers.length === 0) {
+                    yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'オファーが見つかりませんでした' });
+                }
+                else {
+                    yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${offers.length}オファーが見つかりました` });
+                    // tslint:disable-next-line:no-magic-numbers
+                    const quickReplyItems4selectOffer = offers.slice(0, 10)
+                        .map((o) => {
+                        var _a, _b, _c;
+                        const unitPriceSpec = o.priceSpecification.priceComponent.find((c) => c.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
+                        const priceStr = (unitPriceSpec !== undefined) ? `${unitPriceSpec.price} ${unitPriceSpec.priceCurrency}` : '';
+                        // const name = (typeof o.name === 'string') ? o.name : o.name?.ja;
+                        let serviceOutputAmountValue = (_c = (_b = (_a = o.itemOffered) === null || _a === void 0 ? void 0 : _a.serviceOutput) === null || _b === void 0 ? void 0 : _b.amount) === null || _c === void 0 ? void 0 : _c.value;
+                        if (typeof serviceOutputAmountValue !== 'number') {
+                            serviceOutputAmountValue = 0;
+                        }
+                        return {
+                            type: 'action',
+                            imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
+                            action: {
+                                type: 'postback',
+                                label: `${priceStr}円 (${serviceOutputAmountValue}円入金)`,
+                                // label: String(o.id),
+                                data: qs.stringify({
+                                    action: 'orderPaymentCard',
+                                    itemOffered: params.itemOffered,
+                                    // profile: params.profile,
+                                    offer: {
+                                        id: o.id
+                                    }
+                                })
+                            }
+                        };
+                    });
+                    const message4selectOffer = {
+                        type: 'text',
+                        text: 'オファーを選択してください',
+                        quickReply: {
+                            items: quickReplyItems4selectOffer
+                        }
+                    };
+                    yield lineClient_1.default.pushMessage(this.user.userId, [message4selectOffer]);
+                }
+                return;
+            }
             yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '注文取引を開始します...' });
             const transaction = yield placeOrderService.start({
                 expires: moment()
@@ -621,72 +678,103 @@ class PostbackWebhookController {
                 // passport: { token: passportToken }
                 }
             });
-            yield offerService.authorizePaymentCard({
-                object: {
-                    project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
-                    typeOf: cinerinoapi.factory.chevre.offerType.Offer,
-                    priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
-                    id: 'dummy',
-                    itemOffered: {
-                        typeOf: 'PaymentCard',
-                        id: (_d = params.itemOffered) === null || _d === void 0 ? void 0 : _d.id,
-                        serviceOutput: {
-                            accessCode: (_f = (_e = params.itemOffered) === null || _e === void 0 ? void 0 : _e.serviceOutput) === null || _f === void 0 ? void 0 : _f.accessCode,
-                            name: (_h = (_g = params.itemOffered) === null || _g === void 0 ? void 0 : _g.serviceOutput) === null || _h === void 0 ? void 0 : _h.name,
-                            additionalProperty: []
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '取引を開始しました' });
+            yield this.user.saveTransaction(transaction);
+            const paymentCardAuthorization = yield offerService.authorizeProduct({
+                object: [{
+                        project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
+                        typeOf: cinerinoapi.factory.chevre.offerType.Offer,
+                        priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
+                        id: (_g = params.offer) === null || _g === void 0 ? void 0 : _g.id,
+                        itemOffered: {
+                            project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
+                            typeOf: 'PaymentCard',
+                            id: (_h = params.itemOffered) === null || _h === void 0 ? void 0 : _h.id,
+                            serviceOutput: {
+                                project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
+                                typeOf: 'PaymentCard',
+                                accessCode: (_k = (_j = params.itemOffered) === null || _j === void 0 ? void 0 : _j.serviceOutput) === null || _k === void 0 ? void 0 : _k.accessCode,
+                                name: (_m = (_l = params.itemOffered) === null || _l === void 0 ? void 0 : _l.serviceOutput) === null || _m === void 0 ? void 0 : _m.name,
+                                additionalProperty: []
+                            }
+                        },
+                        seller: {
+                            typeOf: seller.typeOf,
+                            name: (typeof seller.name === 'string') ? seller.name : String((_o = seller.name) === null || _o === void 0 ? void 0 : _o.ja)
                         }
-                    },
-                    seller: { typeOf: seller.typeOf, name: seller.name.ja }
-                },
+                    }],
                 purpose: { typeOf: transaction.typeOf, id: transaction.id }
             });
-            // クレジットカード決済承認
-            // console.log('authorizing credit card payment...');
-            // let creditCardPaymentAuth = await paymentService.authorizeCreditCard({
-            //     object: {
-            //         typeOf: client.factory.paymentMethodType.CreditCard,
-            //         amount: amount,
-            //         method: '1',
-            //         creditCard: creditCard
-            //     },
-            //     purpose: { typeOf: transaction.typeOf, id: transaction.id },
-            // });
-            // console.log('credit card payment authorized', creditCardPaymentAuth.id);
-            yield placeOrderService.setProfile({
-                id: transaction.id,
-                agent: params.profile
-            });
-            const email = {
-                sender: {
-                    name: `♥ ${seller.name.ja} ♥`
-                },
-                about: `♥♥♥ ${params.profile.givenName}さんへ${(_k = (_j = params.itemOffered) === null || _j === void 0 ? void 0 : _j.serviceOutput) === null || _k === void 0 ? void 0 : _k.name}発行のお知らせ ♥♥♥`
-            };
-            const result = yield placeOrderService.confirm({
-                id: transaction.id,
-                potentialActions: {
-                    order: {
-                        potentialActions: {
-                            sendOrder: {
-                                potentialActions: {
-                                    sendEmailMessage: [
-                                        {
-                                            object: email
-                                        }
-                                    ]
-                                }
-                            }
-                        }
+            const price = (_p = paymentCardAuthorization.result) === null || _p === void 0 ? void 0 : _p.price;
+            const quickReplyItems = [];
+            if (price === 0) {
+                quickReplyItems.push({
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: '決済なし',
+                        data: qs.stringify({
+                            action: 'selectPaymentMethodType',
+                            amount: price,
+                            paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                            transactionId: transaction.id
+                        })
                     }
+                });
+            }
+            else {
+                // クレジットカード決済
+                quickReplyItems.push({
+                    type: 'action',
+                    imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
+                    action: {
+                        type: 'postback',
+                        label: 'クレジットカード',
+                        data: qs.stringify({
+                            action: 'selectCreditCard',
+                            amount: price,
+                            transactionId: transaction.id
+                        })
+                    }
+                });
+                if ((yield this.user.getCredentials()) !== undefined) {
+                    quickReplyItems.push({
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/friend-pay-50.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'Friend Pay',
+                            data: qs.stringify({
+                                action: 'askPaymentCode',
+                                amount: price,
+                                transactionId: transaction.id
+                            })
+                        }
+                    }, {
+                        type: 'action',
+                        imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
+                        action: {
+                            type: 'postback',
+                            label: 'その他',
+                            data: qs.stringify({
+                                action: 'selectPaymentMethodType',
+                                amount: price,
+                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                transactionId: transaction.id
+                            })
+                        }
+                    });
                 }
-            });
-            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'カードを発行しました' });
-            const flex = {
-                type: 'flex',
-                altText: 'This is a Flex Message',
-                contents: contentsBuilder_1.order2flexBubble({ order: result.order })
+            }
+            const message = {
+                type: 'text',
+                text: `決済方法を選択してください(${price}円)`,
+                quickReply: {
+                    items: quickReplyItems
+                }
             };
-            yield lineClient_1.default.pushMessage(this.user.userId, [flex]);
+            yield lineClient_1.default.pushMessage(this.user.userId, [message]);
         });
     }
     /**
@@ -772,7 +860,7 @@ class PostbackWebhookController {
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'プリペイドカードを選択してください',
+                                    text: '決済カードを選択してください',
                                     weight: 'bold',
                                     color: '#1DB446',
                                     size: 'sm'
@@ -822,10 +910,7 @@ class PostbackWebhookController {
                 id: params.transactionId,
                 agent: profile
             });
-            yield placeOrderService.setProfile({
-                id: params.transactionId,
-                agent: profile
-            });
+            yield this.user.saveProfile(profile);
             // 注文内容確認
             const price = yield this.user.findTransactionAmount();
             yield lineClient_1.default.pushMessage(this.user.userId, [
@@ -1007,7 +1092,7 @@ class PostbackWebhookController {
                 .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
             const account = accounts.shift();
             if (account === undefined) {
-                throw new Error('プリペイドカード未作成なので振込を実行できません');
+                throw new Error('決済カード未作成なので振込を実行できません');
             }
             // 取引に販売者を指定する必要があるので、適当に検索
             const searchSellersResult = yield sellerService.search({ limit: 1 });
@@ -1029,7 +1114,7 @@ class PostbackWebhookController {
         });
     }
     /**
-     * プリペイドカード入金金額選択
+     * 決済カード入金金額選択
      */
     selectDepositAmount(params) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -1084,11 +1169,11 @@ class PostbackWebhookController {
         });
     }
     /**
-     * クレジット決済でプリペイドカード入金
+     * クレジット決済で決済カード入金
      */
     // tslint:disable-next-line:max-func-body-length
     depositCoinByCreditCard(params) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         return __awaiter(this, void 0, void 0, function* () {
             yield lineClient_1.default.replyMessage(params.replyToken, { type: 'text', text: `${params.amount}円の入金処理を実行します...` });
             const sellerService = new cinerinoapi.service.Seller({
@@ -1136,7 +1221,10 @@ class PostbackWebhookController {
                         currency: cinerinoapi.factory.accountType.Prepaid
                     },
                     priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
-                    seller: { typeOf: seller.typeOf, name: seller.name.ja },
+                    seller: {
+                        typeOf: seller.typeOf,
+                        name: (typeof seller.name === 'string') ? seller.name : String((_e = seller.name) === null || _e === void 0 ? void 0 : _e.ja)
+                    },
                     toLocation: params.paymentCard
                 },
                 purpose: { typeOf: transaction.typeOf, id: transaction.id }
@@ -1178,7 +1266,7 @@ class PostbackWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
                         type: 'postback',
-                        label: 'プリペイドカード',
+                        label: '決済カード',
                         data: qs.stringify({
                             action: 'selectPaymentCard',
                             amount: price,
@@ -1524,7 +1612,7 @@ class PostbackWebhookController {
             if (ticketOffers.length === 0) {
                 throw new Error('使用可能なオファーが見つかりませんでした');
             }
-            // 券種未選択であれば、券種選択へ
+            // オファー未選択であれば、オファー選択へ
             if (params.offerId === undefined) {
                 // tslint:disable-next-line:no-magic-numbers
                 const quickReplyItems4selectOffer = ticketOffers.slice(0, 10)
@@ -1553,7 +1641,7 @@ class PostbackWebhookController {
                 });
                 const message4selectOffer = {
                     type: 'text',
-                    text: '券種を選択してください',
+                    text: 'オファーを選択してください',
                     quickReply: {
                         items: quickReplyItems4selectOffer
                     }
@@ -1675,7 +1763,7 @@ class PostbackWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
                         type: 'postback',
-                        label: 'プリペイドカード',
+                        label: '決済カード',
                         data: qs.stringify({
                             action: 'selectPaymentCard',
                             amount: price,
@@ -2285,12 +2373,19 @@ class PostbackWebhookController {
                 auth: this.user.authClient,
                 project: { id: (_a = this.project) === null || _a === void 0 ? void 0 : _a.id }
             });
-            const order = yield orderService.findByConfirmationNumber({
+            let order = yield orderService.findByConfirmationNumber({
                 confirmationNumber: params.confirmationNumber,
                 customer: {
                     telephone: params.telephone
                 }
             });
+            if (Array.isArray(order)) {
+                order = order[0];
+            }
+            if (order === undefined) {
+                yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '注文が見つかりませんでした' });
+                return;
+            }
             yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '注文が見つかりました' });
             const contents = [contentsBuilder_1.order2flexBubble({ order })];
             const flex = {
