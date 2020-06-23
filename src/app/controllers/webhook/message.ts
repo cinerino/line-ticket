@@ -57,8 +57,8 @@ export class MessageWebhookController {
                 imageUrl: `https://${this.user.host}/img/labels/coin-64.png`,
                 action: {
                     type: 'message',
-                    label: '決済カード',
-                    text: '決済カード'
+                    label: 'ペイメントカード',
+                    text: 'ペイメントカード'
                 }
             },
             {
@@ -332,10 +332,10 @@ export class MessageWebhookController {
         await LINE.replyMessage(params.replyToken, [
             {
                 type: 'template',
-                altText: '決済カード管理',
+                altText: 'ペイメントカード管理',
                 template: {
                     type: 'buttons',
-                    title: '決済カード管理',
+                    title: 'ペイメントカード管理',
                     text: 'ご用件はなんでしょう？',
                     actions: [
                         {

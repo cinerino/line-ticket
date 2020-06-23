@@ -10,14 +10,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 決済カードルーター
+ * ペイメントカードルーター
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const express = require("express");
 const user_1 = require("../user");
 const paymentCardsRouter = express.Router();
 /**
- * 決済カード注文
+ * ペイメントカード注文
  */
 paymentCardsRouter.get('/order', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

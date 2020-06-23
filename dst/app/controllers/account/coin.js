@@ -14,7 +14,7 @@ const moment = require("moment");
 const lineClient_1 = require("../../../lineClient");
 const contentsBuilder_1 = require("../../contentsBuilder");
 /**
- * 決済カードコントローラ
+ * ペイメントカードコントローラ
  */
 class CoinAccountController {
     constructor(req) {

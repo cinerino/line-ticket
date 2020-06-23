@@ -1,5 +1,5 @@
 /**
- * 決済カードルーター
+ * ペイメントカードルーター
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as express from 'express';
@@ -9,7 +9,7 @@ import User from '../user';
 const paymentCardsRouter = express.Router();
 
 /**
- * 決済カード注文
+ * ペイメントカード注文
  */
 paymentCardsRouter.get(
     '/order',

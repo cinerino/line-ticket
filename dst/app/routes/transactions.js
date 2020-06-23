@@ -62,7 +62,7 @@ transactionsRouter.get('/placeOrder/:transactionId/inputCreditCard', (req, res, 
     }
 }));
 /**
- * 決済カード入力フォーム
+ * ペイメントカード入力フォーム
  */
 transactionsRouter.get('/placeOrder/:transactionId/inputPaymentCard', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

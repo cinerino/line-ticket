@@ -11,7 +11,7 @@ import {
 } from '../../contentsBuilder';
 
 /**
- * 決済カードコントローラ
+ * ペイメントカードコントローラ
  */
 export class CoinAccountController {
     private readonly project?: { id: string };

@@ -269,7 +269,7 @@ export class PostbackWebhookController {
                     // }
                     const paymentCard = params.paymentCard;
                     if (paymentCard === undefined) {
-                        throw new Error('決済カードが指定されていません');
+                        throw new Error('ペイメントカードが指定されていません');
                     }
                     await LINE.pushMessage(this.user.userId, { type: 'text', text: `${JSON.stringify(paymentCard)}` });
                     await LINE.pushMessage(this.user.userId, { type: 'text', text: `${paymentCard.identifier}の残高を確認しています...` });
@@ -611,7 +611,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 決済カード照会
+     * ペイメントカード照会
      */
     public async checkPaymentCard(params: {
         replyToken: string;
@@ -646,7 +646,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 決済カード注文
+     * ペイメントカード注文
      */
     // tslint:disable-next-line:max-func-body-length
     public async orderPaymentCard(params: {
@@ -871,7 +871,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 決済カード選択
+     * ペイメントカード選択
      */
     // tslint:disable-next-line:max-func-body-length
     public async selectPaymentCard(params: {
@@ -957,7 +957,7 @@ export class PostbackWebhookController {
                         contents: [
                             {
                                 type: 'text',
-                                text: '決済カードを選択してください',
+                                text: 'ペイメントカードを選択してください',
                                 weight: 'bold',
                                 color: '#1DB446',
                                 size: 'sm'
@@ -1211,7 +1211,7 @@ export class PostbackWebhookController {
             .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         const account = accounts.shift();
         if (account === undefined) {
-            throw new Error('決済カード未作成なので振込を実行できません');
+            throw new Error('ペイメントカード未作成なので振込を実行できません');
         }
 
         // 取引に販売者を指定する必要があるので、適当に検索
@@ -1236,7 +1236,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * 決済カード入金金額選択
+     * ペイメントカード入金金額選択
      */
     public async selectDepositAmount(params: {
         replyToken: string;
@@ -1296,7 +1296,7 @@ export class PostbackWebhookController {
     }
 
     /**
-     * クレジット決済で決済カード入金
+     * クレジット決済でペイメントカード入金
      */
     // tslint:disable-next-line:max-func-body-length
     public async depositCoinByCreditCard(params: {
@@ -1406,7 +1406,7 @@ export class PostbackWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
                         type: 'postback',
-                        label: '決済カード',
+                        label: 'ペイメントカード',
                         data: qs.stringify({
                             action: 'selectPaymentCard',
                             amount: price,
@@ -1960,7 +1960,7 @@ export class PostbackWebhookController {
                     imageUrl: `https://${this.user.host}/img/labels/credit-card-64.png`,
                     action: {
                         type: 'postback',
-                        label: '決済カード',
+                        label: 'ペイメントカード',
                         data: qs.stringify({
                             action: 'selectPaymentCard',
                             amount: price,
