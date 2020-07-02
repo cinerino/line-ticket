@@ -730,7 +730,10 @@ export class PostbackWebhookController {
         // オファー未選択であれば、オファー選択へ
         if (typeof params.offer?.id !== 'string') {
             await LINE.pushMessage(this.user.userId, { type: 'text', text: 'オファーを検索しています...' });
-            const offers = await productService.searchOffers({ itemOffered: { id: params.itemOffered?.id } });
+            const offers = await productService.searchOffers({
+                itemOffered: { id: params.itemOffered?.id },
+                seller: { id: seller.id }
+            });
 
             if (offers.length === 0) {
                 await LINE.pushMessage(this.user.userId, { type: 'text', text: 'オファーが見つかりませんでした' });

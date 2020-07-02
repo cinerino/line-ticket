@@ -652,7 +652,10 @@ class PostbackWebhookController {
             // オファー未選択であれば、オファー選択へ
             if (typeof ((_e = params.offer) === null || _e === void 0 ? void 0 : _e.id) !== 'string') {
                 yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'オファーを検索しています...' });
-                const offers = yield productService.searchOffers({ itemOffered: { id: (_f = params.itemOffered) === null || _f === void 0 ? void 0 : _f.id } });
+                const offers = yield productService.searchOffers({
+                    itemOffered: { id: (_f = params.itemOffered) === null || _f === void 0 ? void 0 : _f.id },
+                    seller: { id: seller.id }
+                });
                 if (offers.length === 0) {
                     yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'オファーが見つかりませんでした' });
                 }
