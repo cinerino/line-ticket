@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.PostbackWebhookController = void 0;
 const cinerinoapi = require("@cinerino/sdk");
 const createDebug = require("debug");
 const moment = require("moment");
@@ -438,7 +439,7 @@ class PostbackWebhookController {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: (profile !== undefined) ? profile.email : '---',
+                                                            text: (typeof (profile === null || profile === void 0 ? void 0 : profile.email) === 'string') ? profile.email : '---',
                                                             wrap: true,
                                                             size: 'sm',
                                                             color: '#666666',
@@ -460,7 +461,7 @@ class PostbackWebhookController {
                                                         },
                                                         {
                                                             type: 'text',
-                                                            text: (profile !== undefined) ? profile.telephone : '---',
+                                                            text: (typeof (profile === null || profile === void 0 ? void 0 : profile.telephone) === 'string') ? profile.telephone : '---',
                                                             wrap: true,
                                                             size: 'sm',
                                                             color: '#666666',
@@ -923,7 +924,7 @@ class PostbackWebhookController {
      * 購入者情報決定
      */
     setProfile(params) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             const sellerService = new cinerinoapi.service.Seller({
                 endpoint: process.env.CINERINO_ENDPOINT,
@@ -938,7 +939,7 @@ class PostbackWebhookController {
             const transaction = yield this.user.findTransaction();
             const seller = yield sellerService.findById({ id: String(transaction.seller.id) });
             const seatReservationAuthorization = yield this.user.findSeatReservationAuthorization();
-            let tmpReservations = (_d = (_c = seatReservationAuthorization) === null || _c === void 0 ? void 0 : _c.result) === null || _d === void 0 ? void 0 : _d.responseBody.object.reservations;
+            let tmpReservations = (_c = seatReservationAuthorization === null || seatReservationAuthorization === void 0 ? void 0 : seatReservationAuthorization.result) === null || _c === void 0 ? void 0 : _c.responseBody.object.reservations;
             tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
             const profile = {
                 familyName: params.familyName,

@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.WebhookController = void 0;
 const createDebug = require("debug");
 const qs = require("qs");
 const lineClient_1 = require("../../lineClient");

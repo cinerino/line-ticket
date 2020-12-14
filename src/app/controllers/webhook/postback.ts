@@ -501,7 +501,7 @@ export class PostbackWebhookController {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (profile !== undefined) ? profile.email : '---',
+                                                        text: (typeof profile?.email === 'string') ? profile.email : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',
@@ -523,7 +523,7 @@ export class PostbackWebhookController {
                                                     },
                                                     {
                                                         type: 'text',
-                                                        text: (profile !== undefined) ? profile.telephone : '---',
+                                                        text: (typeof profile?.telephone === 'string') ? profile.telephone : '---',
                                                         wrap: true,
                                                         size: 'sm',
                                                         color: '#666666',

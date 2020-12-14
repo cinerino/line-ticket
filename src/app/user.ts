@@ -234,7 +234,7 @@ export default class User {
         debug('results:', results);
 
         // rekognitionコレクション作成
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             rekognition.createCollection(
                 {
                     CollectionId: this.rekognitionCollectionId
@@ -456,7 +456,7 @@ export default class User {
      * @param source 顔画像buffer
      */
     public async indexFace(source: Buffer) {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             rekognition.indexFaces(
                 {
                     CollectionId: this.rekognitionCollectionId,

@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ImageMessageWebhookController = void 0;
 const lineClient_1 = require("../../../../lineClient");
 /**
  * 画像メッセージウェブフックコントローラ
