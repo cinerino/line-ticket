@@ -1,7 +1,7 @@
 /**
  * 取引ルーター
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import * as express from 'express';
 
 import User from '../user';

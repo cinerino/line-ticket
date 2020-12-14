@@ -1,10 +1,10 @@
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { FlexBubble, FlexComponent, FlexMessage, QuickReplyItem, TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import { Request } from 'express';
 import * as moment from 'moment';
 import * as qs from 'qs';
-import { format } from 'util';
+// import { format } from 'util';
 
 import LINE from '../../../lineClient';
 import User from '../../user';
@@ -15,12 +15,16 @@ import {
     account2flexBubble,
     createConfirmOrderFlexBubble,
     creditCard2flexBubble,
+    IAccountOwnershipInfoWithDetail,
+    IReservationOwnershipInfoWithDetail,
     moneyTransferAction2flexBubble,
     order2flexBubble,
     paymentCard2flexBubble,
     product2flexBubble,
     profile2bubble,
     reservation2flexBubble,
+    // reservation2Ticket,
+    // reservations2Ticket,
     screeningEvent2flexBubble,
     screeningEventSeries2flexBubble
 } from '../../contentsBuilder';
@@ -312,9 +316,10 @@ export class PostbackWebhookController {
                     await LINE.pushMessage(this.user.userId, { type: 'text', text: `${paymentCard.identifier}の残高を確認しています...` });
                     const accountAuthorization = await paymentService.authorizePaymentCard({
                         object: {
-                            typeOf: paymentCard.typeOf,
+                            typeOf: cinerinoapi.factory.action.authorize.paymentMethod.any.ResultType.Payment,
                             amount: price,
-                            fromLocation: paymentCard
+                            fromLocation: paymentCard,
+                            paymentMethod: paymentCard.typeOf
                         },
                         purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                     });
@@ -331,10 +336,11 @@ export class PostbackWebhookController {
 
                     await paymentService.authorizeCreditCard({
                         object: {
-                            typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                            typeOf: cinerinoapi.factory.action.authorize.paymentMethod.any.ResultType.Payment,
                             name: 'クレカ',
                             amount: price,
-                            method: <any>'1',
+                            method: '1',
+                            paymentMethod: cinerinoapi.factory.chevre.paymentMethodType.CreditCard,
                             creditCard: params.creditCard
                         },
                         purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
@@ -347,9 +353,10 @@ export class PostbackWebhookController {
 
                     await paymentService.authorizeAnyPayment({
                         object: {
-                            typeOf: cinerinoapi.factory.paymentMethodType.Others,
+                            typeOf: cinerinoapi.factory.action.authorize.paymentMethod.any.ResultType.Payment,
                             name: 'LINE POS その他',
-                            amount: price
+                            amount: price,
+                            paymentMethod: cinerinoapi.factory.chevre.paymentMethodType.Others
                         },
                         purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                     });
@@ -560,13 +567,13 @@ export class PostbackWebhookController {
         if (seller.paymentAccepted === undefined) {
             throw new Error('許可された決済方法が見つかりません');
         }
-        const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+        const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted>
             seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
         if (creditCardPayment === undefined) {
             throw new Error('クレジットカード決済が許可されていません');
         }
         const inputCreditCardUri =
-            `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}&amount=${params.amount}`;
+            `/projects/${seller.project.id}/transactions/placeOrder/${params.transactionId}/inputCreditCard?gmoShopId=${(<any>creditCardPayment).gmoInfo.shopId}&amount=${params.amount}`;
         const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: inputCreditCardUri })}`;
         const footerContets: FlexComponent[] = [
             {
@@ -732,7 +739,7 @@ export class PostbackWebhookController {
             await LINE.pushMessage(this.user.userId, { type: 'text', text: 'オファーを検索しています...' });
             const offers = await productService.searchOffers({
                 itemOffered: { id: params.itemOffered?.id },
-                seller: { id: seller.id }
+                seller: { id: String(seller.id) }
             });
 
             if (offers.length === 0) {
@@ -795,7 +802,7 @@ export class PostbackWebhookController {
             agent: {},
             seller: {
                 typeOf: seller.typeOf,
-                id: seller.id
+                id: String(seller.id)
             },
             object: {
                 // passport: { token: passportToken }
@@ -812,7 +819,7 @@ export class PostbackWebhookController {
                 id: params.offer?.id,
                 itemOffered: {
                     project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
-                    typeOf: 'PaymentCard',
+                    typeOf: cinerinoapi.factory.chevre.product.ProductType.PaymentCard,
                     id: params.itemOffered?.id,
                     serviceOutput: {
                         project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
@@ -823,6 +830,7 @@ export class PostbackWebhookController {
                     }
                 },
                 seller: {
+                    project: { typeOf: transaction.project.typeOf, id: transaction.project.id },
                     typeOf: seller.typeOf,
                     name: (typeof seller.name === 'string') ? seller.name : String(seller.name?.ja)
                 }
@@ -1038,7 +1046,7 @@ export class PostbackWebhookController {
         });
 
         const transaction = await this.user.findTransaction();
-        const seller = await sellerService.findById({ id: transaction.seller.id });
+        const seller = await sellerService.findById({ id: String(transaction.seller.id) });
         const seatReservationAuthorization = await this.user.findSeatReservationAuthorization();
         let tmpReservations = seatReservationAuthorization?.result?.responseBody.object.reservations;
         tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
@@ -1240,15 +1248,15 @@ export class PostbackWebhookController {
             project: { id: this.project?.id }
         });
 
-        const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        const searchAccountsResult = await personOwnershipInfoService.search({
             typeOfGood: {
-                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                typeOf: 'Account',
                 accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
         const accounts = searchAccountsResult.data
-            .map((o) => o.typeOfGood)
-            .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+            .map((o) => <cinerinoapi.factory.pecorino.account.IAccount>o.typeOfGood)
+            .filter((a) => (a).status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         const account = accounts.shift();
         if (account === undefined) {
             throw new Error('ペイメントカード未作成なので振込を実行できません');
@@ -1380,7 +1388,7 @@ export class PostbackWebhookController {
             expires: moment()
                 .add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes')
                 .toDate(),
-            seller: seller,
+            seller: { id: String(seller.id), typeOf: seller.typeOf },
             object: {}
         });
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
@@ -1389,7 +1397,7 @@ export class PostbackWebhookController {
 
         await offerService.authorizeMonetaryAmount({
             object: {
-                project: { typeOf: 'Project', id: transaction.project.id },
+                project: { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: transaction.project.id },
                 typeOf: cinerinoapi.factory.chevre.offerType.Offer,
                 itemOffered: {
                     typeOf: 'MonetaryAmount',
@@ -1398,6 +1406,7 @@ export class PostbackWebhookController {
                 },
                 priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
                 seller: {
+                    project: { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: transaction.project.id },
                     typeOf: seller.typeOf,
                     name: (typeof seller.name === 'string') ? seller.name : String(seller.name?.ja)
                 },
@@ -1570,13 +1579,13 @@ export class PostbackWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        const accountOwnershipInfo = await personOwnershipInfoService.openAccount({
+        const openResult = await personOwnershipInfoService.openAccount({
             name: params.name,
             accountType: params.accountType
         });
         await LINE.replyMessage(params.replyToken, {
             type: 'text',
-            text: `${params.accountType}口座 ${accountOwnershipInfo.typeOfGood.accountNumber} が開設されました`
+            text: `${params.accountType}口座 が開設されました 注文番号:${openResult.order.orderNumber}`
         });
     }
 
@@ -1593,7 +1602,7 @@ export class PostbackWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        await personOwnershipInfoService.closeAccount({ accountType: params.accountType, accountNumber: params.accountNumber });
+        await personOwnershipInfoService.closeAccount({ accountNumber: params.accountNumber });
         await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.accountType}口座 ${params.accountNumber} が解約されました` });
     }
 
@@ -1605,14 +1614,16 @@ export class PostbackWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        const searchAccountsResult = await personOwnershipInfoService.search({
             typeOfGood: {
-                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                typeOf: 'Account',
                 accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
-        const accountOwnershipInfos = searchAccountsResult.data
-            .filter((o) => o.typeOfGood.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+        const accountOwnershipInfos = <IAccountOwnershipInfoWithDetail[]>searchAccountsResult.data.filter(
+            (o) => (<cinerinoapi.factory.pecorino.account.IAccount>o.typeOfGood).status
+                === cinerinoapi.factory.pecorino.accountStatusType.Opened
+        );
         if (accountOwnershipInfos.length === 0) {
             throw new Error('口座未開設です');
         }
@@ -1645,13 +1656,15 @@ export class PostbackWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        const searchAccountsResult = await personOwnershipInfoService.search({
             typeOfGood: {
-                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                typeOf: 'Account',
                 accountType: params.accountType
             }
         });
-        const accountOwnershipInfo = searchAccountsResult.data.find((o) => o.typeOfGood.accountNumber === params.accountNumber);
+        const accountOwnershipInfo = searchAccountsResult.data.find(
+            (o) => (<cinerinoapi.factory.ownershipInfo.IAccount>o.typeOfGood).accountNumber === params.accountNumber
+        );
         debug('accounts:', accountOwnershipInfo);
         if (accountOwnershipInfo === undefined) {
             throw new Error('口座が見つかりません');
@@ -1664,7 +1677,6 @@ export class PostbackWebhookController {
             sort: {
                 startDate: cinerinoapi.factory.pecorino.sortType.Descending
             },
-            accountType: params.accountType,
             accountNumber: params.accountNumber
         });
         const transferActions = searchActions.data;
@@ -1711,7 +1723,7 @@ export class PostbackWebhookController {
             project: { id: this.project?.id }
         });
         const searchScreeningEventReservationsResult =
-            await personOwnershipInfoService.search<cinerinoapi.factory.chevre.reservationType.EventReservation>({
+            await personOwnershipInfoService.search({
                 typeOfGood: {
                     typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
                 },
@@ -1725,7 +1737,7 @@ export class PostbackWebhookController {
                     ownedFrom: cinerinoapi.factory.sortType.Descending
                 }
             });
-        const ownershipInfos = searchScreeningEventReservationsResult.data;
+        const ownershipInfos = <IReservationOwnershipInfoWithDetail[]>searchScreeningEventReservationsResult.data;
         // 未来の予約
         if (searchScreeningEventReservationsResult.data.length === 0) {
             await LINE.pushMessage(this.user.userId, { type: 'text', text: '予約が見つかりませんでした' });
@@ -1811,7 +1823,7 @@ export class PostbackWebhookController {
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `店舗ID:${storeId}でオファーを検索しています...` });
         let ticketOffers = await eventService.searchTicketOffers({
             event: { id: params.eventId },
-            seller: seller,
+            seller: { id: String(seller.id), typeOf: seller.typeOf },
             store: { id: storeId }
         });
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `${ticketOffers.length}件のオファーが見つかりました` });
@@ -1886,7 +1898,7 @@ export class PostbackWebhookController {
             expires: moment()
                 .add(TRANSACTION_EXPIRES_IN_MINUTES, 'minutes')
                 .toDate(),
-            seller: seller,
+            seller: { id: String(seller.id), typeOf: seller.typeOf },
             object: {}
         });
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `${TRANSACTION_EXPIRES_IN_MINUTES}分以内に取引を終了してください` });
@@ -2059,7 +2071,7 @@ export class PostbackWebhookController {
     // tslint:disable-next-line:max-func-body-length
     public async authorizeOwnershipInfo(params: {
         replyToken: string;
-        goodType: cinerinoapi.factory.ownershipInfo.IGoodType;
+        goodType: string;
         id: string;
     }) {
         await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コード発行中...' });
@@ -2081,7 +2093,7 @@ export class PostbackWebhookController {
         switch (params.goodType) {
             case cinerinoapi.factory.chevre.reservationType.EventReservation:
                 const searchScreeningEventReservationsResult =
-                    await personOwnershipInfoService.search<cinerinoapi.factory.chevre.reservationType.EventReservation>({
+                    await personOwnershipInfoService.search({
                         typeOfGood: {
                             typeOf: cinerinoapi.factory.chevre.reservationType.EventReservation
                         }
@@ -2091,7 +2103,7 @@ export class PostbackWebhookController {
                 if (reservation === undefined) {
                     throw new Error('Reservation not found');
                 }
-                const itemOffered = reservation.typeOfGood;
+                const itemOffered = <cinerinoapi.factory.order.IReservation>reservation.typeOfGood;
                 const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({
                     id: itemOffered.reservationFor.id
                 });
@@ -2343,11 +2355,11 @@ export class PostbackWebhookController {
                 await LINE.pushMessage(this.user.userId, [flex]);
                 break;
 
-            case cinerinoapi.factory.ownershipInfo.AccountGoodType.Account:
+            case 'Account':
                 const searchAccountsResult =
-                    await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+                    await personOwnershipInfoService.search({
                         typeOfGood: {
-                            typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                            typeOf: 'Account',
                             accountType: cinerinoapi.factory.accountType.Prepaid
                         }
                     });
@@ -2356,7 +2368,7 @@ export class PostbackWebhookController {
                     throw new Error('Account not found');
                 }
 
-                const account = accountOwnershipInfo.typeOfGood;
+                const account = <cinerinoapi.factory.pecorino.account.IAccount>accountOwnershipInfo.typeOfGood;
                 flex = {
                     type: 'flex',
                     altText: 'This is a Flex Message',
@@ -2625,7 +2637,7 @@ export class PostbackWebhookController {
             project: { id: this.project?.id }
         });
         let order = await orderService.findByConfirmationNumber({
-            confirmationNumber: params.confirmationNumber,
+            confirmationNumber: String(params.confirmationNumber),
             customer: {
                 telephone: params.telephone
             }
@@ -2687,282 +2699,32 @@ export class PostbackWebhookController {
         telephone: string;
     }) {
         await LINE.replyMessage(params.replyToken, { type: 'text', text: `${params.orderNumber}に対して発券処理を実行します...` });
-        const eventService = new cinerinoapi.service.Event({
-            endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: this.user.authClient,
-            project: { id: this.project?.id }
-        });
-        const orderService = new cinerinoapi.service.Order({
-            endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: this.user.authClient,
-            project: { id: this.project?.id }
-        });
-        const order = await orderService.authorizeOwnershipInfos({
-            orderNumber: <any>params.orderNumber,
-            customer: {
-                telephone: params.telephone
-            }
-        });
-        await LINE.pushMessage(this.user.userId, { type: 'text', text: 'コードが発行されました' });
-        const reservations = <cinerinoapi.factory.order.IReservation[]>order.acceptedOffers
-            .filter((o) => o.itemOffered.typeOf === cinerinoapi.factory.chevre.reservationType.EventReservation)
-            .map((o) => o.itemOffered);
-        const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({
-            id: reservations[0].reservationFor.id
-        });
-        const thumbnailImageUrl = (event.workPerformed !== undefined
-            && event.workPerformed.thumbnailUrl !== undefined
-            && event.workPerformed.thumbnailUrl !== null)
-            ? event.workPerformed.thumbnailUrl
-            // tslint:disable-next-line:max-line-length
-            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-        const bubbles: FlexBubble[] = reservations.map(
-            // tslint:disable-next-line:max-func-body-length
-            (r) => {
-                return {
-                    type: 'bubble',
-                    hero: {
-                        type: 'image',
-                        url: thumbnailImageUrl,
-                        size: 'full',
-                        aspectRatio: '20:13',
-                        aspectMode: 'cover',
-                        action: {
-                            type: 'uri',
-                            label: 'event',
-                            // tslint:disable-next-line:no-http-string
-                            uri: 'http://linecorp.com/'
-                        }
-                    },
-                    body: {
-                        type: 'box',
-                        layout: 'vertical',
-                        spacing: 'md',
-                        contents: [
-                            {
-                                type: 'text',
-                                text: String(event.name.ja),
-                                wrap: true,
-                                weight: 'bold',
-                                gravity: 'center',
-                                size: 'xl'
-                            },
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                margin: 'lg',
-                                spacing: 'sm',
-                                contents: [
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '日時',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: moment(event.startDate)
-                                                    .format('llll'),
-                                                wrap: true,
-                                                size: 'sm',
-                                                color: '#666666',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '場所',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '座席',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: (r.reservedTicket.ticketedSeat !== undefined)
-                                                    ? r.reservedTicket.ticketedSeat.seatNumber
-                                                    : '座席なし',
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '券種',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: (typeof r.reservedTicket.ticketType.name === 'string')
-                                                    ? String(r.reservedTicket.ticketType.name)
-                                                    : String(r.reservedTicket.ticketType.name?.ja),
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '発行者',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: (r.reservedTicket.issuedBy !== undefined)
-                                                    ? r.reservedTicket.issuedBy.name
-                                                    : 'No Issued By',
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: '予約者',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
-                                                    ? r.reservedTicket.underName.name
-                                                    : 'No Under Name',
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'baseline',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: 'Status',
-                                                color: '#aaaaaa',
-                                                size: 'sm',
-                                                flex: 1
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: String(r.reservationStatus),
-                                                wrap: true,
-                                                color: '#666666',
-                                                size: 'sm',
-                                                flex: 4
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        margin: 'xxl',
-                                        contents: [
-                                            {
-                                                type: 'spacer',
-                                                size: 'md'
-                                            },
-                                            {
-                                                type: 'image',
-                                                // tslint:disable-next-line:max-line-length
-                                                url: format(
-                                                    '%s%s',
-                                                    `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=`,
-                                                    (r.reservedTicket !== undefined) ? r.reservedTicket.ticketToken : 'notickettoken'
-                                                ),
-                                                aspectMode: 'cover',
-                                                size: 'xl'
-                                            },
-                                            {
-                                                type: 'text',
-                                                // tslint:disable-next-line:max-line-length
-                                                text: 'You can enter the theater by using this code instead of a ticket',
-                                                color: '#aaaaaa',
-                                                wrap: true,
-                                                margin: 'xxl',
-                                                size: 'xs'
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                };
-            }
-        );
-        const flex: FlexMessage = {
-            type: 'flex',
-            altText: 'This is a Flex Message',
-            contents: {
-                type: 'carousel',
-                contents: bubbles
-            }
-        };
-        await LINE.pushMessage(this.user.userId, [flex]);
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: 'implementing...' });
+        // const eventService = new cinerinoapi.service.Event({
+        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+        //     auth: this.user.authClient,
+        //     project: { id: this.project?.id }
+        // });
+        // const orderService = new cinerinoapi.service.Order({
+        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+        //     auth: this.user.authClient,
+        //     project: { id: this.project?.id }
+        // });
+        // const order = await orderService.authorizeOwnershipInfos({
+        //     orderNumber: <any>params.orderNumber,
+        //     customer: {
+        //         telephone: params.telephone
+        //     }
+        // });
+        // await LINE.pushMessage(this.user.userId, { type: 'text', text: 'コードが発行されました' });
+        // const reservations = <cinerinoapi.factory.order.IReservation[]>order.acceptedOffers
+        //     .filter((o) => o.itemOffered.typeOf === cinerinoapi.factory.chevre.reservationType.EventReservation)
+        //     .map((o) => o.itemOffered);
+        // const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({
+        //     id: reservations[0].reservationFor.id
+        // });
+        // const flex = reservations2Ticket({ reservations, event });
+        // await LINE.pushMessage(this.user.userId, [flex]);
     }
 
     /**
@@ -2974,251 +2736,32 @@ export class PostbackWebhookController {
         code: string;
     }) {
         await LINE.replyMessage(params.replyToken, { type: 'text', text: 'コードを読み込んでいます...' });
-        const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
-            endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: this.user.authClient,
-            project: { id: this.project?.id }
-        });
-        const reservationService = new cinerinoapi.service.Reservation({
-            endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: this.user.authClient,
-            project: { id: this.project?.id }
-        });
-        const eventService = new cinerinoapi.service.Event({
-            endpoint: <string>process.env.CINERINO_ENDPOINT,
-            auth: this.user.authClient,
-            project: { id: this.project?.id }
-        });
+        // const ownershipInfoService = new cinerinoapi.service.OwnershipInfo({
+        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+        //     auth: this.user.authClient,
+        //     project: { id: this.project?.id }
+        // });
+        // const reservationService = new cinerinoapi.service.Reservation({
+        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+        //     auth: this.user.authClient,
+        //     project: { id: this.project?.id }
+        // });
+        // const eventService = new cinerinoapi.service.Event({
+        //     endpoint: <string>process.env.CINERINO_ENDPOINT,
+        //     auth: this.user.authClient,
+        //     project: { id: this.project?.id }
+        // });
         try {
-            const { token } = await ownershipInfoService.getToken({ code: params.code });
-            const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
-            await LINE.pushMessage(this.user.userId, { type: 'text', text: '予約が見つかりました' });
-            const reservation = ownershipInfo.typeOfGood;
-            const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({
-                id: reservation.reservationFor.id
-            });
-            const thumbnailImageUrl = (event.workPerformed !== undefined
-                && event.workPerformed.thumbnailUrl !== undefined
-                && event.workPerformed.thumbnailUrl !== null)
-                ? event.workPerformed.thumbnailUrl
-                // tslint:disable-next-line:max-line-length
-                : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
-            const flex: FlexMessage = {
-                type: 'flex',
-                altText: 'This is a Flex Message',
-                contents: {
-                    type: 'carousel',
-                    contents: [
-                        {
-                            type: 'bubble',
-                            hero: {
-                                type: 'image',
-                                url: thumbnailImageUrl,
-                                size: 'full',
-                                aspectRatio: '20:13',
-                                aspectMode: 'cover',
-                                action: {
-                                    type: 'uri',
-                                    label: 'event',
-                                    // tslint:disable-next-line:no-http-string
-                                    uri: 'http://linecorp.com/'
-                                }
-                            },
-                            body: {
-                                type: 'box',
-                                layout: 'vertical',
-                                spacing: 'md',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: String(event.name.ja),
-                                        wrap: true,
-                                        weight: 'bold',
-                                        gravity: 'center',
-                                        size: 'xl'
-                                    },
-                                    {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        margin: 'lg',
-                                        spacing: 'sm',
-                                        contents: [
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '日時',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: moment(event.startDate)
-                                                            .format('llll'),
-                                                        wrap: true,
-                                                        size: 'sm',
-                                                        color: '#666666',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '場所',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text:
-                                                            `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '座席',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: (reservation.reservedTicket !== undefined
-                                                            && reservation.reservedTicket.ticketedSeat !== undefined)
-                                                            ? reservation.reservedTicket.ticketedSeat.seatNumber
-                                                            : 'No ticketedSeat',
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '券種',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: (reservation.reservedTicket !== undefined)
-                                                            ? String((<any>reservation.reservedTicket.ticketType).name.ja)
-                                                            : 'No reserved ticket',
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '発行者',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: (reservation.reservedTicket !== undefined
-                                                            && reservation.reservedTicket.issuedBy !== undefined)
-                                                            ? reservation.reservedTicket.issuedBy.name
-                                                            : 'No issuedBy',
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: '予約者',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: (reservation.reservedTicket !== undefined
-                                                            && reservation.reservedTicket.underName !== undefined)
-                                                            ? reservation.reservedTicket.underName.name
-                                                            : 'No underName',
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                type: 'box',
-                                                layout: 'baseline',
-                                                spacing: 'sm',
-                                                contents: [
-                                                    {
-                                                        type: 'text',
-                                                        text: 'Status',
-                                                        color: '#aaaaaa',
-                                                        size: 'sm',
-                                                        flex: 1
-                                                    },
-                                                    {
-                                                        type: 'text',
-                                                        text: String(reservation.reservationStatus),
-                                                        wrap: true,
-                                                        color: '#666666',
-                                                        size: 'sm',
-                                                        flex: 4
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-            };
-            await LINE.pushMessage(this.user.userId, [flex]);
+            await LINE.pushMessage(this.user.userId, { type: 'text', text: 'implementing...' });
+            // const { token } = await ownershipInfoService.getToken({ code: params.code });
+            // const ownershipInfo = await reservationService.findScreeningEventReservationByToken({ token: token });
+            // await LINE.pushMessage(this.user.userId, { type: 'text', text: '予約が見つかりました' });
+            // const reservation = ownershipInfo.typeOfGood;
+            // const event = await eventService.findById<cinerinoapi.factory.chevre.eventType.ScreeningEvent>({
+            //     id: reservation.reservationFor.id
+            // });
+            // const flex = reservation2Ticket({ reservation, event });
+            // await LINE.pushMessage(this.user.userId, [flex]);
         } catch (error) {
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `Invalid code ${error.message}` });
         }

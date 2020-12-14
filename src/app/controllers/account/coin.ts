@@ -1,4 +1,4 @@
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { FlexMessage } from '@line/bot-sdk';
 import { Request } from 'express';
 import * as moment from 'moment';
@@ -32,7 +32,7 @@ export class CoinAccountController {
         };
         transferMoneyInfo: ITransferMoneyInfo;
         profile: cinerinoapi.factory.person.IProfile;
-        seller: cinerinoapi.factory.seller.IOrganization<any>;
+        seller: cinerinoapi.factory.seller.ISeller;
     }) {
         const moneyTransferService = new cinerinoapi.service.txn.MoneyTransfer({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -43,7 +43,7 @@ export class CoinAccountController {
         // 通貨転送取引開始
         const moneyTransferTransaction =
             await moneyTransferService.start({
-                project: { typeOf: cinerinoapi.factory.organizationType.Project, id: params.seller.project.id },
+                project: { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: params.seller.project.id },
                 expires: moment()
                     .add(1, 'minutes')
                     .toDate(),
@@ -57,7 +57,7 @@ export class CoinAccountController {
                     name: params.transferMoneyInfo.name,
                     url: ''
                 },
-                seller: { typeOf: params.seller.typeOf, id: params.seller.id },
+                seller: { typeOf: params.seller.typeOf, id: String(params.seller.id) },
                 object: {
                     amount: params.amount,
                     authorizeActions: [],
@@ -103,7 +103,7 @@ export class CoinAccountController {
         };
         creditCard: cinerinoapi.factory.chevre.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
         profile: cinerinoapi.factory.person.IProfile;
-        seller: cinerinoapi.factory.seller.IOrganization<any>;
+        seller: cinerinoapi.factory.seller.ISeller;
     }) {
         const placeOrderService = new cinerinoapi.service.txn.PlaceOrder({
             endpoint: <string>process.env.CINERINO_ENDPOINT,
@@ -126,7 +126,7 @@ export class CoinAccountController {
             agent: {
                 identifier: [{ name: 'lineUserId', value: this.user.userId }]
             },
-            seller: { typeOf: params.seller.typeOf, id: params.seller.id },
+            seller: { typeOf: params.seller.typeOf, id: String(params.seller.id) },
             expires: moment()
                 .add(1, 'minutes')
                 .toDate()
@@ -142,7 +142,7 @@ export class CoinAccountController {
 
         await offerService.authorizeMonetaryAmount({
             object: {
-                project: { typeOf: 'Project', id: placeOrderTransaction.project.id },
+                project: { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: placeOrderTransaction.project.id },
                 typeOf: cinerinoapi.factory.chevre.offerType.Offer,
                 itemOffered: {
                     typeOf: 'MonetaryAmount',
@@ -150,7 +150,11 @@ export class CoinAccountController {
                     currency: cinerinoapi.factory.accountType.Prepaid
                 },
                 priceCurrency: cinerinoapi.factory.priceCurrency.JPY,
-                seller: { typeOf: params.seller.typeOf, name: params.seller.name },
+                seller: {
+                    project: { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: placeOrderTransaction.project.id },
+                    typeOf: params.seller.typeOf,
+                    name: params.seller.name
+                },
                 toLocation: {
                     typeOf: cinerinoapi.factory.accountType.Prepaid,
                     identifier: params.toLocation.accountNumber
@@ -161,10 +165,11 @@ export class CoinAccountController {
 
         await paymentService.authorizeCreditCard({
             object: {
-                typeOf: cinerinoapi.factory.paymentMethodType.CreditCard,
+                typeOf: cinerinoapi.factory.action.authorize.paymentMethod.any.ResultType.Payment,
                 amount: Number(params.amount),
-                method: <any>'1',
-                creditCard: params.creditCard
+                method: '1',
+                creditCard: params.creditCard,
+                paymentMethod: cinerinoapi.factory.paymentMethodType.CreditCard
             },
             purpose: { typeOf: placeOrderTransaction.typeOf, id: placeOrderTransaction.id }
         });

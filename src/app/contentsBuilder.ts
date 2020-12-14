@@ -1,7 +1,7 @@
 /**
  * コンテンツビルダー
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 // import { FlexBox, FlexBubble, FlexComponent, FlexMessage, QuickReplyItem, TextMessage } from '@line/bot-sdk';
 import { FlexBox, FlexBubble, FlexComponent, FlexMessage } from '@line/bot-sdk';
 import * as moment from 'moment';
@@ -10,10 +10,10 @@ import { format } from 'util';
 
 import User from './user';
 
-export type IAccountGoodWithDetail = cinerinoapi.factory.ownershipInfo.IGoodWithDetail<cinerinoapi.factory.ownershipInfo.AccountGoodType>;
-export type IReservationGoodWithDetail
-    = cinerinoapi.factory.ownershipInfo.IGoodWithDetail<cinerinoapi.factory.chevre.reservationType.EventReservation>;
-export type IAccountOwnershipInfoWithDetail = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<IAccountGoodWithDetail>;
+export type IAccountGoodWithDetail = cinerinoapi.factory.ownershipInfo.IGoodWithDetail;
+export type IReservationGoodWithDetail = cinerinoapi.factory.ownershipInfo.IReservationWithDetail;
+export type IAccountOwnershipInfoWithDetail
+    = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<cinerinoapi.factory.pecorino.account.IAccount>;
 export type IReservationOwnershipInfoWithDetail = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<IReservationGoodWithDetail>;
 
 export type IReservationPriceSpec =
@@ -63,7 +63,9 @@ export function project2flexBubble(params: {
                             },
                             {
                                 type: 'text',
-                                text: String(project.parentOrganization?.name.ja),
+                                text: (typeof project.parentOrganization?.name === 'string')
+                                    ? project.parentOrganization.name
+                                    : String(project.parentOrganization?.name?.ja),
                                 wrap: true,
                                 color: '#666666',
                                 size: 'sm',
@@ -116,7 +118,7 @@ export function project2flexBubble(params: {
 // tslint:disable-next-line:max-func-body-length
 export function createConfirmOrderFlexBubble(params: {
     id: string;
-    seller: cinerinoapi.factory.seller.IOrganization<any>;
+    seller: cinerinoapi.factory.seller.ISeller;
     profile: cinerinoapi.factory.person.IProfile;
     tmpReservations: cinerinoapi.factory.chevre.transaction.reserve.ISubReservation[];
     price?: number;
@@ -136,7 +138,9 @@ export function createConfirmOrderFlexBubble(params: {
         },
         {
             type: 'text',
-            text: seller.name.ja,
+            text: (typeof seller.name === 'string')
+                ? seller.name
+                : String(seller.name?.ja),
             weight: 'bold',
             size: 'xxl',
             margin: 'md',
@@ -846,7 +850,7 @@ export function order2flexBubble(params: {
                 },
                 {
                     type: 'text',
-                    text: order.seller.name,
+                    text: (typeof order.seller.name === 'string') ? order.seller.name : String(order.seller.name?.ja),
                     weight: 'bold',
                     size: 'xxl',
                     margin: 'md',
@@ -2030,7 +2034,8 @@ export function reservation2flexBubble(params: {
 }): FlexBubble {
     const ownershipInfo = params.ownershipInfo;
 
-    const itemOffered = ownershipInfo.typeOfGood;
+    const itemOffered = <cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>>
+        ownershipInfo.typeOfGood;
     const event = itemOffered.reservationFor;
     const thumbnailImageUrl = (event.workPerformed !== undefined
         && event.workPerformed.thumbnailUrl !== undefined
@@ -2110,7 +2115,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
+                                    text: `${String(event.superEvent.location.name?.ja)} ${String(event.location.name?.ja)}`,
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
@@ -2132,7 +2137,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: (itemOffered.reservedTicket.ticketedSeat !== undefined)
+                                    text: (typeof itemOffered.reservedTicket?.ticketedSeat?.seatNumber === 'string')
                                         ? itemOffered.reservedTicket.ticketedSeat.seatNumber
                                         : '座席なし',
                                     wrap: true,
@@ -2156,9 +2161,9 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: (typeof itemOffered.reservedTicket.ticketType.name === 'string')
+                                    text: (typeof itemOffered.reservedTicket?.ticketType.name === 'string')
                                         ? itemOffered.reservedTicket.ticketType.name
-                                        : String(itemOffered.reservedTicket.ticketType.name?.ja),
+                                        : String(itemOffered.reservedTicket?.ticketType.name?.ja),
                                     wrap: true,
                                     color: '#666666',
                                     size: 'sm',
@@ -2180,7 +2185,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: (itemOffered.reservedTicket.issuedBy !== undefined)
+                                    text: (typeof itemOffered.reservedTicket?.issuedBy?.name === 'string')
                                         ? itemOffered.reservedTicket.issuedBy.name
                                         : 'No reservedTicket.issuedBy',
                                     wrap: true,
@@ -2204,7 +2209,7 @@ export function reservation2flexBubble(params: {
                                 },
                                 {
                                     type: 'text',
-                                    text: (itemOffered.reservedTicket.underName !== undefined)
+                                    text: (typeof itemOffered.reservedTicket?.underName?.name === 'string')
                                         ? itemOffered.reservedTicket.underName.name
                                         : 'No reservedTicket.underName',
                                     wrap: true,
@@ -2370,6 +2375,499 @@ export function profile2bubble(params: cinerinoapi.factory.person.IProfile): Fle
                     ]
                 }
             ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
+export function reservation2Ticket(params: {
+    reservation: cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>;
+    event: cinerinoapi.factory.chevre.event.IEvent<cinerinoapi.factory.chevre.eventType.ScreeningEvent>;
+}): FlexMessage {
+    const reservation = params.reservation;
+    const event = params.event;
+    const thumbnailImageUrl = (event.workPerformed !== undefined
+        && event.workPerformed.thumbnailUrl !== undefined
+        && event.workPerformed.thumbnailUrl !== null)
+        ? event.workPerformed.thumbnailUrl
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+
+    return {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: [
+                {
+                    type: 'bubble',
+                    hero: {
+                        type: 'image',
+                        url: thumbnailImageUrl,
+                        size: 'full',
+                        aspectRatio: '20:13',
+                        aspectMode: 'cover',
+                        action: {
+                            type: 'uri',
+                            label: 'event',
+                            // tslint:disable-next-line:no-http-string
+                            uri: 'http://linecorp.com/'
+                        }
+                    },
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        spacing: 'md',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: String(event.name.ja),
+                                wrap: true,
+                                weight: 'bold',
+                                gravity: 'center',
+                                size: 'xl'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'lg',
+                                spacing: 'sm',
+                                contents: [
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '日時',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: moment(event.startDate)
+                                                    .format('llll'),
+                                                wrap: true,
+                                                size: 'sm',
+                                                color: '#666666',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '場所',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text:
+                                                    `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '座席',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (reservation.reservedTicket !== undefined
+                                                    && reservation.reservedTicket.ticketedSeat !== undefined)
+                                                    ? reservation.reservedTicket.ticketedSeat.seatNumber
+                                                    : 'No ticketedSeat',
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '券種',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (reservation.reservedTicket !== undefined)
+                                                    ? String((<any>reservation.reservedTicket.ticketType).name.ja)
+                                                    : 'No reserved ticket',
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '発行者',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (reservation.reservedTicket !== undefined
+                                                    && reservation.reservedTicket.issuedBy !== undefined)
+                                                    ? reservation.reservedTicket.issuedBy.name
+                                                    : 'No issuedBy',
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: '予約者',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: (reservation.reservedTicket !== undefined
+                                                    && reservation.reservedTicket.underName !== undefined)
+                                                    ? reservation.reservedTicket.underName.name
+                                                    : 'No underName',
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'box',
+                                        layout: 'baseline',
+                                        spacing: 'sm',
+                                        contents: [
+                                            {
+                                                type: 'text',
+                                                text: 'Status',
+                                                color: '#aaaaaa',
+                                                size: 'sm',
+                                                flex: 1
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: String(reservation.reservationStatus),
+                                                wrap: true,
+                                                color: '#666666',
+                                                size: 'sm',
+                                                flex: 4
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    };
+}
+
+// tslint:disable-next-line:max-func-body-length
+export function reservations2Ticket(params: {
+    reservations: cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>[];
+    event: cinerinoapi.factory.chevre.event.IEvent<cinerinoapi.factory.chevre.eventType.ScreeningEvent>;
+}): FlexMessage {
+    const reservations = params.reservations;
+    const event = params.event;
+    const thumbnailImageUrl = (event.workPerformed !== undefined
+        && event.workPerformed.thumbnailUrl !== undefined
+        && event.workPerformed.thumbnailUrl !== null)
+        ? event.workPerformed.thumbnailUrl
+        // tslint:disable-next-line:max-line-length
+        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrhpsOJOcLBwc1SPD9sWlinildy4S05-I2Wf6z2wRXnSxbmtRz';
+    const bubbles: FlexBubble[] = reservations.map(
+        // tslint:disable-next-line:max-func-body-length
+        (r) => {
+            return {
+                type: 'bubble',
+                hero: {
+                    type: 'image',
+                    url: thumbnailImageUrl,
+                    size: 'full',
+                    aspectRatio: '20:13',
+                    aspectMode: 'cover',
+                    action: {
+                        type: 'uri',
+                        label: 'event',
+                        // tslint:disable-next-line:no-http-string
+                        uri: 'http://linecorp.com/'
+                    }
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'md',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: String(event.name.ja),
+                            wrap: true,
+                            weight: 'bold',
+                            gravity: 'center',
+                            size: 'xl'
+                        },
+                        {
+                            type: 'box',
+                            layout: 'vertical',
+                            margin: 'lg',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '日時',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: moment(event.startDate)
+                                                .format('llll'),
+                                            wrap: true,
+                                            size: 'sm',
+                                            color: '#666666',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '場所',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: `${(<any>event.superEvent.location.name).ja} ${(<any>event.location.name).ja}`,
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '座席',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket.ticketedSeat !== undefined)
+                                                ? r.reservedTicket.ticketedSeat.seatNumber
+                                                : '座席なし',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '券種',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (typeof r.reservedTicket.ticketType.name === 'string')
+                                                ? String(r.reservedTicket.ticketType.name)
+                                                : String(r.reservedTicket.ticketType.name?.ja),
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '発行者',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket.issuedBy !== undefined)
+                                                ? r.reservedTicket.issuedBy.name
+                                                : 'No Issued By',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: '予約者',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: (r.reservedTicket !== undefined && r.reservedTicket.underName !== undefined)
+                                                ? r.reservedTicket.underName.name
+                                                : 'No Under Name',
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'baseline',
+                                    spacing: 'sm',
+                                    contents: [
+                                        {
+                                            type: 'text',
+                                            text: 'Status',
+                                            color: '#aaaaaa',
+                                            size: 'sm',
+                                            flex: 1
+                                        },
+                                        {
+                                            type: 'text',
+                                            text: String(r.reservationStatus),
+                                            wrap: true,
+                                            color: '#666666',
+                                            size: 'sm',
+                                            flex: 4
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'xxl',
+                                    contents: [
+                                        {
+                                            type: 'spacer',
+                                            size: 'md'
+                                        },
+                                        {
+                                            type: 'image',
+                                            // tslint:disable-next-line:max-line-length
+                                            url: format(
+                                                '%s%s',
+                                                `https://chart.apis.google.com/chart?chs=300x300&cht=qr&chl=`,
+                                                (r.reservedTicket !== undefined) ? r.reservedTicket.ticketToken : 'notickettoken'
+                                            ),
+                                            aspectMode: 'cover',
+                                            size: 'xl'
+                                        },
+                                        {
+                                            type: 'text',
+                                            // tslint:disable-next-line:max-line-length
+                                            text: 'You can enter the theater by using this code instead of a ticket',
+                                            color: '#aaaaaa',
+                                            wrap: true,
+                                            margin: 'xxl',
+                                            size: 'xs'
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            };
+        }
+    );
+
+    return {
+        type: 'flex',
+        altText: 'This is a Flex Message',
+        contents: {
+            type: 'carousel',
+            contents: bubbles
         }
     };
 }

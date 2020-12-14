@@ -1,4 +1,4 @@
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { Action, QuickReplyItem, TextMessage } from '@line/bot-sdk';
 import * as createDebug from 'debug';
 import { Request } from 'express';
@@ -294,12 +294,12 @@ export class MessageWebhookController {
         if (seller.paymentAccepted === undefined) {
             throw new Error('許可された決済方法が見つかりません');
         }
-        const creditCardPayment = <cinerinoapi.factory.seller.IPaymentAccepted<cinerinoapi.factory.paymentMethodType.CreditCard>>
+        const creditCardPayment =
             seller.paymentAccepted.find((p) => p.paymentMethodType === cinerinoapi.factory.paymentMethodType.CreditCard);
         if (creditCardPayment === undefined) {
             throw new Error('クレジットカード決済が許可されていません');
         }
-        const inputCreditCardUri = `/projects/${seller.project.id}/transactions/inputCreditCard?gmoShopId=${creditCardPayment.gmoInfo.shopId}`;
+        const inputCreditCardUri = `/projects/${seller.project.id}/transactions/inputCreditCard?gmoShopId=${(<any>creditCardPayment).gmoInfo.shopId}`;
         await LINE.replyMessage(params.replyToken, [
             {
                 type: 'template',
@@ -531,14 +531,14 @@ export class MessageWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        const searchAccountsResult = await personOwnershipInfoService.search<cinerinoapi.factory.ownershipInfo.AccountGoodType.Account>({
+        const searchAccountsResult = await personOwnershipInfoService.search({
             typeOfGood: {
-                typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                typeOf: 'Account',
                 accountType: cinerinoapi.factory.accountType.Prepaid
             }
         });
         const accounts = searchAccountsResult.data
-            .map((o) => o.typeOfGood)
+            .map((o) => <cinerinoapi.factory.pecorino.account.IAccount>o.typeOfGood)
             .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
         debug('accounts:', accounts);
         if (accounts.length === 0) {

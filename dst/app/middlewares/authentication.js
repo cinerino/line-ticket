@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * oauthミドルウェア
  * @see https://aws.amazon.com/blogs/mobile/integrating-amazon-cognito-user-pools-with-api-gateway/
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const express_middleware_1 = require("@motionpicture/express-middleware");
 const http_status_1 = require("http-status");
 const qs = require("qs");

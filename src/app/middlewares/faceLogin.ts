@@ -1,7 +1,7 @@
 /**
  * 顔ログインミドルウェア
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';

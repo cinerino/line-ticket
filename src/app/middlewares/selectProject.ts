@@ -1,7 +1,7 @@
 /**
  * 顔ログインミドルウェア
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { FlexBubble, FlexMessage, WebhookEvent } from '@line/bot-sdk';
 import { NextFunction, Request, Response } from 'express';
 import { OK } from 'http-status';
@@ -50,7 +50,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
                         const projectId = data.id;
                         if (typeof projectId === 'string' && projectId.length > 0) {
                             selectedProject = {
-                                typeOf: cinerinoapi.factory.organizationType.Project,
+                                typeOf: cinerinoapi.factory.chevre.organizationType.Project,
                                 id: data.id,
                                 name: data.name
                             };
@@ -79,7 +79,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
         // 選択中であればリクエストにプロジェクトセット
         if (selectedProject !== undefined) {
-            req.project = { typeOf: cinerinoapi.factory.organizationType.Project, id: selectedProject.id };
+            req.project = { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: selectedProject.id };
 
             next();
 

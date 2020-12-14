@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 取引ルーター
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const express = require("express");
 const user_1 = require("../user");
 const transactionsRouter = express.Router();

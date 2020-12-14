@@ -1,4 +1,4 @@
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import * as AWS from 'aws-sdk';
 import * as createDebug from 'debug';
 import * as redis from 'ioredis';

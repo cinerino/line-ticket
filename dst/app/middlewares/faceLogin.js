@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 顔ログインミドルウェア
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const http_status_1 = require("http-status");
 const qs = require("qs");
 const request = require("request-promise-native");

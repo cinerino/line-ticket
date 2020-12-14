@@ -2,7 +2,7 @@
  * oauthミドルウェア
  * @see https://aws.amazon.com/blogs/mobile/integrating-amazon-cognito-user-pools-with-api-gateway/
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import { TemplateMessage, WebhookEvent } from '@line/bot-sdk';
 import { cognitoAuth } from '@motionpicture/express-middleware';
 import { NextFunction, Request, Response } from 'express';

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const createDebug = require("debug");
 const moment = require("moment");
 const qs = require("qs");
@@ -500,7 +500,7 @@ class MessageWebhookController {
             });
             const searchAccountsResult = yield personOwnershipInfoService.search({
                 typeOfGood: {
-                    typeOf: cinerinoapi.factory.ownershipInfo.AccountGoodType.Account,
+                    typeOf: 'Account',
                     accountType: cinerinoapi.factory.accountType.Prepaid
                 }
             });

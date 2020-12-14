@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 顔ログインミドルウェア
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const http_status_1 = require("http-status");
 const qs = require("qs");
 // import * as request from 'request-promise-native';
@@ -52,7 +52,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
                         const projectId = data.id;
                         if (typeof projectId === 'string' && projectId.length > 0) {
                             selectedProject = {
-                                typeOf: cinerinoapi.factory.organizationType.Project,
+                                typeOf: cinerinoapi.factory.chevre.organizationType.Project,
                                 id: data.id,
                                 name: data.name
                             };
@@ -76,7 +76,7 @@ exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         }
         // 選択中であればリクエストにプロジェクトセット
         if (selectedProject !== undefined) {
-            req.project = { typeOf: cinerinoapi.factory.organizationType.Project, id: selectedProject.id };
+            req.project = { typeOf: cinerinoapi.factory.chevre.organizationType.Project, id: selectedProject.id };
             next();
             return;
         }
