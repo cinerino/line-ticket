@@ -49,10 +49,9 @@ class CoinAccountController {
                     name: params.transferMoneyInfo.name,
                     url: ''
                 },
-                seller: { typeOf: params.seller.typeOf, id: String(params.seller.id) },
+                seller: { id: String(params.seller.id) },
                 object: {
-                    amount: params.amount,
-                    authorizeActions: [],
+                    amount: { currency: cinerinoapi.factory.priceCurrency.JPY, value: params.amount, typeOf: 'MonetaryAmount' },
                     description: 'Cinerino LINE Ticket Pocket Money',
                     fromLocation: {
                         typeOf: cinerinoapi.factory.accountType.Prepaid,

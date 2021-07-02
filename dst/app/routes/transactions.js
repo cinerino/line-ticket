@@ -110,8 +110,8 @@ transactionsRouter.get('/placeOrder/selectSeatOffers', (req, res, next) => __awa
         const event = yield eventService.findById({ id: req.query.eventId });
         const reservedSeatsAvailable = ((_e = (_d = (_c = event.offers) === null || _c === void 0 ? void 0 : _c.itemOffered.serviceOutput) === null || _d === void 0 ? void 0 : _d.reservedTicket) === null || _e === void 0 ? void 0 : _e.ticketedSeat) !== undefined;
         if (reservedSeatsAvailable) {
-            const eventOffers = yield eventService.searchOffers({ event: { id: req.query.eventId } });
-            const availableSeats = eventOffers[0].containsPlace.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
+            const searchSeatsResult = yield eventService.searchSeats({ event: { id: req.query.eventId } });
+            const availableSeats = searchSeatsResult.data.filter((p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock');
             const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
             res.render('transactions/placeOrder/selectSeatOffers', {
                 eventId: req.query.eventId,

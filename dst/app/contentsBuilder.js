@@ -1723,13 +1723,13 @@ function moneyTransferAction2flexBubble(params) {
     const a = params.action;
     let actionName = '---';
     switch (a.purpose.typeOf) {
-        case cinerinoapi.factory.pecorino.transactionType.Withdraw:
+        case cinerinoapi.factory.account.transactionType.Withdraw:
             actionName = '出金';
             break;
-        case cinerinoapi.factory.pecorino.transactionType.Transfer:
+        case cinerinoapi.factory.account.transactionType.Transfer:
             actionName = '転送';
             break;
-        case cinerinoapi.factory.pecorino.transactionType.Deposit:
+        case cinerinoapi.factory.account.transactionType.Deposit:
             actionName = '入金';
             break;
         default:

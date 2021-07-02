@@ -13,7 +13,7 @@ import User from './user';
 export type IAccountGoodWithDetail = cinerinoapi.factory.ownershipInfo.IGoodWithDetail;
 export type IReservationGoodWithDetail = cinerinoapi.factory.ownershipInfo.IReservationWithDetail;
 export type IAccountOwnershipInfoWithDetail
-    = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<cinerinoapi.factory.pecorino.account.IAccount>;
+    = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<cinerinoapi.factory.account.IAccount>;
 export type IReservationOwnershipInfoWithDetail = cinerinoapi.factory.ownershipInfo.IOwnershipInfo<IReservationGoodWithDetail>;
 
 export type IReservationPriceSpec =
@@ -120,7 +120,7 @@ export function createConfirmOrderFlexBubble(params: {
     id: string;
     seller: cinerinoapi.factory.seller.ISeller;
     profile: cinerinoapi.factory.person.IProfile;
-    tmpReservations: cinerinoapi.factory.chevre.transaction.reserve.ISubReservation[];
+    tmpReservations: cinerinoapi.factory.assetTransaction.reserve.ISubReservation[];
     price?: number;
 }): FlexMessage {
     const seller = params.seller;
@@ -1791,20 +1791,20 @@ export function paymentCard2flexBubble(params: {
 
 // tslint:disable-next-line:max-func-body-length
 export function moneyTransferAction2flexBubble(params: {
-    action: cinerinoapi.factory.pecorino.action.transfer.moneyTransfer.IAction;
+    action: cinerinoapi.factory.account.action.moneyTransfer.IAction;
     user: User;
 }): FlexBubble {
     const a = params.action;
 
     let actionName = '---';
     switch (a.purpose.typeOf) {
-        case cinerinoapi.factory.pecorino.transactionType.Withdraw:
+        case cinerinoapi.factory.account.transactionType.Withdraw:
             actionName = '出金';
             break;
-        case cinerinoapi.factory.pecorino.transactionType.Transfer:
+        case cinerinoapi.factory.account.transactionType.Transfer:
             actionName = '転送';
             break;
-        case cinerinoapi.factory.pecorino.transactionType.Deposit:
+        case cinerinoapi.factory.account.transactionType.Deposit:
             actionName = '入金';
             break;
 

@@ -507,7 +507,7 @@ class MessageWebhookController {
             });
             const accounts = searchAccountsResult.data
                 .map((o) => o.typeOfGood)
-                .filter((a) => a.status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+                .filter((a) => a.status === cinerinoapi.factory.accountStatusType.Opened);
             debug('accounts:', accounts);
             if (accounts.length === 0) {
                 throw new Error('口座未開設です');

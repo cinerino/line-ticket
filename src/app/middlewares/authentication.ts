@@ -96,7 +96,8 @@ export async function sendLoginButton(req: Request) {
     const cbWithGoogle = `https://${req.user.host}/projects/${req.project?.id}/liff/signIn?${qs.stringify({ userId: req.user.userId, state: req.user.state, identity_provider: 'Google' })}`;
 
     // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cb })}`;
-    const liffUriWithGoogle = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cbWithGoogle })}`;
+    // const liffUriWithGoogle = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: cbWithGoogle })}`;
+    const liffUriWithGoogle = cbWithGoogle;
     // const signInUrl = new URL(user.generateAuthUrl());
     // const liffUri = `line://app/${process.env.LIFF_ID}?${qs.stringify({ cb: signInUrl.href })}`;
     // const googleSignInUrl = `${signInUrl.href}&identity_provider=Google`;

@@ -34,7 +34,7 @@ const debug = createDebug('cinerino-line-ticket:controllers');
 export type PaymentMethodType =
     'PaymentCard'
     | cinerinoapi.factory.paymentMethodType.CreditCard
-    | cinerinoapi.factory.paymentMethodType.Others;
+    | 'Others';
 export type ICreditCard = cinerinoapi.factory.chevre.paymentMethod.paymentCard.creditCard.IUncheckedCardTokenized
     | cinerinoapi.factory.chevre.paymentMethod.paymentCard.creditCard.IUnauthorizedCardOfMember;
 export type ISeatReservationAuthorization
@@ -348,7 +348,7 @@ export class PostbackWebhookController {
                     await LINE.pushMessage(this.user.userId, { type: 'text', text: 'クレジットカードで決済を受け付けます' });
                     break;
 
-                case cinerinoapi.factory.paymentMethodType.Others:
+                case 'Others':
                     await LINE.replyMessage(params.replyToken, { type: 'text', text: '決済承認を実行します...' });
 
                     await paymentService.authorizeAnyPayment({
@@ -356,7 +356,7 @@ export class PostbackWebhookController {
                             typeOf: cinerinoapi.factory.action.authorize.paymentMethod.any.ResultType.Payment,
                             name: 'LINE POS その他',
                             amount: price,
-                            paymentMethod: cinerinoapi.factory.chevre.paymentMethodType.Others
+                            paymentMethod: 'Others'
                         },
                         purpose: { typeOf: cinerinoapi.factory.transactionType.PlaceOrder, id: params.transactionId }
                     });
@@ -589,13 +589,21 @@ export class PostbackWebhookController {
         ];
         // ログイン状態の場合、会員カードを選択肢に追加
         if (await this.user.getCredentials() !== undefined) {
-            const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
-                endpoint: <string>process.env.CINERINO_ENDPOINT,
-                auth: this.user.authClient,
-                project: { id: this.project?.id }
-            });
-            const creditCards = await personOwnershipInfoService.searchCreditCards({});
-            await LINE.pushMessage(this.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
+            // myクレカサービスに対応しているとは限らない
+            let creditCards: cinerinoapi.factory.paymentMethod.paymentCard.creditCard.ICheckedCard[] = [];
+
+            try {
+                const personOwnershipInfoService = new cinerinoapi.service.person.OwnershipInfo({
+                    endpoint: <string>process.env.CINERINO_ENDPOINT,
+                    auth: this.user.authClient,
+                    project: { id: this.project?.id }
+                });
+                creditCards = await personOwnershipInfoService.searchCreditCards({});
+                await LINE.pushMessage(this.user.userId, { type: 'text', text: `${creditCards.length}件のクレジットカードが見つかりました` });
+            } catch (error) {
+                await LINE.pushMessage(this.user.userId, { type: 'text', text: '※クレジットカード保持サービス非対応' });
+            }
+
             if (creditCards.length > 0) {
                 const creditCard = creditCards[0];
                 footerContets.push({
@@ -852,7 +860,7 @@ export class PostbackWebhookController {
                     data: qs.stringify({
                         action: 'selectPaymentMethodType',
                         amount: price,
-                        paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                        paymentMethod: 'Others',
                         transactionId: transaction.id
                     })
                 }
@@ -899,7 +907,7 @@ export class PostbackWebhookController {
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
                                 amount: price,
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                paymentMethod: 'Others',
                                 transactionId: transaction.id
                             })
                         }
@@ -1255,8 +1263,8 @@ export class PostbackWebhookController {
             }
         });
         const accounts = searchAccountsResult.data
-            .map((o) => <cinerinoapi.factory.pecorino.account.IAccount>o.typeOfGood)
-            .filter((a) => (a).status === cinerinoapi.factory.pecorino.accountStatusType.Opened);
+            .map((o) => <cinerinoapi.factory.account.IAccount>o.typeOfGood)
+            .filter((a) => (a).status === cinerinoapi.factory.accountStatusType.Opened);
         const account = accounts.shift();
         if (account === undefined) {
             throw new Error('ペイメントカード未作成なので振込を実行できません');
@@ -1429,7 +1437,7 @@ export class PostbackWebhookController {
                     data: qs.stringify({
                         action: 'selectPaymentMethodType',
                         amount: 0,
-                        paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                        paymentMethod: 'Others',
                         transactionId: transaction.id
                     })
                 }
@@ -1489,7 +1497,7 @@ export class PostbackWebhookController {
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
                                 amount: price,
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                paymentMethod: 'Others',
                                 transactionId: transaction.id
                             })
                         }
@@ -1621,8 +1629,8 @@ export class PostbackWebhookController {
             }
         });
         const accountOwnershipInfos = <IAccountOwnershipInfoWithDetail[]>searchAccountsResult.data.filter(
-            (o) => (<cinerinoapi.factory.pecorino.account.IAccount>o.typeOfGood).status
-                === cinerinoapi.factory.pecorino.accountStatusType.Opened
+            (o) => (<cinerinoapi.factory.account.IAccount>o.typeOfGood).status
+                === cinerinoapi.factory.accountStatusType.Opened
         );
         if (accountOwnershipInfos.length === 0) {
             throw new Error('口座未開設です');
@@ -1675,7 +1683,7 @@ export class PostbackWebhookController {
             limit: 10,
             page: 1,
             sort: {
-                startDate: cinerinoapi.factory.pecorino.sortType.Descending
+                startDate: cinerinoapi.factory.sortType.Descending
             },
             accountNumber: params.accountNumber
         });
@@ -1917,23 +1925,40 @@ export class PostbackWebhookController {
 
             await LINE.pushMessage(this.user.userId, { type: 'text', text: `${event.name.ja}の座席を確保します...` });
             debug('creating a seat reservation authorization...');
+            const authorizeObject: cinerinoapi.factory.assetTransaction.reserve.IObjectWithoutDetail = {
+                reservationFor: { id: event.id },
+                acceptedOffer: params.seatNumbers.map((seatNumber) => {
+                    // return '';
+                    return {
+                        id: <string>selectedTicketOffer.id,
+                        itemOffered: {
+                            serviceOutput: {
+                                typeOf: cinerinoapi.factory.reservationType.EventReservation,
+                                // additionalProperty?: IPropertyValue<string>[];
+                                // additionalTicketText?: string;
+                                // programMembershipUsed?: {
+                                //     accessCode?: string;
+                                //     identifier?: string;
+                                // };
+                                reservedTicket: {
+                                    typeOf: 'Ticket',
+                                    ticketedSeat: {
+                                        typeOf: cinerinoapi.factory.chevre.placeType.Seat,
+                                        seatNumber: seatNumber,
+                                        seatSection: 'Default',
+                                        seatRow: ''
+                                        // seatingType: <any>{}
+                                    }
+                                }
+                                // subReservation?: IAcceptedSubReservation[];
+                            }
+                        }
+                        // additionalProperty: []
+                    };
+                })
+            };
             seatReservationAuthorization = <ISeatReservationAuthorization>await placeOrderService.authorizeSeatReservation({
-                object: {
-                    event: { id: event.id },
-                    acceptedOffer: params.seatNumbers.map((seatNumber) => {
-                        return {
-                            id: <string>selectedTicketOffer.id,
-                            ticketedSeat: {
-                                typeOf: cinerinoapi.factory.chevre.placeType.Seat,
-                                seatNumber: seatNumber,
-                                seatSection: 'Default',
-                                seatRow: '',
-                                seatingType: <any>{}
-                            },
-                            additionalProperty: []
-                        };
-                    })
-                },
+                object: authorizeObject,
                 purpose: transaction
             });
             debug('seatReservationAuthorization:', seatReservationAuthorization);
@@ -1951,7 +1976,7 @@ export class PostbackWebhookController {
             debug('creating a seat reservation authorization...');
             seatReservationAuthorization = <ISeatReservationAuthorization>await placeOrderService.authorizeSeatReservation({
                 object: {
-                    event: { id: event.id },
+                    reservationFor: { id: event.id },
                     // tslint:disable-next-line:prefer-array-literal
                     acceptedOffer: [...Array(params.numSeats)].map(() => {
                         return {
@@ -1986,7 +2011,7 @@ export class PostbackWebhookController {
                     data: qs.stringify({
                         action: 'selectPaymentMethodType',
                         amount: price,
-                        paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                        paymentMethod: 'Others',
                         transactionId: transaction.id
                     })
                 }
@@ -2046,7 +2071,7 @@ export class PostbackWebhookController {
                             data: qs.stringify({
                                 action: 'selectPaymentMethodType',
                                 amount: price,
-                                paymentMethod: cinerinoapi.factory.paymentMethodType.Others,
+                                paymentMethod: 'Others',
                                 transactionId: transaction.id
                             })
                         }
@@ -2368,7 +2393,7 @@ export class PostbackWebhookController {
                     throw new Error('Account not found');
                 }
 
-                const account = <cinerinoapi.factory.pecorino.account.IAccount>accountOwnershipInfo.typeOfGood;
+                const account = <cinerinoapi.factory.account.IAccount>accountOwnershipInfo.typeOfGood;
                 flex = {
                     type: 'flex',
                     altText: 'This is a Flex Message',
@@ -2636,14 +2661,15 @@ export class PostbackWebhookController {
             auth: this.user.authClient,
             project: { id: this.project?.id }
         });
-        let order = await orderService.findByConfirmationNumber({
+        let order: cinerinoapi.factory.order.IOrder | undefined;
+        const orders = await orderService.findByConfirmationNumber({
             confirmationNumber: String(params.confirmationNumber),
             customer: {
                 telephone: params.telephone
             }
         });
-        if (Array.isArray(order)) {
-            order = order[0];
+        if (Array.isArray(orders)) {
+            order = orders[0];
         }
         if (order === undefined) {
             await LINE.pushMessage(this.user.userId, { type: 'text', text: '注文が見つかりませんでした' });

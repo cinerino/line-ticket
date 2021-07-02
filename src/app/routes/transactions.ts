@@ -119,8 +119,8 @@ transactionsRouter.get(
             const reservedSeatsAvailable = event.offers?.itemOffered.serviceOutput?.reservedTicket?.ticketedSeat !== undefined;
 
             if (reservedSeatsAvailable) {
-                const eventOffers = await eventService.searchOffers({ event: { id: req.query.eventId } });
-                const availableSeats = eventOffers[0].containsPlace.filter(
+                const searchSeatsResult = await eventService.searchSeats({ event: { id: req.query.eventId } });
+                const availableSeats = searchSeatsResult.data.filter(
                     (p) => Array.isArray(p.offers) && p.offers[0].availability === 'InStock'
                 );
                 const availableSeatNumbers = availableSeats.map((s) => s.branchCode);
