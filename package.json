@@ -10,7 +10,7 @@
   ],
   "config": {},
   "dependencies": {
-    "@cinerino/sdk": "3.7.1",
+    "@cinerino/sdk": "3.7.3",
     "@line/bot-sdk": "^6.7.0",
     "@motionpicture/express-middleware": "^0.1.1",
     "aws-sdk": "^2.458.0",

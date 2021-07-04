@@ -120,6 +120,7 @@ export function createConfirmOrderFlexBubble(params: {
     id: string;
     seller: cinerinoapi.factory.seller.ISeller;
     profile: cinerinoapi.factory.person.IProfile;
+    productOffers: cinerinoapi.factory.action.authorize.offer.product.IObject;
     tmpReservations: cinerinoapi.factory.assetTransaction.reserve.ISubReservation[];
     price?: number;
 }): FlexMessage {
@@ -250,6 +251,90 @@ export function createConfirmOrderFlexBubble(params: {
             margin: 'xxl',
             spacing: 'sm',
             contents: [
+                // プロダクトオファーの場合のアイテムを追加する
+                ...params.productOffers.map<FlexBox>((productOffer) => {
+                    const product = productOffer.itemOffered;
+
+                    let itemName = `${product?.typeOf}`;
+                    if (typeof (<cinerinoapi.factory.multilingualString | undefined>product?.name)?.ja === 'string') {
+                        itemName = `${(<cinerinoapi.factory.multilingualString | undefined>product?.name)?.ja}`;
+                    }
+                    // tslint:disable-next-line:no-magic-numbers
+                    if (itemName.length > 30) {
+                        // tslint:disable-next-line:no-magic-numbers
+                        itemName = `${itemName.slice(0, 30)}...`;
+                    }
+
+                    let offerName = `${productOffer.identifier}`;
+                    if (typeof (<cinerinoapi.factory.multilingualString | undefined>productOffer.name)?.ja === 'string') {
+                        offerName = `${(<cinerinoapi.factory.multilingualString | undefined>productOffer.name)?.ja}`;
+                    }
+                    // tslint:disable-next-line:no-magic-numbers
+                    if (offerName.length > 30) {
+                        // tslint:disable-next-line:no-magic-numbers
+                        offerName = `${offerName.slice(0, 30)}...`;
+                    }
+
+                    let priceStr = String(productOffer.priceCurrency);
+                    if (productOffer.priceSpecification !== undefined) {
+                        // tslint:disable-next-line:max-line-length
+                        const unitPriceSpec = <cinerinoapi.factory.chevre.priceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>>
+                            // tslint:disable-next-line:max-line-length
+                            (<cinerinoapi.factory.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType>>productOffer.priceSpecification).priceComponent.find(
+                                // tslint:disable-next-line:max-line-length
+                                (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                            );
+                        if (unitPriceSpec !== undefined) {
+                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${unitPriceSpec.referenceQuantity.unitCode} ${unitPriceSpec.priceCurrency}`;
+                        }
+                    }
+
+                    return {
+                        type: 'box',
+                        layout: 'horizontal',
+                        contents: [
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                flex: 2,
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: itemName,
+                                        size: 'xs',
+                                        color: '#555555',
+                                        wrap: true
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: offerName,
+                                        size: 'xs',
+                                        color: '#aaaaaa'
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'text',
+                                text: priceStr,
+                                size: 'xs',
+                                color: '#111111',
+                                align: 'end',
+                                flex: 1,
+                                gravity: 'top'
+                            }
+                        ]
+                    };
+                }),
+
+                ...(params.productOffers.length > 0)
+                    ? [
+                        {
+                            type: <'separator'>'separator',
+                            margin: <'xxl'>'xxl'
+                        }
+                    ]
+                    : [],
+
                 ...tmpReservations.map<FlexBox>((tmpReservation) => {
                     const item = tmpReservation;
                     const event = item.reservationFor;
@@ -332,7 +417,7 @@ export function createConfirmOrderFlexBubble(params: {
                         },
                         {
                             type: 'text',
-                            text: `${tmpReservations.length}`,
+                            text: `${params.productOffers.length + tmpReservations.length}`,
                             size: 'sm',
                             color: '#111111',
                             align: 'end'
@@ -748,6 +833,7 @@ export function screeningEvent2flexBubble(params: {
 export function product2flexBubble(params: {
     product: cinerinoapi.factory.chevre.service.IService;
     user: User;
+    accessCode: string;
 }): FlexBubble {
     const product = params.product;
 
@@ -812,8 +898,7 @@ export function product2flexBubble(params: {
                             itemOffered: {
                                 id: product.id,
                                 serviceOutput: {
-                                    // api仕様上必須なので、いったん固定で
-                                    accessCode: '123'
+                                    accessCode: params.accessCode
                                 }
                             }
                         })

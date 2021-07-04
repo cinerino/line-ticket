@@ -48,17 +48,8 @@ export class MessageWebhookController {
                 imageUrl: `https://${this.user.host}/img/labels/reservation-ticket.png`,
                 action: {
                     type: 'message',
-                    label: '予約',
-                    text: '予約'
-                }
-            },
-            {
-                type: 'action',
-                imageUrl: `https://${this.user.host}/img/labels/payment-card-64.png`,
-                action: {
-                    type: 'message',
-                    label: 'ペイメントカード',
-                    text: 'ペイメントカード'
+                    label: 'イベント予約',
+                    text: 'イベント予約'
                 }
             },
             {
@@ -68,6 +59,15 @@ export class MessageWebhookController {
                     type: 'message',
                     label: 'メンバーシップ',
                     text: 'メンバーシップ'
+                }
+            },
+            {
+                type: 'action',
+                imageUrl: `https://${this.user.host}/img/labels/payment-card-64.png`,
+                action: {
+                    type: 'message',
+                    label: 'ペイメントカード',
+                    text: 'ペイメントカード'
                 }
             },
             {

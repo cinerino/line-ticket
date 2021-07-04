@@ -195,7 +195,8 @@ export class PostbackWebhookController {
         await LINE.pushMessage(this.user.userId, { type: 'text', text: `${products.length}件のプロダクトがみつかりました` });
 
         const bubbles: FlexBubble[] = products.map<FlexBubble>((product) => {
-            return product2flexBubble({ product, user: this.user });
+            // api仕様上必須なので、いったん固定で
+            return product2flexBubble({ product, user: this.user, accessCode: '1234' });
         });
 
         await LINE.pushMessage(this.user.userId, [
@@ -698,7 +699,8 @@ export class PostbackWebhookController {
     }
 
     /**
-     * ペイメントカード注文
+     * プロダクト注文
+     * メンバーシップ、ペイメントカードなど...
      */
     // tslint:disable-next-line:max-func-body-length
     public async orderPaymentCard(params: {
@@ -741,6 +743,12 @@ export class PostbackWebhookController {
         // if (creditCardPayment === undefined) {
         //     throw new Error('クレジットカード決済が許可されていません');
         // }
+
+        // プロダクト検索
+        // const product = await productService.search({
+        //     limit:1,
+        //     id:
+        // });
 
         // オファー未選択であれば、オファー選択へ
         if (typeof params.offer?.id !== 'string') {
@@ -816,7 +824,7 @@ export class PostbackWebhookController {
                 // passport: { token: passportToken }
             }
         });
-        await LINE.pushMessage(this.user.userId, { type: 'text', text: '取引を開始しました' });
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: `取引を開始しました: ${transaction.id}` });
         await this.user.saveTransaction(transaction);
 
         const paymentCardAuthorization = await offerService.authorizeProduct({
@@ -845,6 +853,8 @@ export class PostbackWebhookController {
             }],
             purpose: { typeOf: transaction.typeOf, id: transaction.id }
         });
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: `オファー ${params.offer?.id} を承認しました` });
+        await this.user.saveProductOfferAuthorization(paymentCardAuthorization);
 
         const price = paymentCardAuthorization.result?.price;
 
@@ -1055,9 +1065,6 @@ export class PostbackWebhookController {
 
         const transaction = await this.user.findTransaction();
         const seller = await sellerService.findById({ id: String(transaction.seller.id) });
-        const seatReservationAuthorization = await this.user.findSeatReservationAuthorization();
-        let tmpReservations = seatReservationAuthorization?.result?.responseBody.object.reservations;
-        tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
 
         const profile: cinerinoapi.factory.person.IProfile = {
             familyName: params.familyName,
@@ -1072,15 +1079,27 @@ export class PostbackWebhookController {
             agent: profile
         });
         await this.user.saveProfile(profile);
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: `プロフィールを設定しました: ${transaction.id}` });
 
         // 注文内容確認
+        await LINE.pushMessage(this.user.userId, { type: 'text', text: `注文内容を確認します... ${transaction.id}` });
+
+        const seatReservationAuthorization = await this.user.findSeatReservationAuthorization({ purpose: { id: transaction.id } });
+        let tmpReservations = seatReservationAuthorization?.result?.responseBody.object.reservations;
+        tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
+
+        const productOfferAuthorization = await this.user.findProductOfferAuthorization({ purpose: { id: transaction.id } });
+        let productOffers = productOfferAuthorization?.object;
+        productOffers = (Array.isArray(productOffers)) ? productOffers : [];
+
         const price = await this.user.findTransactionAmount();
 
         await LINE.pushMessage(this.user.userId, [
             createConfirmOrderFlexBubble({
                 seller: seller,
                 profile: profile,
-                tmpReservations: tmpReservations,
+                productOffers,
+                tmpReservations,
                 id: params.transactionId,
                 price: price
             })

@@ -294,21 +294,50 @@ export default class User {
             .expire(`line-ticket:transaction:${this.userId}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
-    public async findSeatReservationAuthorization(
+    public async findSeatReservationAuthorization(params: {
+        purpose: {
+            /**
+             * 取引ID
+             */
+            id: string;
+        };
         // tslint:disable-next-line:max-line-length
-    ): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre> | undefined> {
-        return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
+    }): Promise<cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre> | undefined> {
+        return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`)
             .then((value) => {
                 return (value !== null) ? JSON.parse(value) : undefined;
             });
     }
     public async saveSeatReservationAuthorization(
         // tslint:disable-next-line:max-line-length
-        authorization: cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>
+        params: cinerinoapi.factory.action.authorize.offer.seatReservation.IAction<cinerinoapi.factory.service.webAPI.Identifier.Chevre>
     ) {
         await redisClient.multi()
-            .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
-            .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+            .set(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`, JSON.stringify(params))
+            .expire(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`, EXPIRES_IN_SECONDS, debug)
+            .exec();
+    }
+
+    public async findProductOfferAuthorization(params: {
+        purpose: {
+            /**
+             * 取引ID
+             */
+            id: string;
+        };
+        // tslint:disable-next-line:max-line-length
+    }): Promise<cinerinoapi.factory.action.authorize.offer.product.IAction | undefined> {
+        return redisClient.get(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`)
+            .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
+    }
+    public async saveProductOfferAuthorization(
+        params: cinerinoapi.factory.action.authorize.offer.product.IAction
+    ) {
+        await redisClient.multi()
+            .set(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`, JSON.stringify(params))
+            .expire(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`, EXPIRES_IN_SECONDS, debug)
             .exec();
     }
 

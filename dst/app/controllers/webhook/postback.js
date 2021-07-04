@@ -153,7 +153,8 @@ class PostbackWebhookController {
             products = products.slice(0, 10);
             yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `${products.length}件のプロダクトがみつかりました` });
             const bubbles = products.map((product) => {
-                return contentsBuilder_1.product2flexBubble({ product, user: this.user });
+                // api仕様上必須なので、いったん固定で
+                return contentsBuilder_1.product2flexBubble({ product, user: this.user, accessCode: '1234' });
             });
             yield lineClient_1.default.pushMessage(this.user.userId, [
                 {
@@ -623,11 +624,12 @@ class PostbackWebhookController {
         });
     }
     /**
-     * ペイメントカード注文
+     * プロダクト注文
+     * メンバーシップ、ペイメントカードなど...
      */
     // tslint:disable-next-line:max-func-body-length
     orderPaymentCard(params) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
         return __awaiter(this, void 0, void 0, function* () {
             const placeOrderService = new cinerinoapi.service.transaction.PlaceOrder({
                 endpoint: process.env.CINERINO_ENDPOINT,
@@ -660,6 +662,11 @@ class PostbackWebhookController {
             // if (creditCardPayment === undefined) {
             //     throw new Error('クレジットカード決済が許可されていません');
             // }
+            // プロダクト検索
+            // const product = await productService.search({
+            //     limit:1,
+            //     id:
+            // });
             // オファー未選択であれば、オファー選択へ
             if (typeof ((_e = params.offer) === null || _e === void 0 ? void 0 : _e.id) !== 'string') {
                 yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: 'オファーを検索しています...' });
@@ -726,7 +733,7 @@ class PostbackWebhookController {
                 // passport: { token: passportToken }
                 }
             });
-            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: '取引を開始しました' });
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `取引を開始しました: ${transaction.id}` });
             yield this.user.saveTransaction(transaction);
             const paymentCardAuthorization = yield offerService.authorizeProduct({
                 object: [{
@@ -754,7 +761,9 @@ class PostbackWebhookController {
                     }],
                 purpose: { typeOf: transaction.typeOf, id: transaction.id }
             });
-            const price = (_p = paymentCardAuthorization.result) === null || _p === void 0 ? void 0 : _p.price;
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `オファー ${(_p = params.offer) === null || _p === void 0 ? void 0 : _p.id} を承認しました` });
+            yield this.user.saveProductOfferAuthorization(paymentCardAuthorization);
+            const price = (_q = paymentCardAuthorization.result) === null || _q === void 0 ? void 0 : _q.price;
             const quickReplyItems = [];
             if (price === 0) {
                 quickReplyItems.push({
@@ -945,9 +954,6 @@ class PostbackWebhookController {
             });
             const transaction = yield this.user.findTransaction();
             const seller = yield sellerService.findById({ id: String(transaction.seller.id) });
-            const seatReservationAuthorization = yield this.user.findSeatReservationAuthorization();
-            let tmpReservations = (_c = seatReservationAuthorization === null || seatReservationAuthorization === void 0 ? void 0 : seatReservationAuthorization.result) === null || _c === void 0 ? void 0 : _c.responseBody.object.reservations;
-            tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
             const profile = {
                 familyName: params.familyName,
                 givenName: params.givenName,
@@ -960,13 +966,22 @@ class PostbackWebhookController {
                 agent: profile
             });
             yield this.user.saveProfile(profile);
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `プロフィールを設定しました: ${transaction.id}` });
             // 注文内容確認
+            yield lineClient_1.default.pushMessage(this.user.userId, { type: 'text', text: `注文内容を確認します... ${transaction.id}` });
+            const seatReservationAuthorization = yield this.user.findSeatReservationAuthorization({ purpose: { id: transaction.id } });
+            let tmpReservations = (_c = seatReservationAuthorization === null || seatReservationAuthorization === void 0 ? void 0 : seatReservationAuthorization.result) === null || _c === void 0 ? void 0 : _c.responseBody.object.reservations;
+            tmpReservations = (Array.isArray(tmpReservations)) ? tmpReservations : [];
+            const productOfferAuthorization = yield this.user.findProductOfferAuthorization({ purpose: { id: transaction.id } });
+            let productOffers = productOfferAuthorization === null || productOfferAuthorization === void 0 ? void 0 : productOfferAuthorization.object;
+            productOffers = (Array.isArray(productOffers)) ? productOffers : [];
             const price = yield this.user.findTransactionAmount();
             yield lineClient_1.default.pushMessage(this.user.userId, [
                 contentsBuilder_1.createConfirmOrderFlexBubble({
                     seller: seller,
                     profile: profile,
-                    tmpReservations: tmpReservations,
+                    productOffers,
+                    tmpReservations,
                     id: params.transactionId,
                     price: price
                 })

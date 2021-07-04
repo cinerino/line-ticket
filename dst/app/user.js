@@ -209,11 +209,9 @@ class User {
                 .exec();
         });
     }
-    findSeatReservationAuthorization(
-    // tslint:disable-next-line:max-line-length
-    ) {
+    findSeatReservationAuthorization(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}`)
+            return redisClient.get(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`)
                 .then((value) => {
                 return (value !== null) ? JSON.parse(value) : undefined;
             });
@@ -221,11 +219,27 @@ class User {
     }
     saveSeatReservationAuthorization(
     // tslint:disable-next-line:max-line-length
-    authorization) {
+    params) {
         return __awaiter(this, void 0, void 0, function* () {
             yield redisClient.multi()
-                .set(`line-ticket:seatReservationAuthorization:${this.userId}`, JSON.stringify(authorization))
-                .expire(`line-ticket:seatReservationAuthorization:${this.userId}`, EXPIRES_IN_SECONDS, debug)
+                .set(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`, JSON.stringify(params))
+                .expire(`line-ticket:seatReservationAuthorization:${this.userId}:${params.purpose.id}`, EXPIRES_IN_SECONDS, debug)
+                .exec();
+        });
+    }
+    findProductOfferAuthorization(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return redisClient.get(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`)
+                .then((value) => {
+                return (value !== null) ? JSON.parse(value) : undefined;
+            });
+        });
+    }
+    saveProductOfferAuthorization(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield redisClient.multi()
+                .set(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`, JSON.stringify(params))
+                .expire(`line-ticket:productOfferAuthorization:${this.userId}:${params.purpose.id}`, EXPIRES_IN_SECONDS, debug)
                 .exec();
         });
     }

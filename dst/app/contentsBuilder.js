@@ -229,6 +229,84 @@ function createConfirmOrderFlexBubble(params) {
             margin: 'xxl',
             spacing: 'sm',
             contents: [
+                // プロダクトオファーの場合のアイテムを追加する
+                ...params.productOffers.map((productOffer) => {
+                    var _a, _b, _c, _d;
+                    const product = productOffer.itemOffered;
+                    let itemName = `${product === null || product === void 0 ? void 0 : product.typeOf}`;
+                    if (typeof ((_a = product === null || product === void 0 ? void 0 : product.name) === null || _a === void 0 ? void 0 : _a.ja) === 'string') {
+                        itemName = `${(_b = product === null || product === void 0 ? void 0 : product.name) === null || _b === void 0 ? void 0 : _b.ja}`;
+                    }
+                    // tslint:disable-next-line:no-magic-numbers
+                    if (itemName.length > 30) {
+                        // tslint:disable-next-line:no-magic-numbers
+                        itemName = `${itemName.slice(0, 30)}...`;
+                    }
+                    let offerName = `${productOffer.identifier}`;
+                    if (typeof ((_c = productOffer.name) === null || _c === void 0 ? void 0 : _c.ja) === 'string') {
+                        offerName = `${(_d = productOffer.name) === null || _d === void 0 ? void 0 : _d.ja}`;
+                    }
+                    // tslint:disable-next-line:no-magic-numbers
+                    if (offerName.length > 30) {
+                        // tslint:disable-next-line:no-magic-numbers
+                        offerName = `${offerName.slice(0, 30)}...`;
+                    }
+                    let priceStr = String(productOffer.priceCurrency);
+                    if (productOffer.priceSpecification !== undefined) {
+                        // tslint:disable-next-line:max-line-length
+                        const unitPriceSpec = 
+                        // tslint:disable-next-line:max-line-length
+                        productOffer.priceSpecification.priceComponent.find(
+                        // tslint:disable-next-line:max-line-length
+                        (spec) => spec.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification);
+                        if (unitPriceSpec !== undefined) {
+                            priceStr = `${unitPriceSpec.price}/${unitPriceSpec.referenceQuantity.value} ${unitPriceSpec.referenceQuantity.unitCode} ${unitPriceSpec.priceCurrency}`;
+                        }
+                    }
+                    return {
+                        type: 'box',
+                        layout: 'horizontal',
+                        contents: [
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                flex: 2,
+                                contents: [
+                                    {
+                                        type: 'text',
+                                        text: itemName,
+                                        size: 'xs',
+                                        color: '#555555',
+                                        wrap: true
+                                    },
+                                    {
+                                        type: 'text',
+                                        text: offerName,
+                                        size: 'xs',
+                                        color: '#aaaaaa'
+                                    }
+                                ]
+                            },
+                            {
+                                type: 'text',
+                                text: priceStr,
+                                size: 'xs',
+                                color: '#111111',
+                                align: 'end',
+                                flex: 1,
+                                gravity: 'top'
+                            }
+                        ]
+                    };
+                }),
+                ...(params.productOffers.length > 0)
+                    ? [
+                        {
+                            type: 'separator',
+                            margin: 'xxl'
+                        }
+                    ]
+                    : [],
                 ...tmpReservations.map((tmpReservation) => {
                     var _a;
                     const item = tmpReservation;
@@ -310,7 +388,7 @@ function createConfirmOrderFlexBubble(params) {
                         },
                         {
                             type: 'text',
-                            text: `${tmpReservations.length}`,
+                            text: `${params.productOffers.length + tmpReservations.length}`,
                             size: 'sm',
                             color: '#111111',
                             align: 'end'
@@ -774,8 +852,7 @@ function product2flexBubble(params) {
                             itemOffered: {
                                 id: product.id,
                                 serviceOutput: {
-                                    // api仕様上必須なので、いったん固定で
-                                    accessCode: '123'
+                                    accessCode: params.accessCode
                                 }
                             }
                         })
